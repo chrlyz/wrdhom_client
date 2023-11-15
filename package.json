@@ -12,11 +12,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "ipfs-car": "^1.0.0",
     "next": "14.0.2",
     "react": "^18",
     "react-dom": "^18",
-    "web3.storage": "^4.5.5"
+    "ipfs-car": "^1.0.0",
+    "@web3-storage/w3up-client": "^11.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
