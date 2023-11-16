@@ -1,24 +1,26 @@
 'use client';
 
 import CreatePost from '@/app/create-post';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import InstallWallet from '@/app/install-wallet';
 
 export default function Home() {
+  const [hasWallet, setHasWallet] = useState(null as null | boolean);
 
   useEffect(() => {
     const mina = (window as any).mina;
     if (mina == null) {
-      console.log("No Mina!");
+      setHasWallet(false);
     } else {
-      console.log("Mina!");
+      setHasWallet(true);
     }
-  })
+  }, []);
 
   return (
   <main>
     WrdHom: The auditable social-media platform
+    <InstallWallet hasWallet={hasWallet} />
     <CreatePost />
   </main>
   )
-  
 }
