@@ -1,6 +1,6 @@
 'use server';
 import { createDirectoryEncoderStream, CAREncoderStream } from 'ipfs-car';
-import { Web3Storage, File } from 'web3.storage';
+import { File } from '@web-std/file';
 
 export async function createPost(formData: FormData) {
     const post = formData.get('post');
@@ -20,9 +20,4 @@ export async function createPost(formData: FormData) {
     .pipeTo(new WritableStream());
 
     console.log(postCID.toString());
-
-    const client = new Web3Storage({ token: process.env.WEB3STORAGE_TOKEN! });
-    const storedPostCID = await client.put([file]);
-    
-    console.log(storedPostCID.toString());
 }
