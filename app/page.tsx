@@ -13,7 +13,6 @@ export default function Home() {
   const [account, setAccount] = useState(['Not connected']);
 
   useEffect(() => {
-    console.log('1');
     if (typeof (window as any).mina !== 'undefined') {
       setHasWallet(true);
     }
@@ -21,7 +20,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    console.log('2');
     (async () => {
       if (walletConnected) {
         const a = await (window as any).mina.requestAccounts()

@@ -12,6 +12,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aurowallet/mina-provider": "^1.0.0",
     "@web-std/file": "^3.0.3",
     "ipfs-car": "^1.0.0",
     "next": "14.0.2",
