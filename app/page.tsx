@@ -10,26 +10,26 @@ export default function Home() {
   const [hasWallet, setHasWallet] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const walletConnection = () => setWalletConnected(!walletConnected);
-  const [account, setAccount] = useState(['not connected']);
+  const [account, setAccount] = useState(['Not connected']);
 
   useEffect(() => {
-    if ((window as any).mina !== null) {
+    console.log('1');
+    if (typeof (window as any).mina !== 'undefined') {
       setHasWallet(true);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
+    console.log('2');
     (async () => {
-      if (typeof window !== 'undefined') {
-        if (walletConnected) {
-          const a = await (window as any).mina.requestAccounts()
-            .catch(() => {
-              setWalletConnected(false);
-              return ['user rejected connection']
-            });
-          setAccount(a);
-        }
+      if (walletConnected) {
+        const a = await (window as any).mina.requestAccounts()
+          .catch(() => {
+            setWalletConnected(false);
+            return ['Not connected, because you rejected connection']
+          });
+        setAccount(a);
       }
     })();
   }, [walletConnected]);
@@ -41,10 +41,10 @@ export default function Home() {
     WrdHom: The auditable social-media platform
     <br/>
     {loading ? null : !hasWallet && <InstallWallet />}
-    {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
     {loading ? null : hasWallet && walletConnected && <CreatePost />}
+    {hasWallet ? 'Your account is: ' + account[0] : ''}
     <br/>
-    Your account is: {account[0]} 
+    {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
   </main>
   )
 }
