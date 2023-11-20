@@ -1,30 +1,13 @@
-import { createPost } from '@/app/actions';
 import { useEffect, useState } from 'react';
-import { SignedData } from '@aurowallet/mina-provider';
 import { createFileEncoderStream, CAREncoderStream } from 'ipfs-car';
 import { Blob } from '@web-std/file';
 
 export default function CreatePost() {
-    const [buttonClicked, setButtonClicked] = useState(false);
-
     const [post, setPost] = useState('');
-    const handleClicks = () => {
-        setButtonClicked(!buttonClicked);
-        console.log(post);
-    }
     const [postCID, setPostCID] = useState(null as any);
-    const emptySignedData: SignedData = {
-        publicKey: '',
-        data: 'aaa',
-        signature: {
-          field: '',
-          scalar: ''
-        }
-      }
-    let signedData = emptySignedData;
-    const [s, setS] = useState(emptySignedData);
-    let createPostWithSignedData = createPost.bind(null, s);
-    const handleSignButton = async () => {
+    const [signedData, setSignedData] = useState(null as any);
+
+    const handleClick = async () => {
         const file = new Blob([post]);
 
         await createFileEncoderStream(file)
@@ -38,37 +21,50 @@ export default function CreatePost() {
         )
         .pipeThrough(new CAREncoderStream())
         .pipeTo(new WritableStream());
-        
-        setButtonClicked(true);
     }
 
-    useEffect(() =>  {
+    useEffect(() => {
         (async () => {
-            console.log('1');
-            if (buttonClicked) {
-                console.log('2');
-                signedData = await (window as any).mina.signMessage({ message: postCID.toString() }).catch(() => {
-                    return emptySignedData;
+            if (postCID !== null ) {
+                const s = await (window as any).mina
+                    .signMessage({ message: postCID.toString() })
+                    .catch(() => {
+                        return {
+                            publicKey: '',
+                            data: '',
+                            signature: {
+                            field: '',
+                            scalar: ''
+                            }
+                        }
                 });
-                setS(signedData);
-                console.log(signedData);
-                console.log('3');
-                //post.toString().split("").map((char) => console.log(char.charCodeAt(0)));
+                setSignedData(s);
             }
-            
+        })()
+    }, [postCID]);
+
+    useEffect(() => {
+        (async ()=> {
+            if (signedData !== null) {
+                const res = await fetch('/posts', {
+                    method: `POST`,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(signedData),
+                });
+            }
         })();
-    }, [buttonClicked])
+    }, [signedData]);
 
     return (
-    <div>
-        <form action={createPostWithSignedData}>
+        <div>
             <div>
-                <textarea name="post" placeholder="Spread the wrd..." onChange={e => setPost(e.target.value)}>
+                <textarea name="post"
+                    placeholder="Spread the wrd..."
+                    onChange={e => setPost(e.target.value)}
+                >
                 </textarea>
-                {buttonClicked ? <button>Wrd</button> : null}
+                <button onClick={handleClick}>Wrd</button>
             </div>
-        </form>
-        {!buttonClicked ? <button onClick={handleSignButton}>Sign Post</button> : null}
-    </div>
+        </div>
     )
 }
