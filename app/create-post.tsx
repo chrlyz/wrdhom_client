@@ -46,11 +46,17 @@ export default function CreatePost() {
     useEffect(() => {
         (async ()=> {
             if (signedData !== null) {
+                const signedPost = {
+                    post: post,
+                    signedData: signedData
+                }
+
                 const res = await fetch('/posts', {
                     method: `POST`,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(signedData),
+                    body: JSON.stringify(signedPost),
                 });
+                console.log(res);
             }
         })();
     }, [signedData]);
