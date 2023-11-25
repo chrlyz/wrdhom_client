@@ -26,8 +26,9 @@ export default function CreatePost() {
     useEffect(() => {
         (async () => {
             if (postCID !== null ) {
+                const { CircuitString } = await import('o1js');
                 const s = await (window as any).mina
-                    .signMessage({ message: postCID.toString() })
+                    .signFields({ message: [CircuitString.fromString(postCID.toString()).hash().toString()] })
                     .catch(() => {
                         return {
                             publicKey: '',
