@@ -15,7 +15,7 @@
     "@aurowallet/mina-provider": "^1.0.0",
     "@web-std/file": "^3.0.3",
     "ipfs-car": "^1.0.0",
-    "next": "14.0.2",
+    "next": "^14.0.3",
     "o1js": "^0.14.1",
     "react": "^18",
     "react-dom": "^18"
