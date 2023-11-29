@@ -23,6 +23,13 @@ export default function CreatePost() {
         .pipeTo(new WritableStream());
     }
 
+    // Make import immediately after rendering, so it's already available when called later
+    useEffect(() => {
+        (async () => {
+            const { CircuitString } = await import('o1js');
+        })();
+    }, []);
+
     useEffect(() => {
         (async () => {
             if (postCID !== null ) {
@@ -41,7 +48,7 @@ export default function CreatePost() {
                 });
                 setSignedData(s);
             }
-        })()
+        })();
     }, [postCID]);
 
     useEffect(() => {
