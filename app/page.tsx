@@ -9,15 +9,23 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [hasWallet, setHasWallet] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
-  const walletConnection = () => setWalletConnected(!walletConnected);
   const [account, setAccount] = useState(['Not connected']);
+  const [accountChanged, setAccountChanged] = useState(false);
+
+  const walletConnection = () => setWalletConnected(!walletConnected);
 
   useEffect(() => {
     if (typeof (window as any).mina !== 'undefined') {
       setHasWallet(true);
+      (window as any).mina?.on('accountsChanged', () => {
+        setAccountChanged(!accountChanged);
+        console.log(accountChanged);
+      });
     }
     setLoading(false);
-  }, []);
+    
+    return () => (window as any).mina?.off('accountsChanged');
+  });
 
   useEffect(() => {
     (async () => {
@@ -25,12 +33,12 @@ export default function Home() {
         const a = await (window as any).mina.requestAccounts()
           .catch(() => {
             setWalletConnected(false);
-            return ['Not connected, because you rejected connection']
+            return ['Not connected']
           });
         setAccount(a);
       }
     })();
-  }, [walletConnected]);
+  }, [walletConnected, accountChanged]);
 
   console.log(account);
 
