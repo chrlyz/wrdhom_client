@@ -4,6 +4,7 @@ import CreatePost from '@/app/create-post';
 import { useState, useEffect } from 'react';
 import InstallWallet from '@/app/install-wallet';
 import ConnectWallet from './connect-wallet';
+import GetPosts from './get-posts';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -53,13 +54,22 @@ export default function Home() {
 
   return (
   <main>
-    WrdHom: The auditable social-media platform
-    <br/>
-    {loading ? null : !hasWallet && <InstallWallet />}
-    {loading ? null : hasWallet && walletConnected && <CreatePost />}
-    {hasWallet ? 'Your account is: ' + account[0] : ''}
-    <br/>
-    {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
+    <div className="flex min-h-screen">
+      <div className="flex flex-col w-1/2 border-r">
+        <div className="p-4 flex-grow">
+          <h1 className="text-2xl font-bold mb-3">WrdHom: The auditable social-media platform</h1>
+          <br/>
+          {loading ? null : !hasWallet && <InstallWallet />}
+          <p className="mb-2">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
+          {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
+        </div>
+        <div className="p-4 w-full mb-32">
+          {loading ? null : hasWallet && walletConnected && <CreatePost />}
+        </div>
+      </div>
+
+      <GetPosts />
+    </div>
   </main>
   )
 }
