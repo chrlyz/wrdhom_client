@@ -15,10 +15,14 @@ export default function Home() {
   const walletConnection = () => setWalletConnected(!walletConnected);
 
   useEffect(() => {
-    if (typeof (window as any).mina !== 'undefined') {
-      setHasWallet(true);
-    }
-    setLoading(false);
+    (async () => {
+      if (typeof (window as any).mina !== 'undefined') {
+        setHasWallet(true);
+      }
+      setLoading(false);
+      // Make imports immediately after rendering, so they are already available when called later
+      const { CircuitString } = await import('o1js');
+    })();
   }, []);
 
   useEffect(() => {
