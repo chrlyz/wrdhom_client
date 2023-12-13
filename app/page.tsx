@@ -17,15 +17,9 @@ export default function Home() {
   useEffect(() => {
     if (typeof (window as any).mina !== 'undefined') {
       setHasWallet(true);
-      (window as any).mina?.on('accountsChanged', () => {
-        setAccountChanged(!accountChanged);
-        console.log(accountChanged);
-      });
     }
     setLoading(false);
-    
-    return () => (window as any).mina?.off('accountsChanged');
-  });
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -39,6 +33,17 @@ export default function Home() {
       }
     })();
   }, [walletConnected, accountChanged]);
+
+  useEffect(() => {
+    if (typeof (window as any).mina !== 'undefined') {
+      (window as any).mina?.on('accountsChanged', () => {
+        setAccountChanged(!accountChanged);
+        console.log(accountChanged);
+      });
+    }
+    
+    return () => (window as any).mina?.off('accountsChanged');
+  });
 
   console.log(account);
 
