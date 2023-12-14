@@ -60,7 +60,7 @@ export default function Home() {
           <h1 className="text-2xl font-bold mb-3">WrdHom: The auditable social-media platform</h1>
           <br/>
           {loading ? null : !hasWallet && <InstallWallet />}
-          <p className="mb-2">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
+          <p className="mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
           {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
         </div>
         <div className="p-4 w-full mb-32">
