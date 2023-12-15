@@ -43,7 +43,6 @@ export default function Home() {
     if (typeof (window as any).mina !== 'undefined') {
       (window as any).mina?.on('accountsChanged', () => {
         setAccountChanged(!accountChanged);
-        console.log(accountChanged);
       });
     }
     

@@ -57,6 +57,7 @@ export default function CreatePost() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(signedPost),
                 });
+                setPost('');
                 console.log(res);
             }
         })();
@@ -67,6 +68,7 @@ export default function CreatePost() {
             <textarea
                 className="w-full h-48 p-2 border-2 border-gray-300 mb-2"
                 placeholder="Spread the wrd..."
+                value={post}
                 onChange={e => setPost(e.target.value)}
             >
             </textarea>
