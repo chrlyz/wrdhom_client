@@ -44,6 +44,10 @@ export default function GetPosts() {
     fetchPosts();
   }, []);
 
+  posts.map(post => {
+    console.log(post.content);
+  });
+
   return (
     <div className="w-1/2 p-4 overflow-y-auto max-h-[90vh]">
       {loading && <p className="border-4 p-2 shadow-lg">Loading posts...</p>}
@@ -64,7 +68,7 @@ export default function GetPosts() {
                       <FontAwesomeIcon icon={faCopy}  />
                     </span>
                 </div>
-                <div className="flex items-center border-4 p-2 shadow-lg">
+                <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap">
                     <p>{post.content}</p>
                 </div>
             </div>
