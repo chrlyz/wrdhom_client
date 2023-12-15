@@ -10,7 +10,7 @@ export default function GetPosts() {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch('/posts?howMany=4');
+      const response = await fetch('/posts?howMany=10');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -52,14 +52,16 @@ export default function GetPosts() {
         const postIdentifier = post.posterAddress + post.postContentID;
         return (
             <div key={postIdentifier} className="p-2 border-b-2 shadow-lg">
-                <div className="flex items-center border-4 p-2 shadow-lg text-xs" style={{ borderBottomWidth: '2px' }}>
+                <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black"
+                style={{ borderBottomWidth: '2px' }}
+                >
                     <p className="mr-4">{post.shortPosterAddress}</p>
                     <span 
-                        className="cursor-pointer"
-                        onMouseEnter={() => handleMouseEnter(post.posterAddress)}
-                        onClick={copyToClipboard}
+                    className="cursor-pointer"
+                    onMouseEnter={() => handleMouseEnter(post.posterAddress)}
+                    onClick={copyToClipboard}
                     >
-                        <FontAwesomeIcon icon={faCopy}  />
+                      <FontAwesomeIcon icon={faCopy}  />
                     </span>
                 </div>
                 <div className="flex items-center border-4 p-2 shadow-lg">
