@@ -10,17 +10,25 @@ export default function GetPosts() {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch('/posts?howMany=10');
+      const response = await fetch('/posts?howMany=2');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      const { MerkleMapWitness } = await import('o1js');
+      const { PostState } = await import('wrdhom');
       const data = await response.json();
-      const processedData = data.map( (obj: any) => {
-        const shortPosterAddressStart = obj.posterAddress.substring(0,7);
-        const shortPosterAddressEnd = obj.posterAddress.slice(-7);
+      const processedData = data.map( (post: any) => {
+        const postStateJSON = JSON.parse(post.postState);
+        const shortPosterAddressStart = postStateJSON.posterAddress.substring(0,7);
+        const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-7);
         const shortPosterAddress = `${shortPosterAddressStart}...${shortPosterAddressEnd}`;
+        const postWitness = MerkleMapWitness.fromJSON(post.postWitness);
+        const postState = PostState.fromJSON(postStateJSON);
+        console.log(postWitness.computeRootAndKey(postState.hash())[0].toString());
         return {
-            ...obj,
+            postState: postStateJSON,
+            postContentID: post.postContentID,
+            content: post.content,
             shortPosterAddress: shortPosterAddress
         }
       });
@@ -31,6 +39,7 @@ export default function GetPosts() {
       setLoading(false);
     }
   };
+    
 
   const handleMouseEnter = (posterAddress: string) => {
     setCopyText(posterAddress);
@@ -44,16 +53,12 @@ export default function GetPosts() {
     fetchPosts();
   }, []);
 
-  posts.map(post => {
-    console.log(post.content);
-  });
-
   return (
     <div className="w-1/2 p-4 overflow-y-auto max-h-[90vh]">
       {loading && <p className="border-4 p-2 shadow-lg">Loading posts...</p>}
       {error && <p className="border-4 p-2 shadow-lg">Error fetching posts: {error}</p>}
       {Array.isArray(posts) && posts.map((post) => {
-        const postIdentifier = post.posterAddress + post.postContentID;
+        const postIdentifier = post.postState.posterAddress + post.postContentID;
         return (
             <div key={postIdentifier} className="p-2 border-b-2 shadow-lg">
                 <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black"
@@ -62,7 +67,7 @@ export default function GetPosts() {
                     <p className="mr-4">{post.shortPosterAddress}</p>
                     <span 
                     className="cursor-pointer"
-                    onMouseEnter={() => handleMouseEnter(post.posterAddress)}
+                    onMouseEnter={() => handleMouseEnter(post.postState.posterAddress)}
                     onClick={copyToClipboard}
                     >
                       <FontAwesomeIcon icon={faCopy}  />

@@ -20,7 +20,8 @@
     "next": "^14.0.3",
     "o1js": "^0.14.1",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "wrdhom": "^0.1.8"
   },
   "devDependencies": {
     "@types/node": "^20",
