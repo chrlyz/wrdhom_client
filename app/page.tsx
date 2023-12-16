@@ -21,8 +21,6 @@ export default function Home() {
         setHasWallet(true);
       }
       setLoading(false);
-      // Make imports immediately after rendering, so they are already available when called later
-      const { CircuitString } = await import('o1js');
     })();
   }, []);
 
@@ -32,7 +30,6 @@ export default function Home() {
         const a = await (window as any).mina.requestAccounts()
           .catch(() => {
             setWalletConnected(false);
-            return ['Not connected']
           });
         setAccount(a);
       }
@@ -49,12 +46,10 @@ export default function Home() {
     return () => (window as any).mina?.off('accountsChanged');
   });
 
-  console.log(account);
-
   return (
   <main>
     <div className="flex min-h-screen">
-      <div className="flex flex-col w-1/2 border-r">
+      <div className="flex flex-col w-2/5 border-r">
         <div className="p-4 flex-grow">
           <h1 className="text-2xl font-bold mb-3">WrdHom: The auditable social-media platform</h1>
           <br/>
@@ -70,5 +65,5 @@ export default function Home() {
       <GetPosts />
     </div>
   </main>
-  )
+  );
 }
