@@ -15,8 +15,13 @@ export default function GetPosts() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const { MerkleMapWitness } = await import('o1js');
+      const { MerkleMapWitness, Mina, fetchAccount } = await import('o1js');
       const { PostState } = await import('wrdhom');
+      const postsContractData = await fetchAccount({
+        publicKey: 'B62qrNHa8tfKVEigCAcgKTipwu63k37HY4ZWwv8epLGsuXcn8CsMkW3'
+      }, '/graphql');
+      const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
+      console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
       const data = await response.json();
       const processedData: any[] = data.map( (post: any, index: number) => {
         const postStateJSON = JSON.parse(post.postState);
@@ -25,28 +30,26 @@ export default function GetPosts() {
         const shortPosterAddress = `${shortPosterAddressStart}...${shortPosterAddressEnd}`;
         const postWitness = MerkleMapWitness.fromJSON(post.postWitness);
         const postState = PostState.fromJSON(postStateJSON);
-        const postsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
-
+        let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
         // Introduce different root to cause a root mismatch
-        /*let postsRoot = '';
-        if (index === 5) {
-          postsRoot = 'differentRoot'
-        } else {
-          postsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
+        /*if (index === 5) {
+          calculatedPostsRoot = 'badRoot'
         }*/
-
-        console.log('postsRoot: ' + postsRoot);
+        if (fetchedPostsRoot !== calculatedPostsRoot) {
+          throw new Error(`Failed response audit. Post ${postStateJSON.allPostsCounter} has different root than zkApp state`);
+        }
+        console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
         return {
             postState: postStateJSON,
             postContentID: post.postContentID,
             content: post.content,
             shortPosterAddress: shortPosterAddress,
-            postsRoot: postsRoot
+            postsRoot: calculatedPostsRoot
         }
       });
 
       // Remove post to cause a gap error
-      //processedData.splice(5, 1);
+      processedData.splice(5, 1);
 
       setPosts(processedData);
     } catch (e: any) {
@@ -56,15 +59,11 @@ export default function GetPosts() {
     }
   };
 
-  const auditPosts = async () => {
+  const auditNoMissingPosts = async () => {
     try {
-      const postsRoot = posts[0].postsRoot;
       for (let i = 0; i < posts.length -1; i++) {
-        if (postsRoot !== posts[i].postsRoot) {
-          throw new Error(`Posts ${posts[0].postState.allPostsCounter} and ${posts[i].postState.allPostsCounter} have different root`);
-        }
         if (Number(posts[i].postState.allPostsCounter) !== Number(posts[i+1].postState.allPostsCounter) + 1) {
-          throw new Error(`Gap between posts ${posts[i].postState.allPostsCounter} and ${posts[i+1].postState.allPostsCounter}`)
+          throw new Error(`Failed response audit. Gap between posts ${posts[i].postState.allPostsCounter} and ${posts[i+1].postState.allPostsCounter}`)
         }
       }
     } catch (e: any) {
@@ -92,7 +91,7 @@ export default function GetPosts() {
 
   useEffect(() => {
     if (posts.length > 0) {
-      auditPosts();
+      auditNoMissingPosts();
     }
   }, [loading]);
 
