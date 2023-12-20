@@ -73,7 +73,7 @@ export default function CreatePost() {
             >
             </textarea>
             <button
-                className="w-full bg-black text-white p-2"
+                className="w-full p-2 bg-black text-white"
                 onClick={handleClick}
             >Wrd</button>
         </div>

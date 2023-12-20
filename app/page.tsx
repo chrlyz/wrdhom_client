@@ -54,32 +54,36 @@ export default function Home() {
   return (
   <main>
     <div className="flex min-h-screen">
-      <div className="flex flex-col w-2/5 border-r">
+      <div className="flex flex-col w-1/5 border-r">
         <div className="p-4 flex-grow">
           <h1 className="text-2xl font-bold mb-3">WrdHom: The auditable social-media platform</h1>
           <br/>
           {loading ? null : !hasWallet && <InstallWallet />}
-          <p className="mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
+          <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
           {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
-          <div className="p-4">
-            {loading? null : walletConnected && <AppSettings
-            visibleSettings={visibleSettings}
-            showSettings={showSettings}
-            getPosts={getPosts}
-            setGetPosts={setGetPosts}
-            howManyPosts={howManyPosts}
-            setHowManyPosts={setHowManyPosts}
-            />}
-          </div>
-          <div className="flex justify-end">
-            <button className="p-2 mr-2 bg-black text-white" onClick={() => setGetPosts(!getPosts)}>Get new posts</button>
-          </div>
         </div>
         <div className="p-4 w-full mb-32">
           {loading ? null : walletConnected && <CreatePost />}
         </div>
       </div>
       <GetPosts getPosts={getPosts} howManyPosts={howManyPosts} />
+      <div className="flex flex-col w-1/5 border-r">
+        <div className="flex-grow">
+          {loading? null : walletConnected && <AppSettings
+            visibleSettings={visibleSettings}
+            showSettings={showSettings}
+            howManyPosts={howManyPosts}
+            setHowManyPosts={setHowManyPosts}
+          />}
+        </div>
+        <div className="p-4 w-full mb-32">
+          <button 
+            className="w-full p-2 bg-black text-white"
+            onClick={() => setGetPosts(!getPosts)}>
+            Get new posts
+          </button>
+        </div>
+      </div>
     </div>
   </main>
   );
