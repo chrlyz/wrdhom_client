@@ -2,16 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
 
-export default function GetPosts() {
+export default function GetPosts({
+  getPosts,
+  howManyPosts
+}: {
+  getPosts: boolean,
+  howManyPosts: number
+}) {
   const [posts, setPosts] = useState([] as any[]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(null);
   const [copyText, setCopyText] = useState('');
+  const [auditTrigger, setAuditTrigger] = useState(false);
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch('/posts?howMany=10');
+      setLoading(true);
+      setErrorMessage(null);
+      const response = await fetch(`/posts?howMany=${howManyPosts}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -31,10 +39,13 @@ export default function GetPosts() {
         const postWitness = MerkleMapWitness.fromJSON(post.postWitness);
         const postState = PostState.fromJSON(postStateJSON);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
+
         // Introduce different root to cause a root mismatch
-        /*if (index === 5) {
+        /*if (index === 0) {
           calculatedPostsRoot = 'badRoot'
         }*/
+
+        // Audit that all roots calculated from the state of each post and their witnesses, match zkApp state
         if (fetchedPostsRoot !== calculatedPostsRoot) {
           throw new Error(`Failed response audit. Post ${postStateJSON.allPostsCounter} has different root than zkApp state`);
         }
@@ -49,13 +60,16 @@ export default function GetPosts() {
       });
 
       // Remove post to cause a gap error
-      processedData.splice(5, 1);
+      //processedData.splice(1, 1);
+
+      // Audit that no post is missing at the edges
+      if (processedData.length !== howManyPosts) {
+        throw Error(`Failed response audit. Expected ${howManyPosts} posts, but got ${processedData.length}`);
+      }
 
       setPosts(processedData);
     } catch (e: any) {
-        console.log('fetchPosts');
         setErrorMessage(e.message);
-        setError(true);
     }
   };
 
@@ -67,9 +81,7 @@ export default function GetPosts() {
         }
       }
     } catch (e: any) {
-        console.log('auditNotSkippingPosts');
         setErrorMessage(e.message);
-        setError(true);
     }
   }
     
@@ -85,21 +97,22 @@ export default function GetPosts() {
   useEffect(() => {
     (async () => {
       await fetchPosts();
+      setAuditTrigger(!auditTrigger);
       setLoading(false);
     })();
-  }, []);
+  }, [getPosts]);
 
   useEffect(() => {
     if (posts.length > 0) {
       auditNoMissingPosts();
     }
-  }, [loading]);
+  }, [auditTrigger]);
 
   return (
     <div className="w-3/5 p-4 overflow-y-auto max-h-[90vh]">
       {loading && <p className="border-4 p-2 shadow-lg">Loading posts...</p>}
-      {error && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
-      {Array.isArray(posts) && posts.map((post) => {
+      {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
+      {!loading && Array.isArray(posts) && posts.map((post) => {
         const postIdentifier = post.postState.posterAddress + post.postContentID;
         return (
             <div key={postIdentifier} className="p-2 border-b-2 shadow-lg">
