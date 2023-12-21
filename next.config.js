@@ -9,7 +9,7 @@ const nextConfig = {
           },
           {
             source: '/graphql',
-            destination: 'https://proxy.berkeley.minaexplorer.com/graphql',
+            destination: 'https://berkeley.minascan.io/graphql',
           }
         ];
     },
