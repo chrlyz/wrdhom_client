@@ -76,13 +76,13 @@ export default function Home() {
             setHowManyPosts={setHowManyPosts}
           />}
         </div>
-        <div className="p-4 w-full mb-32">
+        {walletConnected && (<div className="p-4 w-full mb-32">
           <button 
             className="w-full p-2 bg-black text-white"
             onClick={() => setGetPosts(!getPosts)}>
             Get new posts
           </button>
-        </div>
+        </div>)}
       </div>
     </div>
   </main>
