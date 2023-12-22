@@ -16,6 +16,8 @@ export default function Home() {
   const [visibleSettings, setVisibleSettings] = useState(false);
   const [getPosts, setGetPosts] = useState(false);
   const [howManyPosts, setHowManyPosts] = useState(10);
+  const [fromBlock, setFromBlock] = useState(24_402);
+  const [toBlock, setToBlock] = useState(100_000)
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   const showSettings = () => setVisibleSettings(!visibleSettings);
@@ -66,7 +68,11 @@ export default function Home() {
           {loading ? null : walletConnected && <CreatePost />}
         </div>
       </div>
-      <GetPosts getPosts={getPosts} howManyPosts={howManyPosts} />
+      <GetPosts getPosts={getPosts}
+        howManyPosts={howManyPosts}
+        fromBlock={fromBlock}
+        toBlock={toBlock}
+      />
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
           {loading? null : walletConnected && <AppSettings
@@ -74,6 +80,10 @@ export default function Home() {
             showSettings={showSettings}
             howManyPosts={howManyPosts}
             setHowManyPosts={setHowManyPosts}
+            fromBlock={fromBlock}
+            setFromBlock={setFromBlock}
+            toBlock={toBlock}
+            setToBlock={setToBlock}
           />}
         </div>
         {walletConnected && (<div className="p-4 w-full mb-32">
