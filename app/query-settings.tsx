@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 
-export default function AppSettings({
+export default function QuerySettings({
     visibleSettings,
     showSettings,
     howManyPosts,
