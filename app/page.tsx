@@ -13,14 +13,14 @@ export default function Home() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
-  const [visibleSettings, setVisibleSettings] = useState(false);
+  
   const [getPosts, setGetPosts] = useState(false);
   const [howManyPosts, setHowManyPosts] = useState(10);
   const [fromBlock, setFromBlock] = useState(24_402);
   const [toBlock, setToBlock] = useState(100_000)
 
   const walletConnection = () => setWalletConnected(!walletConnected);
-  const showSettings = () => setVisibleSettings(!visibleSettings);
+  
 
   useEffect(() => {
     (async () => {
@@ -75,9 +75,7 @@ export default function Home() {
       />
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
-          {loading? null : walletConnected && <AppSettings
-            visibleSettings={visibleSettings}
-            showSettings={showSettings}
+          {walletConnected && <AppSettings
             howManyPosts={howManyPosts}
             setHowManyPosts={setHowManyPosts}
             fromBlock={fromBlock}
