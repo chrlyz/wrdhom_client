@@ -4,7 +4,7 @@ export default function ConnectWallet({
     walletConnection: () => void;
 }) {
     return (
-        <button onClick={walletConnection} className="hover:underline mt-4">
+        <button onClick={walletConnection} className="hover:underline mb-4">
             {'-> Connect wallet to be able to post'}
         </button>
     )

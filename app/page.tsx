@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import InstallWallet from '@/app/install-wallet';
 import ConnectWallet from './connect-wallet';
 import GetPosts from './get-posts';
+import AppSettings from './settings';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -12,8 +13,14 @@ export default function Home() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
+  const [visibleSettings, setVisibleSettings] = useState(false);
+  const [getPosts, setGetPosts] = useState(false);
+  const [howManyPosts, setHowManyPosts] = useState(10);
+  const [fromBlock, setFromBlock] = useState(24_402);
+  const [toBlock, setToBlock] = useState(100_000)
 
   const walletConnection = () => setWalletConnected(!walletConnected);
+  const showSettings = () => setVisibleSettings(!visibleSettings);
 
   useEffect(() => {
     (async () => {
@@ -54,14 +61,39 @@ export default function Home() {
           <h1 className="text-2xl font-bold mb-3">WrdHom: The auditable social-media platform</h1>
           <br/>
           {loading ? null : !hasWallet && <InstallWallet />}
-          <p className="text-s mb-2 break-words whitespace-pre-wrap">{hasWallet ? "Your account is:\n" + account[0] : ''}</p>
+          <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
           {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
         </div>
         <div className="p-4 w-full mb-32">
           {loading ? null : walletConnected && <CreatePost />}
         </div>
       </div>
-      <GetPosts walletConnected={walletConnected}/>
+      <GetPosts getPosts={getPosts}
+        howManyPosts={howManyPosts}
+        fromBlock={fromBlock}
+        toBlock={toBlock}
+      />
+      <div className="flex flex-col w-1/5 border-r">
+        <div className="flex-grow">
+          {loading? null : walletConnected && <AppSettings
+            visibleSettings={visibleSettings}
+            showSettings={showSettings}
+            howManyPosts={howManyPosts}
+            setHowManyPosts={setHowManyPosts}
+            fromBlock={fromBlock}
+            setFromBlock={setFromBlock}
+            toBlock={toBlock}
+            setToBlock={setToBlock}
+          />}
+        </div>
+        {walletConnected && (<div className="p-4 w-full mb-32">
+          <button 
+            className="w-full p-2 bg-black text-white"
+            onClick={() => setGetPosts(!getPosts)}>
+            Get new posts
+          </button>
+        </div>)}
+      </div>
     </div>
   </main>
   );
