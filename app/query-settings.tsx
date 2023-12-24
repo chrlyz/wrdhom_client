@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
-import PostsSettings from "./posts-settings";
+import PostsQuerySettings from "./posts-query-settings";
 
-export default function AppSettings({
+export default function QuerySettings({
     howManyPosts,
     setHowManyPosts,
     fromBlock,
@@ -20,7 +20,7 @@ export default function AppSettings({
     return (
         <div className="mt-4 text-left">
             <label className="m-4">Settings</label>
-            <PostsSettings
+            <PostsQuerySettings
                 howManyPosts={howManyPosts}
                 setHowManyPosts={setHowManyPosts}
                 fromBlock={fromBlock}

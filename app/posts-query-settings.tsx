@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-export default function PostsSettings({
+export default function PostsQuerySettings({
     howManyPosts,
     setHowManyPosts,
     fromBlock,
