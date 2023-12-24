@@ -21,8 +21,8 @@ export default function PostsQuerySettings({
     const showPostsSettings = () => setVisiblePostsSettings(!visiblePostsSettings);
 
     return (
-        <div className="p-4">
-            <button className="hover:underline mb-4" onClick={showPostsSettings}>
+        <div className="m-2">
+            <button className="hover:underline" onClick={showPostsSettings}>
                 {'-> Posts'}
             </button>
             {visiblePostsSettings && (

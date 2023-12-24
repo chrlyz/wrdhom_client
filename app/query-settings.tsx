@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import PostsQuerySettings from "./posts-query-settings";
+import ProfileQuerySettings from './profile-query-settings';
 
 export default function QuerySettings({
     howManyPosts,
@@ -7,14 +8,26 @@ export default function QuerySettings({
     fromBlock,
     setFromBlock,
     toBlock,
-    setToBlock
+    setToBlock,
+    profileHowManyPosts,
+    profileSetHowManyPosts,
+    profileFromBlock,
+    profileSetFromBlock,
+    profileToBlock,
+    profileSetToBlock
 }: {
     howManyPosts: number,
     setHowManyPosts: Dispatch<SetStateAction<number>>,
     fromBlock: number,
     setFromBlock: Dispatch<SetStateAction<number>>,
     toBlock: number,
-    setToBlock: Dispatch<SetStateAction<number>>
+    setToBlock: Dispatch<SetStateAction<number>>,
+    profileHowManyPosts: number,
+    profileSetHowManyPosts: Dispatch<SetStateAction<number>>,
+    profileFromBlock: number,
+    profileSetFromBlock: Dispatch<SetStateAction<number>>,
+    profileToBlock: number,
+    profileSetToBlock: Dispatch<SetStateAction<number>>
 }) {
 
     return (
@@ -27,6 +40,14 @@ export default function QuerySettings({
                 setFromBlock={setFromBlock}
                 toBlock={toBlock}
                 setToBlock={setToBlock}
+            />
+            <ProfileQuerySettings
+                profileHowManyPosts={profileHowManyPosts}
+                profileSetHowManyPosts={profileSetHowManyPosts}
+                profileFromBlock={profileFromBlock}
+                profileSetFromBlock={profileSetFromBlock}
+                profileToBlock={profileToBlock}
+                profileSetToBlock={profileSetToBlock}
             />
         </div>
     );
