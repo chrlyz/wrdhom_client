@@ -182,7 +182,7 @@ export default function GetProfile({
                     <p className="mr-8">{post.shortPosterAddress}</p>
                     <p className="mr-4">{'User Post: ' + post.postState.userPostsCounter}</p>
                 </div>
-                <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap">
+                <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                     <p>{post.content}</p>
                 </div>
             </div>
