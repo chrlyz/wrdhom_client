@@ -81,12 +81,16 @@ export default function GetProfile({
 
         // Introduce different root to cause a root mismatch
         /*if (index === 0) {
-          calculatedPostsRoot = 'badRoot'
+          calculatedPostsRoot = 'wrongRoot'
         }*/
 
         // Introduce different block-length to cause block mismatch
         /*if (index === 2) {
           postStateJSON.postBlockHeight = 10000000000;
+        }*/
+
+        /*if (index === 2) {
+          postStateJSON.posterAddress = 'wrongAddress';
         }*/
 
         // Audit that all posts are between the block range in the user query
@@ -99,6 +103,11 @@ export default function GetProfile({
         if (fetchedPostsRoot !== calculatedPostsRoot) {
           throw new Error(`Post ${postStateJSON.allPostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
           manipulating results for your query.`);
+        }
+
+        // Audit that all posts come from the profile we are visiting
+        if (profilePosterAddress !== postStateJSON.posterAddress) {
+          throw new Error(`Post ${postStateJSON.allPostsCounter} comes from a wrong address. All posts should come from address: ${profilePosterAddress}`);
         }
 
         console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
@@ -163,7 +172,7 @@ export default function GetProfile({
         </div>
     </div>
       {loading && <p className="border-4 p-2 shadow-lg">Loading posts...</p>}
-      {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
+      {errorMessage && <p className="border-4 p-2 shadow-lg break-words">Error: {errorMessage}</p>}
       {!loading && warningMessage && <p className="border-4 p-2 shadow-lg">Warning: {warningMessage}</p>}
       {!loading && !errorMessage && Array.isArray(posts) && posts.map((post) => {
         const postIdentifier = post.postState.posterAddress + post.postContentID;
