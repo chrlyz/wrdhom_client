@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
-import QuerySettings from './query-settings';
 
 export default function GetPosts({
-  walletConnected
+  getPosts,
+  howManyPosts,
+  fromBlock,
+  toBlock
 }: {
-  walletConnected: boolean
+  getPosts: boolean,
+  howManyPosts: number,
+  fromBlock: number,
+  toBlock: number
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   const [warningMessage, setWarningMessage] = useState(null);
   const [copyText, setCopyText] = useState('');
-  const [visibleSettings, setVisibleSettings] = useState(false);
-  const [getPosts, setGetPosts] = useState(false);
-  const [howManyPosts, setHowManyPosts] = useState(10);
-  const [fromBlock, setFromBlock] = useState(24_402);
-  const [toBlock, setToBlock] = useState(100_000);
-
-  const showSettings = () => setVisibleSettings(!visibleSettings);
 
   const fetchPosts = async () => {
     try {
@@ -37,7 +35,7 @@ export default function GetPosts({
       const { MerkleMapWitness, Mina, fetchAccount } = await import('o1js');
       const { PostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
-        publicKey: 'B62qm432JaFjzAdbudBnfunqTtBSaFWCQr4eeWvhW9NWdTeXdG45zcE'
+        publicKey: 'B62qrNHa8tfKVEigCAcgKTipwu63k37HY4ZWwv8epLGsuXcn8CsMkW3'
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
@@ -49,8 +47,7 @@ export default function GetPosts({
       // Audit that no post is missing at the edges
       if (data.length !== howManyPosts) {
         setWarningMessage(`Expected ${howManyPosts} posts, but got ${data.length}. This could be because there are not\
-        as many posts that match your query, but the server could also be censoring posts at the edges of your query\
-        (e.g. If you requested 3 posts, posts 1 or 3 could be missing).` as any);
+        as many posts that match your query, but the server could also be censoring posts at the edges of your query.` as any);
       }
 
       const processedData: any[] = data.map( (post: any, index: number) => {
@@ -61,7 +58,6 @@ export default function GetPosts({
         const postWitness = MerkleMapWitness.fromJSON(post.postWitness);
         const postState = PostState.fromJSON(postStateJSON);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
-        console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
 
         // Introduce different root to cause a root mismatch
         /*if (index === 0) {
@@ -85,6 +81,7 @@ export default function GetPosts({
           manipulating results for your query.`);
         }
 
+        console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
         return {
             postState: postStateJSON,
             postContentID: post.postContentID,
@@ -133,56 +130,33 @@ export default function GetPosts({
   }, [getPosts]);
 
   return (
-    <div className="flex w-full">
-      <div className="w-3/4 p-4 overflow-y-auto max-h-[90vh]">
-        {loading && <p className="border-4 p-2 shadow-lg">Loading posts...</p>}
-        {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
-        {warningMessage && !errorMessage && <p className="border-4 p-2 shadow-lg">Warning: {warningMessage}</p>}
-        {!loading && !errorMessage && Array.isArray(posts) && posts.map((post) => {
-          const postIdentifier = post.postState.posterAddress + post.postContentID;
-          return (
-              <div key={postIdentifier} className="p-2 border-b-2 shadow-lg">
-                  <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black"
-                  style={{ borderBottomWidth: '2px' }}
-                  >
-                    <span 
-                      className="mr-2 cursor-pointer"
-                      onMouseEnter={() => handleMouseEnter(post.postState.posterAddress)}
-                      onClick={copyToClipboard}
-                      >
-                        <FontAwesomeIcon icon={faCopy}  />
-                      </span>
-                      <p className="mr-8">{post.shortPosterAddress}</p>
-                      <p className="mr-4">{'Post:' + post.postState.allPostsCounter}</p>
-                  </div>
-                  <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap">
-                      <p>{post.content}</p>
-                  </div>
-              </div>
-          );
-        })}
-      </div>
-      <div className="flex flex-col w-1/4 border-r">
-        <div className="flex-grow">
-          {loading? null : walletConnected && <QuerySettings
-            visibleSettings={visibleSettings}
-            showSettings={showSettings}
-            howManyPosts={howManyPosts}
-            setHowManyPosts={setHowManyPosts}
-            fromBlock={fromBlock}
-            setFromBlock={setFromBlock}
-            toBlock={toBlock}
-            setToBlock={setToBlock}
-          />}
-        </div>
-        {walletConnected && (<div className="p-4 w-full mb-32">
-          <button 
-            className="w-full p-2 bg-black text-white"
-            onClick={() => setGetPosts(!getPosts)}>
-            Update feed
-          </button>
-        </div>)}
-      </div>
+    <div className="w-3/5 p-4 overflow-y-auto max-h-[90vh]">
+      {loading && <p className="border-4 p-2 shadow-lg">Loading posts...</p>}
+      {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
+      {warningMessage && !errorMessage && <p className="border-4 p-2 shadow-lg">Warning: {warningMessage}</p>}
+      {!loading && !errorMessage && Array.isArray(posts) && posts.map((post) => {
+        const postIdentifier = post.postState.posterAddress + post.postContentID;
+        return (
+            <div key={postIdentifier} className="p-2 border-b-2 shadow-lg">
+                <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black"
+                style={{ borderBottomWidth: '2px' }}
+                >
+                  <span 
+                    className="mr-2 cursor-pointer"
+                    onMouseEnter={() => handleMouseEnter(post.postState.posterAddress)}
+                    onClick={copyToClipboard}
+                    >
+                      <FontAwesomeIcon icon={faCopy}  />
+                    </span>
+                    <p className="mr-8">{post.shortPosterAddress}</p>
+                    <p className="mr-4">{'Post:' + post.postState.allPostsCounter}</p>
+                </div>
+                <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap">
+                    <p>{post.content}</p>
+                </div>
+            </div>
+        );
+      })}
     </div>
   );
 };
