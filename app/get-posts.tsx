@@ -22,12 +22,14 @@ export default function GetPosts({
   const [warningMessage, setWarningMessage] = useState(null);
   const [selectedPosterAddress, setSelectedPosterAddress] = useState('');
   const [triggerAudit, setTriggerAudit] = useState(false);
+  const [whenZeroPosts, setWhenZeroPosts] = useState(false);
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
       setErrorMessage(null);
       setWarningMessage(null);
+      setWhenZeroPosts(false);
       const response = await fetch(`/posts`+
         `?howMany=${howManyPosts}`+
         `&fromBlock=${fromBlock}`+
@@ -39,6 +41,11 @@ export default function GetPosts({
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      const data: any[] = await response.json();
+      if (data.length === 0) {
+        setLoading(false);
+        setWhenZeroPosts(true);
+      }
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
@@ -46,7 +53,6 @@ export default function GetPosts({
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
-      const data: any[] = await response.json();
 
       // Remove post to cause a gap error
       //data.splice(2, 1);
@@ -161,6 +167,11 @@ export default function GetPosts({
             </div>
         );
       })}
+      {whenZeroPosts && <div className="p-2 border-b-2 shadow-lg">
+        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
+            <p >The query threw zero posts</p>
+        </div>
+      </div>}
     </div>
   );
 };
