@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import InstallWallet from '@/app/install-wallet';
 import ConnectWallet from './connect-wallet';
 import GetPosts from './get-posts';
-import AppSettings from './settings';
+import QuerySettings from './query-settings';
+import GetProfile from './get-profile';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -13,11 +14,17 @@ export default function Home() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
-  
   const [getPosts, setGetPosts] = useState(false);
   const [howManyPosts, setHowManyPosts] = useState(10);
-  const [fromBlock, setFromBlock] = useState(24_402);
-  const [toBlock, setToBlock] = useState(100_000)
+  const [fromBlock, setFromBlock] = useState(27_182);
+  const [toBlock, setToBlock] = useState(100_000);
+  const [getProfile, setGetProfile] = useState(false);
+  const [profilePosterAddress, setProfilePosterAddress] = useState('');
+  const [profileHowManyPosts, profileSetHowManyPosts] = useState(3);
+  const [profileFromBlock, profileSetFromBlock] = useState(27_182);
+  const [profileToBlock, profileSetToBlock] = useState(100_000);
+  const [hideGetPosts, setHideGetPosts] = useState('')
+  const [showProfile, setShowProfile] = useState(false);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
@@ -53,6 +60,14 @@ export default function Home() {
     return () => (window as any).mina?.off('accountsChanged');
   });
 
+  useEffect(() => {
+    if (profilePosterAddress !== '') {
+      console.log(profilePosterAddress);
+      setHideGetPosts('hidden');
+      setShowProfile(true);
+    }
+  }, [profilePosterAddress]);
+
   return (
   <main>
     <div className="flex min-h-screen">
@@ -72,10 +87,21 @@ export default function Home() {
         howManyPosts={howManyPosts}
         fromBlock={fromBlock}
         toBlock={toBlock}
+        setProfilePosterAddress={setProfilePosterAddress}
+        hideGetPosts={hideGetPosts}
       />
+      {showProfile && <GetProfile
+        getProfile={getProfile}
+        profilePosterAddress={profilePosterAddress}
+        profileHowManyPosts={profileHowManyPosts}
+        profileFromBlock={profileFromBlock}
+        profileToBlock={profileToBlock}
+        setShowProfile={setShowProfile}
+        setHideGetPosts={setHideGetPosts}
+      />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
-          {walletConnected && <AppSettings
+          {walletConnected && <QuerySettings
             howManyPosts={howManyPosts}
             setHowManyPosts={setHowManyPosts}
             fromBlock={fromBlock}

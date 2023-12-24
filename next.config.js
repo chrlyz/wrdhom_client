@@ -8,6 +8,10 @@ const nextConfig = {
             destination: "http://localhost:3001/posts",
           },
           {
+            source: "/profile",
+            destination: "http://localhost:3001/profile",
+          },
+          {
             source: '/graphql',
             destination: 'https://proxy.berkeley.minaexplorer.com/graphql',
           }
