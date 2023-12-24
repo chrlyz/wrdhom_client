@@ -62,7 +62,6 @@ export default function Home() {
 
   useEffect(() => {
     if (profilePosterAddress !== '') {
-      console.log(profilePosterAddress);
       setHideGetPosts('hidden');
       setShowProfile(true);
     }
@@ -93,6 +92,7 @@ export default function Home() {
       {showProfile && <GetProfile
         getProfile={getProfile}
         profilePosterAddress={profilePosterAddress}
+        setProfilePosterAddress={setProfilePosterAddress}
         profileHowManyPosts={profileHowManyPosts}
         profileFromBlock={profileFromBlock}
         profileToBlock={profileToBlock}
@@ -108,13 +108,26 @@ export default function Home() {
             setFromBlock={setFromBlock}
             toBlock={toBlock}
             setToBlock={setToBlock}
+            profileHowManyPosts={profileHowManyPosts}
+            profileSetHowManyPosts={profileSetHowManyPosts}
+            profileFromBlock={profileFromBlock}
+            profileSetFromBlock={profileSetFromBlock}
+            profileToBlock={profileToBlock}
+            profileSetToBlock={profileSetToBlock}
           />}
         </div>
-        {walletConnected && (<div className="p-4 w-full mb-32">
+        {walletConnected && !showProfile && (<div className="p-4 w-full mb-32">
           <button 
             className="w-full p-2 bg-black text-white"
             onClick={() => setGetPosts(!getPosts)}>
-            Get new posts
+            Update Feed
+          </button>
+        </div>)}
+        {walletConnected && showProfile && (<div className="p-4 w-full mb-32">
+          <button 
+            className="w-full p-2 bg-black text-white"
+            onClick={() => setGetProfile(!getProfile)}>
+            Update Profile
           </button>
         </div>)}
       </div>

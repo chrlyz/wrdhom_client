@@ -39,7 +39,7 @@ export default function GetPosts({
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const { MerkleMapWitness, Mina, fetchAccount } = await import('o1js');
+      const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
         publicKey: 'B62qm432JaFjzAdbudBnfunqTtBSaFWCQr4eeWvhW9NWdTeXdG45zcE'
@@ -50,8 +50,6 @@ export default function GetPosts({
 
       // Remove post to cause a gap error
       //data.splice(2, 1);
-
-      console.log(data);
 
       // Audit that no post is missing at the edges
       if (data.length !== howManyPosts) {

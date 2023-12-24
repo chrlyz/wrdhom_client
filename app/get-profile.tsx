@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction } from "react";
 export default function GetProfile({
   getProfile,
   profilePosterAddress,
+  setProfilePosterAddress,
   profileHowManyPosts,
   profileFromBlock,
   profileToBlock,
@@ -12,6 +13,7 @@ export default function GetProfile({
 }: {
   getProfile: boolean,
   profilePosterAddress: string,
+  setProfilePosterAddress: Dispatch<SetStateAction<string>>
   profileHowManyPosts: number,
   profileFromBlock: number,
   profileToBlock: number,
@@ -30,10 +32,10 @@ export default function GetProfile({
       setErrorMessage(null);
       setWarningMessage(null);
       const response = await fetch(`/profile`+
-        `?posterAddress=${profilePosterAddress}`+
-        `&howMany=${profileHowManyPosts}`+
-        `&profileFromBlock=${profileFromBlock}`+`
-        &profileToBlock=${profileToBlock}`,
+      `?posterAddress=${profilePosterAddress}`+
+      `&howMany=${profileHowManyPosts}`+
+      `&fromBlock=${profileFromBlock}`+
+      `&toBlock=${profileToBlock}`,
         {
           headers: {'Cache-Control': 'no-cache'}
         }
@@ -41,7 +43,7 @@ export default function GetProfile({
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const { MerkleMapWitness, Mina, fetchAccount } = await import('o1js');
+      const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
         publicKey: 'B62qm432JaFjzAdbudBnfunqTtBSaFWCQr4eeWvhW9NWdTeXdG45zcE'
@@ -127,6 +129,7 @@ export default function GetProfile({
 
   const goBack = () => {
     setShowProfile(false);
+    setProfilePosterAddress('');
     setHideGetPosts('');
   }
 

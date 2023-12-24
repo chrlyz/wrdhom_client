@@ -21,9 +21,9 @@ export default function ProfileQuerySettings({
     const showProfilesSettings = () => setVisibleProfileSettings(!visibleProfileSettings);
 
     return (
-        <div className="p-4">
-            <button className="hover:underline mb-4" onClick={showProfilesSettings}>
-                {'-> Posts'}
+        <div className="m-2">
+            <button className="hover:underline" onClick={showProfilesSettings}>
+                {'-> Profiles'}
             </button>
             {visibleProfileSettings && (
                 <div className="text-s">
