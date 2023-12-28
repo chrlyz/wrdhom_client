@@ -1,34 +1,22 @@
 import { useEffect, useState } from 'react';
-import { createFileEncoderStream, CAREncoderStream } from 'ipfs-car';
-import { Blob } from '@web-std/file';
+import { getCID } from './utils/cid';
 
 export default function CreatePost() {
     const [post, setPost] = useState('');
-    const [postCID, setPostCID] = useState(null as any);
+    const [postCID, setPostCID] = useState('');
     const [signedData, setSignedData] = useState(null as any);
-
+    setPostCID
     const handleClick = async () => {
-        const file = new Blob([post]);
-
-        await createFileEncoderStream(file)
-        .pipeThrough(
-        new TransformStream({
-            transform(block, controller) {
-            setPostCID(block.cid);
-            controller.enqueue(block);
-            },
-        })
-        )
-        .pipeThrough(new CAREncoderStream())
-        .pipeTo(new WritableStream());
+        const cid = await getCID(post);
+        setPostCID(cid);
     }
 
     useEffect(() => {
         (async () => {
-            if (postCID !== null ) {
+            if (postCID !== '') {
                 const { CircuitString } = await import('o1js');
                 const s = await (window as any).mina
-                    .signFields({ message: [CircuitString.fromString(postCID.toString()).hash().toString()] })
+                    .signFields({ message: [CircuitString.fromString(postCID).hash().toString()] })
                     .catch(() => {
                         return {
                             publicKey: '',

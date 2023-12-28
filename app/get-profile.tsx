@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
+import { getCID } from './utils/cid';
 
 export default function GetProfile({
   getProfile,
@@ -61,8 +62,6 @@ export default function GetProfile({
       // Remove post to cause a gap error
       //data.splice(2, 1);
 
-      console.log(data);
-
       // Audit that no post is missing at the edges
       if (data.length !== profileHowManyPosts) {
         setWarningMessage(`Expected ${profileHowManyPosts} posts, but got ${data.length}. This could be because there are not\
@@ -70,27 +69,33 @@ export default function GetProfile({
         (for example, if you expected to get posts 1, 2, 3, 4, and 5; post 1 or post 5 may be missing).` as any);
       }
 
-      const processedData: any[] = data.map( (post: any, index: number) => {
-        const postStateJSON = JSON.parse(post.postState);
+      const processedData: any[] = [];
+      
+      for (let i = 0; i < data.length; i++) {
+        const postStateJSON = JSON.parse(data[i].postState);
         const shortPosterAddressStart = postStateJSON.posterAddress.substring(0,7);
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-7);
         const shortPosterAddress = `${shortPosterAddressStart}...${shortPosterAddressEnd}`;
-        const postWitness = MerkleMapWitness.fromJSON(post.postWitness);
+        const postWitness = MerkleMapWitness.fromJSON(data[i].postWitness);
         const postState = PostState.fromJSON(postStateJSON);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
 
         // Introduce different root to cause a root mismatch
-        /*if (index === 0) {
+        /*if (i === 0) {
           calculatedPostsRoot = 'wrongRoot'
         }*/
 
         // Introduce different block-length to cause block mismatch
-        /*if (index === 2) {
+        /*if (i === 2) {
           postStateJSON.postBlockHeight = 10000000000;
         }*/
 
-        /*if (index === 2) {
+        /*if (i === 2) {
           postStateJSON.posterAddress = 'wrongAddress';
+        }*/
+
+        /*if (i === 2) {
+          data[i].content = 'wrong content';
         }*/
 
         // Audit that all posts are between the block range in the user query
@@ -110,15 +115,22 @@ export default function GetProfile({
           throw new Error(`Post ${postStateJSON.allPostsCounter} comes from a wrong address. All posts should come from address: ${profilePosterAddress}`);
         }
 
+        // Audit that the content of posts matches the contentID signed by the author
+        const cid = await getCID(data[i].content);
+        if (cid !== data[i].postContentID) {
+          throw new Error(`The content for Post ${postStateJSON.allPostsCounter} doesn't match the expected contentID. The server may be experiencing\
+          some issues or manipulating the content it shows.`);
+        }
+
         console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
-        return {
+        processedData.push({
             postState: postStateJSON,
-            postContentID: post.postContentID,
-            content: post.content,
+            postContentID: data[i].postContentID,
+            content: data[i].content,
             shortPosterAddress: shortPosterAddress,
             postsRoot: calculatedPostsRoot
-        }
-      });
+        });
+      };
 
       setPosts(processedData);
     } catch (e: any) {

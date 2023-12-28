@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
+import { getCID } from './utils/cid';
 
 export default function GetPosts({
   getPosts,
@@ -64,12 +65,14 @@ export default function GetPosts({
         (for example, if you expected to get posts 1, 2, 3, 4, and 5; post 1 or post 5 may be missing).` as any);
       }
 
-      const processedData: any[] = data.map( (post: any, index: number) => {
-        const postStateJSON = JSON.parse(post.postState);
+      const processedData: any[] = [];
+      
+      for (let i = 0; i < data.length; i++) {
+        const postStateJSON = JSON.parse(data[i].postState);
         const shortPosterAddressStart = postStateJSON.posterAddress.substring(0,7);
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-7);
         const shortPosterAddress = `${shortPosterAddressStart}...${shortPosterAddressEnd}`;
-        const postWitness = MerkleMapWitness.fromJSON(post.postWitness);
+        const postWitness = MerkleMapWitness.fromJSON(data[i].postWitness);
         const postState = PostState.fromJSON(postStateJSON);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
 
@@ -81,6 +84,11 @@ export default function GetPosts({
         // Introduce different block-length to cause block mismatch
         /*if (index === 2) {
           postStateJSON.postBlockHeight = 10000000000;
+        }*/
+
+        // Introduce different content to cause content mismatch
+        /*if (i === 0) {
+          data[i].content = 'wrong content';
         }*/
 
         // Audit that all posts are between the block range in the user query
@@ -95,15 +103,22 @@ export default function GetPosts({
           manipulating results for your query.`);
         }
 
+        // Audit that the content of posts matches the contentID signed by the author
+        const cid = await getCID(data[i].content);
+        if (cid !== data[i].postContentID) {
+          throw new Error(`The content for Post ${postStateJSON.allPostsCounter} doesn't match the expected contentID. The server may be experiencing\
+          some issues or manipulating the content it shows.`);
+        }
+
         console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
-        return {
+        processedData.push({
             postState: postStateJSON,
-            postContentID: post.postContentID,
-            content: post.content,
+            postContentID: data[i].postContentID,
+            content: data[i].content,
             shortPosterAddress: shortPosterAddress,
             postsRoot: calculatedPostsRoot
-        }
-      });
+        });
+      };
 
       setPosts(processedData);
     } catch (e: any) {
