@@ -15,13 +15,13 @@ export default function Home() {
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
   const [getPosts, setGetPosts] = useState(false);
-  const [howManyPosts, setHowManyPosts] = useState(10);
-  const [fromBlock, setFromBlock] = useState(27_182);
+  const [howManyPosts, setHowManyPosts] = useState(5);
+  const [fromBlock, setFromBlock] = useState(24_650);
   const [toBlock, setToBlock] = useState(100_000);
   const [getProfile, setGetProfile] = useState(false);
   const [profilePosterAddress, setProfilePosterAddress] = useState('');
   const [profileHowManyPosts, profileSetHowManyPosts] = useState(3);
-  const [profileFromBlock, profileSetFromBlock] = useState(27_182);
+  const [profileFromBlock, profileSetFromBlock] = useState(24_650);
   const [profileToBlock, profileSetToBlock] = useState(100_000);
   const [hideGetPosts, setHideGetPosts] = useState('')
   const [showProfile, setShowProfile] = useState(false);
@@ -88,6 +88,7 @@ export default function Home() {
         toBlock={toBlock}
         setProfilePosterAddress={setProfilePosterAddress}
         hideGetPosts={hideGetPosts}
+        account={account}
       />
       {showProfile && <GetProfile
         getProfile={getProfile}

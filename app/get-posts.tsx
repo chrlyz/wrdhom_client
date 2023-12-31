@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { getCID } from './utils/cid';
+import DeletePost from './delete-post';
 
 export default function GetPosts({
   getPosts,
@@ -8,14 +9,16 @@ export default function GetPosts({
   fromBlock,
   toBlock,
   setProfilePosterAddress,
-  hideGetPosts
+  hideGetPosts,
+  account
 }: {
   getPosts: boolean,
   howManyPosts: number,
   fromBlock: number,
   toBlock: number,
   setProfilePosterAddress: Dispatch<SetStateAction<string>>,
-  hideGetPosts: string
+  hideGetPosts: string,
+  account: string[]
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +53,7 @@ export default function GetPosts({
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
-        publicKey: 'B62qm432JaFjzAdbudBnfunqTtBSaFWCQr4eeWvhW9NWdTeXdG45zcE'
+        publicKey: 'B62qrcTCcthegCwNQSK82CmGoJNocne7Jx6fwictwizthHVZ5tE34fN'
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
@@ -74,7 +77,8 @@ export default function GetPosts({
         const shortPosterAddress = `${shortPosterAddressStart}...${shortPosterAddressEnd}`;
         const postWitness = MerkleMapWitness.fromJSON(data[i].postWitness);
         const postState = PostState.fromJSON(postStateJSON);
-        let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
+        const postStateHash = postState.hash();
+        let calculatedPostsRoot = postWitness.computeRootAndKey(postStateHash)[0].toString();
 
         // Introduce different root to cause a root mismatch
         /*if (index === 0) {
@@ -113,6 +117,7 @@ export default function GetPosts({
         console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
         processedData.push({
             postState: postStateJSON,
+            postStateHash: postStateHash.toString(),
             postContentID: data[i].postContentID,
             content: data[i].content,
             shortPosterAddress: shortPosterAddress,
@@ -167,14 +172,22 @@ export default function GetPosts({
         return (
             <div key={postIdentifier} className="p-2 border-b-2 shadow-lg">
                 <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
-                  <span 
+                  <button 
                     className="mr-2 cursor-pointer hover:underline"
                     onMouseEnter={() => setSelectedPosterAddress(post.postState.posterAddress)}
                     onClick={() => setProfilePosterAddress(selectedPosterAddress)}
                     >
                       <p className="mr-8">{post.shortPosterAddress}</p>
-                    </span>
-                    <p className="mr-4">{'Post:' + post.postState.allPostsCounter}</p>
+                    </button>
+                    <p className="flex-grow">{'Post:' + post.postState.allPostsCounter}</p>
+                    {
+                      account[0] === post.postState.posterAddress ?
+                      <DeletePost
+                        postStateHash={post.postStateHash}
+                        postContentID={post.postContentID}  
+                       />
+                       : null
+                    }
                 </div>
                 <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                     <p>{post.content}</p>
