@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { getCID } from './utils/cid';
+import ReactionButton from './reaction-button';
 
 export default function GetPosts({
   getPosts,
@@ -8,14 +9,16 @@ export default function GetPosts({
   fromBlock,
   toBlock,
   setProfilePosterAddress,
-  hideGetPosts
+  hideGetPosts,
+  walletConnected
 }: {
   getPosts: boolean,
   howManyPosts: number,
   fromBlock: number,
   toBlock: number,
   setProfilePosterAddress: Dispatch<SetStateAction<string>>,
-  hideGetPosts: string
+  hideGetPosts: string,
+  walletConnected: boolean
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +53,7 @@ export default function GetPosts({
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
-        publicKey: 'B62qm432JaFjzAdbudBnfunqTtBSaFWCQr4eeWvhW9NWdTeXdG45zcE'
+        publicKey: 'B62qru9dnNnXfALnKULDnJfGaUM17ZZSfVpTodKJcrys2wrHy14infJ'
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
@@ -69,9 +72,7 @@ export default function GetPosts({
       
       for (let i = 0; i < data.length; i++) {
         const postStateJSON = JSON.parse(data[i].postState);
-        const shortPosterAddressStart = postStateJSON.posterAddress.substring(0,7);
-        const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-7);
-        const shortPosterAddress = `${shortPosterAddressStart}...${shortPosterAddressEnd}`;
+        const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
         const postWitness = MerkleMapWitness.fromJSON(data[i].postWitness);
         const postState = PostState.fromJSON(postStateJSON);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
@@ -115,7 +116,7 @@ export default function GetPosts({
             postState: postStateJSON,
             postContentID: data[i].postContentID,
             content: data[i].content,
-            shortPosterAddress: shortPosterAddress,
+            shortPosterAddressEnd: shortPosterAddressEnd,
             postsRoot: calculatedPostsRoot
         });
       };
@@ -172,13 +173,17 @@ export default function GetPosts({
                     onMouseEnter={() => setSelectedPosterAddress(post.postState.posterAddress)}
                     onClick={() => setProfilePosterAddress(selectedPosterAddress)}
                     >
-                      <p className="mr-8">{post.shortPosterAddress}</p>
+                      <p className="mr-8">{post.shortPosterAddressEnd}</p>
                     </span>
                     <p className="mr-4">{'Post:' + post.postState.allPostsCounter}</p>
                 </div>
                 <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                     <p>{post.content}</p>
                 </div>
+                {walletConnected && <ReactionButton
+                  posterAddress={post.postState.posterAddress}
+                  postContentID={post.postContentID}
+                />}
             </div>
         );
       })}
