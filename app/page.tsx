@@ -88,6 +88,7 @@ export default function Home() {
         toBlock={toBlock}
         setProfilePosterAddress={setProfilePosterAddress}
         hideGetPosts={hideGetPosts}
+        walletConnected={walletConnected}
       />
       {showProfile && <GetProfile
         getProfile={getProfile}
