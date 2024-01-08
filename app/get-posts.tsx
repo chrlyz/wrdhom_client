@@ -76,8 +76,15 @@ export default function GetPosts({
         (for example, if you expected to get posts 1, 2, 3, 4, and 5; post 1 or post 5 may be missing).` as any);
       }
 
-      const processedData: any[] = [];
-      const processedReactions: any[] = [];
+      const processedData: {
+        postState: JSON,
+        postContentID: string,
+        content: string,
+        shortPosterAddressEnd: string,
+        postsRoot: string,
+        processedReactions: ProcessedReactions,
+        top3Emojis: string[]
+      }[] = [];
       
       for (let i = 0; i < data.length; i++) {
         const postStateJSON = JSON.parse(data[i].postState);
@@ -86,6 +93,7 @@ export default function GetPosts({
         const postState = PostState.fromJSON(postStateJSON);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
         console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
+        const processedReactions: ProcessedReactions = [];
 
         // Introduce different root to cause a root mismatch
         /*if (index === 0) {
@@ -141,13 +149,23 @@ export default function GetPosts({
           });
         }
 
+        const emojis = processedReactions.map(reaction => reaction.reactionEmoji);
+        const frequencyMap = new Map<string, number>();
+        emojis.forEach(emoji => {
+          const count = frequencyMap.get(emoji) || 0;
+          frequencyMap.set(emoji, count + 1);
+        });
+        const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
+        const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
+
         processedData.push({
             postState: postStateJSON,
             postContentID: data[i].postContentID,
             content: data[i].content,
             shortPosterAddressEnd: shortPosterAddressEnd,
             postsRoot: calculatedPostsRoot,
-            processedReactions: processedReactions
+            processedReactions: processedReactions,
+            top3Emojis: top3Emojis
         });
       };
 
@@ -217,7 +235,10 @@ export default function GetPosts({
                 <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                     <p>{post.content}</p>
                 </div>
-                <div>
+                <div className="flex flex-row">
+                  {post.top3Emojis.map((emoji: string, index: number) => emoji)}
+                  <p className="text-xs mx-1 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
+                  <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
                     posterAddress={post.postState.posterAddress}
                     postContentID={post.postContentID}
@@ -234,3 +255,9 @@ export default function GetPosts({
     </div>
   );
 };
+
+type ProcessedReactions = {
+  reactionState: JSON,
+  reactionEmoji: string,
+  reactionsRoot: string
+}[];
