@@ -185,10 +185,10 @@ export default function GetPosts({
         }
 
         for (let r = 0; r < Number(posts[i].processedReactions.length)-1; r++) {
-          if (Number(posts[i].processedReactions[r].reactionState.allReactionsCounter)
-          !== Number(posts[i].processedReactions[r+1].reactionState.allReactionsCounter)+1) {
-            throw new Error(`Gap between reactions ${posts[i].processedReactions[r].reactionState.allReactionsCounter} and\
-            ${posts[i].processedReactions[r+1].reactionState.allReactionsCounter}.\
+          if (Number(posts[i].processedReactions[r].reactionState.targetReactionsCounter)
+          !== Number(posts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
+            throw new Error(`Gap between reactions ${posts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
+            ${posts[i].processedReactions[r+1].reactionState.targetReactionsCounter}.\
             The server may be experiencing some issues or censoring posts.`);
           }
         }
@@ -256,7 +256,7 @@ export default function GetPosts({
   );
 };
 
-type ProcessedReactions = {
+export type ProcessedReactions = {
   reactionState: JSON,
   reactionEmoji: string,
   reactionsRoot: string
