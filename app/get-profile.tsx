@@ -54,7 +54,7 @@ export default function GetProfile({
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
-        publicKey: 'B62qru9dnNnXfALnKULDnJfGaUM17ZZSfVpTodKJcrys2wrHy14infJ'
+        publicKey: 'B62qkWodZBcAAMtw6Q8bG37CYRgKjurS84tdhacLmSmnu3P719eUydF'
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);

@@ -1,7 +1,8 @@
 export default function InstallWallet() {
   return (
-  <form action="https://aurowallet.com">
-    <input type="submit" value="-> Install wallet to be able to post" className="cursor-pointer"/>
-  </form>
+    <a href="https://aurowallet.com"
+      className="hover:underline">
+      Install wallet to be able to post
+    </a>
   )
 }
