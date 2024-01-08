@@ -18,10 +18,10 @@
     "@web-std/file": "^3.0.3",
     "ipfs-car": "^1.0.0",
     "next": "^14.0.3",
-    "o1js": "^0.14.1",
+    "o1js": "^0.15.1",
     "react": "^18",
     "react-dom": "^18",
-    "wrdhom": "^0.1.8"
+    "wrdhom": "^0.2.2"
   },
   "devDependencies": {
     "@types/node": "^20",

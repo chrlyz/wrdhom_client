@@ -38,8 +38,7 @@ export default function ReactionButton({
     };
   
     return (
-      <div className="flex flex-row">
-        <div className="flex-grow"></div>
+      <div>
         <button
           onClick={() => setShowPicker(!showPicker)}
           className="text-lg mx-10"

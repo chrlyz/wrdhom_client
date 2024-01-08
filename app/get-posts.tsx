@@ -51,15 +51,23 @@ export default function GetPosts({
         setWhenZeroPosts(true);
       }
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
-      const { PostState } = await import('wrdhom');
+      const { PostState, ReactionState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
-        publicKey: 'B62qru9dnNnXfALnKULDnJfGaUM17ZZSfVpTodKJcrys2wrHy14infJ'
+        publicKey: 'B62qkWodZBcAAMtw6Q8bG37CYRgKjurS84tdhacLmSmnu3P719eUydF'
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
+      const reactionsContractData = await fetchAccount({
+        publicKey: 'B62qoiVJBGMS3zip5QDUVvCtK2ENPsg2GGyjaqMFV8fN6H265GoiomY'
+      }, '/graphql');
+      const fetchedReactionsRoot = reactionsContractData.account?.zkapp?.appState[3].toString();
+      console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
 
       // Remove post to cause a gap error
       //data.splice(2, 1);
+
+      // Remove reaction to cause a gap error
+      // data[2].reactionsResponse.splice(4, 1);
 
       // Audit that no post is missing at the edges
       if (data.length !== howManyPosts) {
@@ -69,6 +77,7 @@ export default function GetPosts({
       }
 
       const processedData: any[] = [];
+      const processedReactions: any[] = [];
       
       for (let i = 0; i < data.length; i++) {
         const postStateJSON = JSON.parse(data[i].postState);
@@ -76,6 +85,7 @@ export default function GetPosts({
         const postWitness = MerkleMapWitness.fromJSON(data[i].postWitness);
         const postState = PostState.fromJSON(postStateJSON);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
+        console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
 
         // Introduce different root to cause a root mismatch
         /*if (index === 0) {
@@ -102,7 +112,7 @@ export default function GetPosts({
         if (fetchedPostsRoot !== calculatedPostsRoot) {
           throw new Error(`Post ${postStateJSON.allPostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
           manipulating results for your query.`);
-        }
+        }    
 
         // Audit that the content of posts matches the contentID signed by the author
         const cid = await getCID(data[i].content);
@@ -111,13 +121,33 @@ export default function GetPosts({
           some issues or manipulating the content it shows.`);
         }
 
-        console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
+        for (let r = 0; r < data[i].reactionsResponse.length; r++) {
+          const reactionStateJSON = JSON.parse(data[i].reactionsResponse[r].reactionState);
+          const reactionWitness = MerkleMapWitness.fromJSON(data[i].reactionsResponse[r].reactionWitness);
+          const reactionState = ReactionState.fromJSON(reactionStateJSON);
+          let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
+          console.log('calculatedReactionRoot: ' + calculatedReactionRoot);
+
+          // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
+          if (fetchedReactionsRoot !== calculatedReactionRoot) {
+            throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
+            The server may be experiencing some issues or manipulating results for the reactions to Post ${postStateJSON.allPostsCounter}.`);
+          }
+
+          processedReactions.push({
+            reactionState: reactionStateJSON,
+            reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
+            reactionsRoot: calculatedReactionRoot
+          });
+        }
+
         processedData.push({
             postState: postStateJSON,
             postContentID: data[i].postContentID,
             content: data[i].content,
             shortPosterAddressEnd: shortPosterAddressEnd,
-            postsRoot: calculatedPostsRoot
+            postsRoot: calculatedPostsRoot,
+            processedReactions: processedReactions
         });
       };
 
@@ -128,12 +158,21 @@ export default function GetPosts({
     }
   };
 
-  const auditNoMissingPosts = async () => {
+  const auditNoMissingContent = () => {
     try {
-      for (let i = 0; i < posts.length -1; i++) {
-        if (Number(posts[i].postState.allPostsCounter) !== Number(posts[i+1].postState.allPostsCounter) + 1) {
+      for (let i = 0; i < posts.length-1; i++) {
+        if (Number(posts[i].postState.allPostsCounter) !== Number(posts[i+1].postState.allPostsCounter)+1) {
           throw new Error(`Gap between posts ${posts[i].postState.allPostsCounter} and ${posts[i+1].postState.allPostsCounter}.\
-          The server may be experiencing some issues or censoring posts.`)
+          The server may be experiencing some issues or censoring posts.`);
+        }
+
+        for (let r = 0; r < Number(posts[i].processedReactions.length)-1; r++) {
+          if (Number(posts[i].processedReactions[r].reactionState.allReactionsCounter)
+          !== Number(posts[i].processedReactions[r+1].reactionState.allReactionsCounter)+1) {
+            throw new Error(`Gap between reactions ${posts[i].processedReactions[r].reactionState.allReactionsCounter} and\
+            ${posts[i].processedReactions[r+1].reactionState.allReactionsCounter}.\
+            The server may be experiencing some issues or censoring posts.`);
+          }
         }
       }
       setLoading(false);
@@ -151,11 +190,9 @@ export default function GetPosts({
   }, [getPosts]);
 
   useEffect(() => {
-    (async () => {
-      if (posts.length > 0) {
-        auditNoMissingPosts();
-      }
-    })();
+    if (posts.length > 0) {
+      auditNoMissingContent();
+    }
   }, [triggerAudit]);
 
   return (
@@ -180,10 +217,12 @@ export default function GetPosts({
                 <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                     <p>{post.content}</p>
                 </div>
-                {walletConnected && <ReactionButton
-                  posterAddress={post.postState.posterAddress}
-                  postContentID={post.postContentID}
-                />}
+                <div>
+                  {walletConnected && <ReactionButton
+                    posterAddress={post.postState.posterAddress}
+                    postContentID={post.postContentID}
+                  />}
+                </div>
             </div>
         );
       })}
