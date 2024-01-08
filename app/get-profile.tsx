@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { getCID } from './utils/cid';
+import ReactionButton from './reaction-button';
+import { ProcessedReactions } from './get-posts'
 
 export default function GetProfile({
   getProfile,
@@ -10,7 +12,8 @@ export default function GetProfile({
   profileFromBlock,
   profileToBlock,
   setShowProfile,
-  setHideGetPosts
+  setHideGetPosts,
+  walletConnected
 }: {
   getProfile: boolean,
   profilePosterAddress: string,
@@ -19,7 +22,8 @@ export default function GetProfile({
   profileFromBlock: number,
   profileToBlock: number,
   setShowProfile: Dispatch<SetStateAction<boolean>>,
-  setHideGetPosts: Dispatch<SetStateAction<string>>
+  setHideGetPosts: Dispatch<SetStateAction<string>>,
+  walletConnected: boolean
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +38,7 @@ export default function GetProfile({
       setErrorMessage(null);
       setWarningMessage(null);
       setWhenZeroPosts(false);
-      const response = await fetch(`/profile`+
+      const response = await fetch(`/posts`+
       `?posterAddress=${profilePosterAddress}`+
       `&howMany=${profileHowManyPosts}`+
       `&fromBlock=${profileFromBlock}`+
@@ -52,15 +56,24 @@ export default function GetProfile({
         setWhenZeroPosts(true);
       }
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
-      const { PostState } = await import('wrdhom');
+      const { PostState, ReactionState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
         publicKey: 'B62qkWodZBcAAMtw6Q8bG37CYRgKjurS84tdhacLmSmnu3P719eUydF'
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
+      const reactionsContractData = await fetchAccount({
+        publicKey: 'B62qoiVJBGMS3zip5QDUVvCtK2ENPsg2GGyjaqMFV8fN6H265GoiomY'
+      }, '/graphql');
+      const fetchedReactionsRoot = reactionsContractData.account?.zkapp?.appState[3].toString();
+      console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
 
       // Remove post to cause a gap error
       //data.splice(2, 1);
+
+      // Remove reaction to cause a gap error
+      // data[2].reactionsResponse.splice(4, 1);
+
 
       // Audit that no post is missing at the edges
       if (data.length !== profileHowManyPosts) {
@@ -69,16 +82,24 @@ export default function GetProfile({
         (for example, if you expected to get posts 1, 2, 3, 4, and 5; post 1 or post 5 may be missing).` as any);
       }
 
-      const processedData: any[] = [];
+      const processedData: {
+        postState: JSON,
+        postContentID: string,
+        content: string,
+        shortPosterAddressEnd: string,
+        postsRoot: string,
+        processedReactions: ProcessedReactions,
+        top3Emojis: string[]
+      }[] = [];
       
       for (let i = 0; i < data.length; i++) {
         const postStateJSON = JSON.parse(data[i].postState);
-        const shortPosterAddressStart = postStateJSON.posterAddress.substring(0,7);
-        const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-7);
-        const shortPosterAddress = `${shortPosterAddressStart}...${shortPosterAddressEnd}`;
+        const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
         const postWitness = MerkleMapWitness.fromJSON(data[i].postWitness);
         const postState = PostState.fromJSON(postStateJSON);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
+        console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
+        const processedReactions: ProcessedReactions = [];
 
         // Introduce different root to cause a root mismatch
         /*if (i === 0) {
@@ -122,13 +143,44 @@ export default function GetProfile({
           some issues or manipulating the content it shows.`);
         }
 
-        console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
+
+        for (let r = 0; r < data[i].reactionsResponse.length; r++) {
+          const reactionStateJSON = JSON.parse(data[i].reactionsResponse[r].reactionState);
+          const reactionWitness = MerkleMapWitness.fromJSON(data[i].reactionsResponse[r].reactionWitness);
+          const reactionState = ReactionState.fromJSON(reactionStateJSON);
+          let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
+          console.log('calculatedReactionRoot: ' + calculatedReactionRoot);
+
+          // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
+          if (fetchedReactionsRoot !== calculatedReactionRoot) {
+            throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
+            The server may be experiencing some issues or manipulating results for the reactions to Post ${postStateJSON.allPostsCounter}.`);
+          }
+
+          processedReactions.push({
+            reactionState: reactionStateJSON,
+            reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
+            reactionsRoot: calculatedReactionRoot
+          });
+        }
+
+        const emojis = processedReactions.map(reaction => reaction.reactionEmoji);
+        const frequencyMap = new Map<string, number>();
+        emojis.forEach(emoji => {
+          const count = frequencyMap.get(emoji) || 0;
+          frequencyMap.set(emoji, count + 1);
+        });
+        const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
+        const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
+
         processedData.push({
             postState: postStateJSON,
             postContentID: data[i].postContentID,
             content: data[i].content,
-            shortPosterAddress: shortPosterAddress,
-            postsRoot: calculatedPostsRoot
+            shortPosterAddressEnd: shortPosterAddressEnd,
+            postsRoot: calculatedPostsRoot,
+            processedReactions: processedReactions,
+            top3Emojis: top3Emojis
         });
       };
 
@@ -139,12 +191,21 @@ export default function GetProfile({
     }
   };
 
-  const auditNoMissingPosts = async () => {
+  const auditNoMissingContent = () => {
     try {
-      for (let i = 0; i < posts.length -1; i++) {
-        if (Number(posts[i].postState.userPostsCounter) !== Number(posts[i+1].postState.userPostsCounter) + 1) {
-          throw new Error(`Gap between user posts ${posts[i].postState.userPostsCounter} and ${posts[i+1].postState.userPostsCounter}.\
-          The server may be experiencing some issues or censoring posts.`)
+      for (let i = 0; i < posts.length-1; i++) {
+        if (Number(posts[i].postState.allPostsCounter) !== Number(posts[i+1].postState.allPostsCounter)+1) {
+          throw new Error(`Gap between posts ${posts[i].postState.allPostsCounter} and ${posts[i+1].postState.allPostsCounter}.\
+          The server may be experiencing some issues or censoring posts.`);
+        }
+
+        for (let r = 0; r < Number(posts[i].processedReactions.length)-1; r++) {
+          if (Number(posts[i].processedReactions[r].reactionState.targetReactionsCounter)
+          !== Number(posts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
+            throw new Error(`Gap between reactions ${posts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
+            ${posts[i].processedReactions[r+1].reactionState.targetReactionsCounter}.\
+            The server may be experiencing some issues or censoring posts.`);
+          }
         }
       }
       setLoading(false);
@@ -168,11 +229,9 @@ export default function GetProfile({
   }, [getProfile]);
 
   useEffect(() => {
-    (async () => {
-      if (posts.length > 0) {
-        auditNoMissingPosts();
-      }
-    })();
+    if (posts.length > 0) {
+      auditNoMissingContent();
+    }
   }, [triggerAudit]);
 
   return (
@@ -196,6 +255,15 @@ export default function GetProfile({
                 </div>
                 <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                     <p>{post.content}</p>
+                </div>
+                <div className="flex flex-row">
+                  {post.top3Emojis.map((emoji: string, index: number) => emoji)}
+                  <p className="text-xs mx-1 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
+                  <div className="flex-grow"></div>
+                  {walletConnected && <ReactionButton
+                    posterAddress={post.postState.posterAddress}
+                    postContentID={post.postContentID}
+                  />}
                 </div>
             </div>
         );

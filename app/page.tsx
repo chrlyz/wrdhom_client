@@ -99,6 +99,7 @@ export default function Home() {
         profileToBlock={profileToBlock}
         setShowProfile={setShowProfile}
         setHideGetPosts={setHideGetPosts}
+        walletConnected={walletConnected}
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
