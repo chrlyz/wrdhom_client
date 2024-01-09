@@ -41,7 +41,7 @@ export default function ReactionButton({
       <div>
         <button
           onClick={() => setShowPicker(!showPicker)}
-          className="mx-10"
+          className="mr-4"
         >
           👽
         </button>

@@ -5,7 +5,7 @@ export default function CreatePost() {
     const [post, setPost] = useState('');
     const [postCID, setPostCID] = useState('');
     const [signedData, setSignedData] = useState(null as any);
-    setPostCID
+
     const handleClick = async () => {
         const cid = await getCID(post);
         setPostCID(cid);
