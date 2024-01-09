@@ -9,7 +9,7 @@ export default function EmojiPicker({
         {emojis.map((emoji) => (
             <button
             key={emoji}
-            className="text-2xl m-1"
+            className="m-1"
             onClick={() => createReaction(emoji)}
             >
             {emoji}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { getCID } from './utils/cid';
 import ReactionButton from './reaction-button';
+import CommentButton from './comment-button';
 
 export default function GetPosts({
   getPosts,
@@ -240,6 +241,10 @@ export default function GetPosts({
                   <p className="text-xs mx-1 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
                   <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
+                    posterAddress={post.postState.posterAddress}
+                    postContentID={post.postContentID}
+                  />}
+                  {walletConnected && <CommentButton
                     posterAddress={post.postState.posterAddress}
                     postContentID={post.postContentID}
                   />}
