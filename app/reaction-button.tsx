@@ -41,7 +41,7 @@ export default function ReactionButton({
       <div>
         <button
           onClick={() => setShowPicker(!showPicker)}
-          className="mr-4"
+          className="hover:text-lg mr-2"
         >
           👽
         </button>

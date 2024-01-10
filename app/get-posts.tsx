@@ -3,6 +3,8 @@ import { Dispatch, SetStateAction } from "react";
 import { getCID } from './utils/cid';
 import ReactionButton from './reaction-button';
 import CommentButton from './comment-button';
+import { faComments } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function GetPosts({
   getPosts,
@@ -11,7 +13,8 @@ export default function GetPosts({
   toBlock,
   setProfilePosterAddress,
   hideGetPosts,
-  walletConnected
+  walletConnected,
+  setCommentTarget
 }: {
   getPosts: boolean,
   howManyPosts: number,
@@ -19,7 +22,8 @@ export default function GetPosts({
   toBlock: number,
   setProfilePosterAddress: Dispatch<SetStateAction<string>>,
   hideGetPosts: string,
-  walletConnected: boolean
+  walletConnected: boolean,
+  setCommentTarget: Dispatch<SetStateAction<any>>
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [loading, setLoading] = useState(true);
@@ -79,12 +83,14 @@ export default function GetPosts({
 
       const processedData: {
         postState: JSON,
+        postKey: string,
         postContentID: string,
         content: string,
         shortPosterAddressEnd: string,
         postsRoot: string,
         processedReactions: ProcessedReactions,
-        top3Emojis: string[]
+        top3Emojis: string[],
+        numberOfComments: number
       }[] = [];
       
       for (let i = 0; i < data.length; i++) {
@@ -161,12 +167,14 @@ export default function GetPosts({
 
         processedData.push({
             postState: postStateJSON,
+            postKey: data[i].postKey,
             postContentID: data[i].postContentID,
             content: data[i].content,
             shortPosterAddressEnd: shortPosterAddressEnd,
             postsRoot: calculatedPostsRoot,
             processedReactions: processedReactions,
-            top3Emojis: top3Emojis
+            top3Emojis: top3Emojis,
+            numberOfComments: data[i].numberOfComments
         });
       };
 
@@ -232,13 +240,22 @@ export default function GetPosts({
                       <p className="mr-8">{post.shortPosterAddressEnd}</p>
                     </span>
                     <p className="mr-4">{'Post:' + post.postState.allPostsCounter}</p>
+                    <div className="flex-grow"></div>
+                    <p className="mr-1">{'Block:' + post.postState.postBlockHeight}</p>
                 </div>
                 <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                     <p>{post.content}</p>
                 </div>
                 <div className="flex flex-row">
-                  {post.top3Emojis.map((emoji: string, index: number) => emoji)}
-                  <p className="text-xs mx-1 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
+                  {post.top3Emojis.map((emoji: string) => emoji)}
+                  <p className="text-xs ml-2 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
+                  {post.numberOfComments > 0 ? <button
+                  className="hover:text-lg ml-2"
+                  onClick={() => setCommentTarget(post)}
+                  >
+                    <FontAwesomeIcon icon={faComments} />
+                  </button> : null}
+                  <p className="text-xs ml-2 mt-2">{post.numberOfComments > 0 ? post.numberOfComments : null}</p>
                   <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
                     posterAddress={post.postState.posterAddress}

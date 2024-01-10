@@ -49,6 +49,12 @@ export default function CommentButton({
         });
         console.log(await res.text());
         setComment('');
+        setShowCommentBox(false);
+        if (expandCommentBox === '') {
+            setExpandCommentBox('w-full');
+        } else {
+            setExpandCommentBox('');
+        }
     };
 
     const handleCommentBoxView = () => {
@@ -63,8 +69,8 @@ export default function CommentButton({
     return (
         <div className={expandCommentBox}>
             <button
+                className="hover:text-lg"
                 onClick={() => handleCommentBoxView()}
-                className="mr-1"
             >
                 <FontAwesomeIcon icon={faComment} />
             </button>
