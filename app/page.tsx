@@ -7,6 +7,7 @@ import ConnectWallet from './connect-wallet';
 import GetPosts from './get-posts';
 import QuerySettings from './query-settings';
 import GetProfile from './get-profile';
+import GetComments from './get-comments';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -15,16 +16,22 @@ export default function Home() {
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
   const [getPosts, setGetPosts] = useState(false);
-  const [howManyPosts, setHowManyPosts] = useState(10);
+  const [howManyPosts, setHowManyPosts] = useState(3);
   const [fromBlock, setFromBlock] = useState(27_182);
   const [toBlock, setToBlock] = useState(100_000);
   const [getProfile, setGetProfile] = useState(false);
   const [profilePosterAddress, setProfilePosterAddress] = useState('');
-  const [profileHowManyPosts, profileSetHowManyPosts] = useState(3);
+  const [profileHowManyPosts, profileSetHowManyPosts] = useState(1);
   const [profileFromBlock, profileSetFromBlock] = useState(27_182);
   const [profileToBlock, profileSetToBlock] = useState(100_000);
   const [hideGetPosts, setHideGetPosts] = useState('')
   const [showProfile, setShowProfile] = useState(false);
+  const [howManyComments, setHowManyComments] = useState(3);
+  const [commentsFromBlock, setCommentsFromBlock] = useState(27_182);
+  const [commentsToBlock, setCommentsToBlock] = useState(100_000);
+  const [getComments, setGetComments] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentTarget, setCommentTarget] = useState(null as any);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
@@ -63,9 +70,20 @@ export default function Home() {
   useEffect(() => {
     if (profilePosterAddress !== '') {
       setHideGetPosts('hidden');
+      setShowComments(false);
+      setCommentTarget(null);
       setShowProfile(true);
     }
   }, [profilePosterAddress]);
+
+  useEffect(() => {
+    if (commentTarget !== null) {
+      setHideGetPosts('hidden');
+      setShowProfile(false);
+      setProfilePosterAddress('');
+      setShowComments(true);
+    }
+  }, [commentTarget]);
 
   return (
   <main>
@@ -89,6 +107,7 @@ export default function Home() {
         setProfilePosterAddress={setProfilePosterAddress}
         hideGetPosts={hideGetPosts}
         walletConnected={walletConnected}
+        setCommentTarget={setCommentTarget}
       />
       {showProfile && <GetProfile
         getProfile={getProfile}
@@ -100,6 +119,19 @@ export default function Home() {
         setShowProfile={setShowProfile}
         setHideGetPosts={setHideGetPosts}
         walletConnected={walletConnected}
+        setCommentTarget={setCommentTarget}
+      />}
+      {showComments && <GetComments
+        commentTarget={commentTarget}
+        setProfilePosterAddress={setProfilePosterAddress}
+        howManyComments={howManyComments}
+        commentsFromBlock={commentsFromBlock}
+        commentsToBlock={commentsToBlock}
+        getComments={getComments}
+        walletConnected={walletConnected}
+        setCommentTarget={setCommentTarget}
+        setHideGetPosts={setHideGetPosts}
+        setShowComments={setShowComments}
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
@@ -118,20 +150,33 @@ export default function Home() {
             profileSetToBlock={profileSetToBlock}
           />}
         </div>
-        {walletConnected && !showProfile && (<div className="p-4 w-full mb-32">
-          <button 
-            className="w-full p-2 bg-black text-white"
-            onClick={() => setGetPosts(!getPosts)}>
-            Update Feed
-          </button>
-        </div>)}
-        {walletConnected && showProfile && (<div className="p-4 w-full mb-32">
-          <button 
-            className="w-full p-2 bg-black text-white"
-            onClick={() => setGetProfile(!getProfile)}>
-            Update Profile
-          </button>
-        </div>)}
+        {walletConnected && !showProfile && !showComments && (
+            <div className="p-4 w-full mb-32">
+              <button 
+                className="w-full p-2 bg-black text-white"
+                onClick={() => setGetPosts(!getPosts)}>
+                Update Feed
+              </button>
+            </div>
+          )}
+        {walletConnected && showProfile && (
+          <div className="p-4 w-full mb-32">
+            <button 
+              className="w-full p-2 bg-black text-white"
+              onClick={() => setGetProfile(!getProfile)}>
+              Update Profile
+            </button>
+          </div>
+        )}
+        {walletConnected && showComments && (
+          <div className="p-4 w-full mb-32">
+            <button 
+              className="w-full p-2 bg-black text-white"
+              onClick={() => setGetComments(!getComments)}>
+              Update Comments
+            </button>
+          </div>
+        )}
       </div>
     </div>
   </main>

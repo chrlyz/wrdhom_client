@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { getCID } from './utils/cid';
 import ReactionButton from './reaction-button';
-import { ProcessedReactions } from './get-posts'
+import { ProcessedReactions } from './get-posts';
+import CommentButton from './comment-button';
+import { faComments } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function GetProfile({
   getProfile,
@@ -13,7 +16,8 @@ export default function GetProfile({
   profileToBlock,
   setShowProfile,
   setHideGetPosts,
-  walletConnected
+  walletConnected,
+  setCommentTarget,
 }: {
   getProfile: boolean,
   profilePosterAddress: string,
@@ -23,7 +27,8 @@ export default function GetProfile({
   profileToBlock: number,
   setShowProfile: Dispatch<SetStateAction<boolean>>,
   setHideGetPosts: Dispatch<SetStateAction<string>>,
-  walletConnected: boolean
+  walletConnected: boolean,
+  setCommentTarget: Dispatch<SetStateAction<any>>
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [loading, setLoading] = useState(true);
@@ -84,12 +89,14 @@ export default function GetProfile({
 
       const processedData: {
         postState: JSON,
+        postKey: string,
         postContentID: string,
         content: string,
         shortPosterAddressEnd: string,
         postsRoot: string,
         processedReactions: ProcessedReactions,
-        top3Emojis: string[]
+        top3Emojis: string[],
+        numberOfComments: number
       }[] = [];
       
       for (let i = 0; i < data.length; i++) {
@@ -174,13 +181,15 @@ export default function GetProfile({
         const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
 
         processedData.push({
-            postState: postStateJSON,
-            postContentID: data[i].postContentID,
-            content: data[i].content,
-            shortPosterAddressEnd: shortPosterAddressEnd,
-            postsRoot: calculatedPostsRoot,
-            processedReactions: processedReactions,
-            top3Emojis: top3Emojis
+          postState: postStateJSON,
+          postKey: data[i].postKey,
+          postContentID: data[i].postContentID,
+          content: data[i].content,
+          shortPosterAddressEnd: shortPosterAddressEnd,
+          postsRoot: calculatedPostsRoot,
+          processedReactions: processedReactions,
+          top3Emojis: top3Emojis,
+          numberOfComments: data[i].numberOfComments
         });
       };
 
@@ -194,8 +203,8 @@ export default function GetProfile({
   const auditNoMissingContent = () => {
     try {
       for (let i = 0; i < posts.length-1; i++) {
-        if (Number(posts[i].postState.allPostsCounter) !== Number(posts[i+1].postState.allPostsCounter)+1) {
-          throw new Error(`Gap between posts ${posts[i].postState.allPostsCounter} and ${posts[i+1].postState.allPostsCounter}.\
+        if (Number(posts[i].postState.userPostsCounter) !== Number(posts[i+1].postState.userPostsCounter)+1) {
+          throw new Error(`Gap between posts ${posts[i].postState.userPostsCounter} and ${posts[i+1].postState.userPostsCounter}.\
           The server may be experiencing some issues or censoring posts.`);
         }
 
@@ -218,6 +227,7 @@ export default function GetProfile({
   const goBack = () => {
     setShowProfile(false);
     setProfilePosterAddress('');
+    setCommentTarget(null);
     setHideGetPosts('');
   }
 
@@ -237,7 +247,7 @@ export default function GetProfile({
   return (
     <div className="w-3/5 p-4 overflow-y-auto max-h-[100vh]">
     <div className="p-2 border-b-2 shadow-lg">
-        <button className="m-2" onClick={goBack}>{'<- Go Back'}</button>
+        <button className="hover:underline m-2" onClick={goBack}>{'<- Go back to feed'}</button>
         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
             <p >{`Posts from user:\n\n${profilePosterAddress}`}</p>
         </div>
@@ -250,17 +260,30 @@ export default function GetProfile({
         return (
             <div key={postIdentifier} className="p-2 border-b-2 shadow-lg">
                 <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
-                    <p className="mr-8">{post.shortPosterAddress}</p>
+                    <p className="mr-8">{post.shortPosterAddressEnd}</p>
                     <p className="mr-4">{'User Post: ' + post.postState.userPostsCounter}</p>
+                    <div className="flex-grow"></div>
+                    <p className="mr-1">{'Block:' + post.postState.postBlockHeight}</p>
                 </div>
                 <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                     <p>{post.content}</p>
                 </div>
                 <div className="flex flex-row">
-                  {post.top3Emojis.map((emoji: string, index: number) => emoji)}
-                  <p className="text-xs mx-1 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
+                  {post.top3Emojis.map((emoji: string) => emoji)}
+                  <p className="text-xs ml-2 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
+                  {post.numberOfComments > 0 ? <button
+                    className="hover:text-lg ml-2"
+                    onClick={() => setCommentTarget(post)}
+                  >
+                    <FontAwesomeIcon icon={faComments} />
+                  </button> : null}
+                  <p className="text-xs ml-2 mt-2">{post.numberOfComments > 0 ? post.numberOfComments : null}</p>
                   <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
+                    posterAddress={post.postState.posterAddress}
+                    postContentID={post.postContentID}
+                  />}
+                  {walletConnected && <CommentButton
                     posterAddress={post.postState.posterAddress}
                     postContentID={post.postContentID}
                   />}
