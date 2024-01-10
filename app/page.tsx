@@ -148,6 +148,12 @@ export default function Home() {
             profileSetFromBlock={profileSetFromBlock}
             profileToBlock={profileToBlock}
             profileSetToBlock={profileSetToBlock}
+            howManyComments={howManyComments}
+            setHowManyComments={setHowManyComments}
+            commentsFromBlock={commentsFromBlock}
+            setCommentsFromBlock={setCommentsFromBlock}
+            commentsToBlock={commentsToBlock}
+            setCommentsToBlock={setCommentsToBlock}
           />}
         </div>
         {walletConnected && !showProfile && !showComments && (

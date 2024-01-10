@@ -5,27 +5,27 @@ import ReactionButton from './reaction-button';
 import CommentButton from './comment-button';
 
 export default function GetComments({
-commentTarget,
-setProfilePosterAddress,
-howManyComments,
-commentsFromBlock,
-commentsToBlock,
-getComments,
-walletConnected,
-setCommentTarget,
-setHideGetPosts,
-setShowComments
+  commentTarget,
+  setProfilePosterAddress,
+  howManyComments,
+  commentsFromBlock,
+  commentsToBlock,
+  getComments,
+  walletConnected,
+  setCommentTarget,
+  setHideGetPosts,
+  setShowComments
 }: {
-commentTarget: any,
-setProfilePosterAddress: Dispatch<SetStateAction<string>>,
-howManyComments: number,
-commentsFromBlock: number,
-commentsToBlock: number,
-getComments: boolean,
-walletConnected: boolean,
-setCommentTarget: Dispatch<SetStateAction<any>>,
-setHideGetPosts: Dispatch<SetStateAction<string>>,
-setShowComments: Dispatch<SetStateAction<boolean>>
+  commentTarget: any,
+  setProfilePosterAddress: Dispatch<SetStateAction<string>>,
+  howManyComments: number,
+  commentsFromBlock: number,
+  commentsToBlock: number,
+  getComments: boolean,
+  walletConnected: boolean,
+  setCommentTarget: Dispatch<SetStateAction<any>>,
+  setHideGetPosts: Dispatch<SetStateAction<string>>,
+  setShowComments: Dispatch<SetStateAction<boolean>>
 }) {
     const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
@@ -44,8 +44,8 @@ setShowComments: Dispatch<SetStateAction<boolean>>
         const response = await fetch(`/comments`+
             `?targetKey=${commentTarget.postKey}`+
             `&howMany=${howManyComments}`+
-            `&commentsFromBlock=${commentsFromBlock}`+
-            `&commentsToBlock=${commentsToBlock}`,
+            `&fromBlock=${commentsFromBlock}`+
+            `&toBlock=${commentsToBlock}`,
           {
             headers: {'Cache-Control': 'no-cache'}
           }
@@ -194,6 +194,8 @@ setShowComments: Dispatch<SetStateAction<boolean>>
                         <p className="mr-8">{commentTarget.shortPosterAddressEnd}</p>
                         </span>
                         <p className="mr-4">{'Post:' + commentTarget.postState.allPostsCounter}</p>
+                        <div className="flex-grow"></div>
+                         <p className="mr-1">{'Block:' + commentTarget.postState.postBlockHeight}</p>
                     </div>
                     <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                         <p>{commentTarget.content}</p>
@@ -228,6 +230,8 @@ setShowComments: Dispatch<SetStateAction<boolean>>
                             <p className="mr-8">{comment.shortCommenterAddressEnd}</p>
                             </span>
                             <p className="mr-4">{'Comment:' + comment.commentState.targetCommentsCounter}</p>
+                            <div className="flex-grow"></div>
+                            <p className="mr-1">{'Block:' + comment.commentState.commentBlockHeight}</p>
                         </div>
                         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                             <p>{comment.content}</p>
