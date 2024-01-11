@@ -2,19 +2,19 @@ import { Dispatch, SetStateAction } from "react";
 import { useState } from 'react';
 
 export default function ProfileQuerySettings({
-    profileHowManyPosts,
-    profileSetHowManyPosts,
-    profileFromBlock,
-    profileSetFromBlock,
-    profileToBlock,
-    profileSetToBlock
+    howManyPostsProfile,
+    setHowManyPostsProfile,
+    fromBlockProfile,
+    setFromBlockProfile,
+    toBlockProfile,
+    setToBlockProfile
 }: {
-    profileHowManyPosts: number,
-    profileSetHowManyPosts: Dispatch<SetStateAction<number>>,
-    profileFromBlock: number,
-    profileSetFromBlock: Dispatch<SetStateAction<number>>,
-    profileToBlock: number,
-    profileSetToBlock: Dispatch<SetStateAction<number>>
+    howManyPostsProfile: number,
+    setHowManyPostsProfile: Dispatch<SetStateAction<number>>,
+    fromBlockProfile: number,
+    setFromBlockProfile: Dispatch<SetStateAction<number>>,
+    toBlockProfile: number,
+    setToBlockProfile: Dispatch<SetStateAction<number>>
 }) {
     const [visibleProfileSettings, setVisibleProfileSettings] = useState(false);
 
@@ -30,24 +30,24 @@ export default function ProfileQuerySettings({
                     <div className="mt-4">
                         <label className="p-2">Posts per request:</label>
                         <input className="text-right border-4 shadow-md" type="number"
-                            defaultValue={profileHowManyPosts}
-                            onChange={e => profileSetHowManyPosts(Number(e.target.value))}
+                            defaultValue={howManyPostsProfile}
+                            onChange={e => setHowManyPostsProfile(Number(e.target.value))}
                             min={1} max={100}>
                         </input>
                     </div>
                     <div className="mt-4">
                         <label className="p-2">From block:</label>
                         <input className="text-right border-4 shadow-md" type="number"
-                            defaultValue={profileFromBlock}
-                            onChange={e => profileSetFromBlock(Number(e.target.value))}
+                            defaultValue={fromBlockProfile}
+                            onChange={e => setFromBlockProfile(Number(e.target.value))}
                             min={24_402} max={1000_000_000}>
                         </input>
                     </div>
                     <div className="mt-4">
                         <label className="p-2">To block:</label>
                         <input className="text-right border-4 shadow-md" type="number"
-                            defaultValue={profileToBlock}
-                            onChange={e => profileSetToBlock(Number(e.target.value))}
+                            defaultValue={toBlockProfile}
+                            onChange={e => setToBlockProfile(Number(e.target.value))}
                             min={24_403} max={1000_000_000}>
                         </input>
                     </div>

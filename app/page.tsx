@@ -21,17 +21,20 @@ export default function Home() {
   const [toBlock, setToBlock] = useState(100_000);
   const [getProfile, setGetProfile] = useState(false);
   const [profilePosterAddress, setProfilePosterAddress] = useState('');
-  const [profileHowManyPosts, profileSetHowManyPosts] = useState(1);
-  const [profileFromBlock, profileSetFromBlock] = useState(27_182);
-  const [profileToBlock, profileSetToBlock] = useState(100_000);
+  const [howManyPostsProfile, setHowManyPostsProfile] = useState(1);
+  const [fromBlockProfile, setFromBlockProfile] = useState(27_182);
+  const [toBlockProfile, setToBlockProfile] = useState(100_000);
   const [hideGetPosts, setHideGetPosts] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [howManyComments, setHowManyComments] = useState(3);
-  const [commentsFromBlock, setCommentsFromBlock] = useState(27_182);
-  const [commentsToBlock, setCommentsToBlock] = useState(100_000);
+  const [fromBlockComments, setFromBlockComments] = useState(27_182);
+  const [toBlockComments, setToBlockComments] = useState(100_000);
   const [getComments, setGetComments] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentTarget, setCommentTarget] = useState(null as any);
+  const [howManyReposts, setHowManyReposts] = useState(0);
+  const [fromBlockReposts, setFromBlockReposts] = useState(27_182);
+  const [toBlockReposts, setToBlockReposts] = useState(100_000);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
@@ -110,14 +113,17 @@ export default function Home() {
         hideGetPosts={hideGetPosts}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
+        howManyReposts={howManyReposts}
+        fromBlockReposts={fromBlockReposts}
+        toBlockReposts={toBlockReposts}
       />
       {showProfile && <GetProfile
         getProfile={getProfile}
         profilePosterAddress={profilePosterAddress}
         setProfilePosterAddress={setProfilePosterAddress}
-        profileHowManyPosts={profileHowManyPosts}
-        profileFromBlock={profileFromBlock}
-        profileToBlock={profileToBlock}
+        howManyPostsProfile={howManyPostsProfile}
+        fromBlockProfile={fromBlockProfile}
+        toBlockProfile={toBlockProfile}
         setShowProfile={setShowProfile}
         setHideGetPosts={setHideGetPosts}
         walletConnected={walletConnected}
@@ -127,8 +133,8 @@ export default function Home() {
         commentTarget={commentTarget}
         setProfilePosterAddress={setProfilePosterAddress}
         howManyComments={howManyComments}
-        commentsFromBlock={commentsFromBlock}
-        commentsToBlock={commentsToBlock}
+        fromBlockComments={fromBlockComments}
+        toBlockComments={toBlockComments}
         getComments={getComments}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
@@ -144,18 +150,24 @@ export default function Home() {
             setFromBlock={setFromBlock}
             toBlock={toBlock}
             setToBlock={setToBlock}
-            profileHowManyPosts={profileHowManyPosts}
-            profileSetHowManyPosts={profileSetHowManyPosts}
-            profileFromBlock={profileFromBlock}
-            profileSetFromBlock={profileSetFromBlock}
-            profileToBlock={profileToBlock}
-            profileSetToBlock={profileSetToBlock}
+            howManyPostsProfile={howManyPostsProfile}
+            setHowManyPostsProfile={setHowManyPostsProfile}
+            fromBlockProfile={fromBlockProfile}
+            setFromBlockProfile={setFromBlockProfile}
+            toBlockProfile={toBlockProfile}
+            setToBlockProfile={setToBlockProfile}
             howManyComments={howManyComments}
             setHowManyComments={setHowManyComments}
-            commentsFromBlock={commentsFromBlock}
-            setCommentsFromBlock={setCommentsFromBlock}
-            commentsToBlock={commentsToBlock}
-            setCommentsToBlock={setCommentsToBlock}
+            fromBlockComments={fromBlockComments}
+            setFromBlockComments={setFromBlockComments}
+            toBlockComments={toBlockComments}
+            setToBlockComments={setToBlockComments}
+            howManyReposts={howManyReposts}
+            setHowManyReposts={setHowManyReposts}
+            fromBlockReposts={fromBlockReposts}
+            setFromBlockReposts={setFromBlockReposts}
+            toBlockReposts={toBlockReposts}
+            setToBlockReposts={setToBlockReposts}
           />
         </div>
         {!showProfile && !showComments && (

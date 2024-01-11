@@ -12,9 +12,9 @@ export default function GetProfile({
   getProfile,
   profilePosterAddress,
   setProfilePosterAddress,
-  profileHowManyPosts,
-  profileFromBlock,
-  profileToBlock,
+  howManyPostsProfile,
+  fromBlockProfile,
+  toBlockProfile,
   setShowProfile,
   setHideGetPosts,
   walletConnected,
@@ -23,9 +23,9 @@ export default function GetProfile({
   getProfile: boolean,
   profilePosterAddress: string,
   setProfilePosterAddress: Dispatch<SetStateAction<string>>
-  profileHowManyPosts: number,
-  profileFromBlock: number,
-  profileToBlock: number,
+  howManyPostsProfile: number,
+  fromBlockProfile: number,
+  toBlockProfile: number,
   setShowProfile: Dispatch<SetStateAction<boolean>>,
   setHideGetPosts: Dispatch<SetStateAction<string>>,
   walletConnected: boolean,
@@ -46,9 +46,9 @@ export default function GetProfile({
       setWhenZeroPosts(false);
       const response = await fetch(`/posts`+
       `?posterAddress=${profilePosterAddress}`+
-      `&howMany=${profileHowManyPosts}`+
-      `&fromBlock=${profileFromBlock}`+
-      `&toBlock=${profileToBlock}`,
+      `&howMany=${howManyPostsProfile}`+
+      `&fromBlock=${fromBlockProfile}`+
+      `&toBlock=${toBlockProfile}`,
         {
           headers: {'Cache-Control': 'no-cache'}
         }
@@ -82,8 +82,8 @@ export default function GetProfile({
 
 
       // Audit that no post is missing at the edges
-      if (data.length !== profileHowManyPosts) {
-        setWarningMessage(`Expected ${profileHowManyPosts} posts, but got ${data.length}. This could be because there are not\
+      if (data.length !== howManyPostsProfile) {
+        setWarningMessage(`Expected ${howManyPostsProfile} posts, but got ${data.length}. This could be because there are not\
         as many posts that match your query, but the server could also be censoring posts at the edges of your query\
         (for example, if you expected to get posts 1, 2, 3, 4, and 5; post 1 or post 5 may be missing).` as any);
       }
@@ -128,9 +128,9 @@ export default function GetProfile({
         }*/
 
         // Audit that all posts are between the block range in the user query
-        if (postStateJSON.postBlockHeight < profileFromBlock ||  postStateJSON.postBlockHeight > profileToBlock) {
+        if (postStateJSON.postBlockHeight < fromBlockProfile ||  postStateJSON.postBlockHeight > toBlockProfile) {
           throw new Error(`Block-length ${postStateJSON.postBlockHeight} for Post ${postStateJSON.allPostsCounter} isn't between the block range\
-          ${profileFromBlock} to ${profileToBlock}`);
+          ${fromBlockProfile} to ${toBlockProfile}`);
         }
 
         // Audit that all roots calculated from the state of each post and their witnesses, match zkApp state

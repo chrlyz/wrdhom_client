@@ -4,17 +4,17 @@ import { useState } from 'react';
 export default function CommentsQuerySettings({
     howManyComments,
     setHowManyComments,
-    commentsFromBlock,
-    setCommentsFromBlock,
-    commentsToBlock,
-    setCommentsToBlock,
+    fromBlockComments,
+    setFromBlockComments,
+    toBlockComments,
+    setToBlockComments,
 }: {
     howManyComments: number,
     setHowManyComments: Dispatch<SetStateAction<number>>,
-    commentsFromBlock: number,
-    setCommentsFromBlock: Dispatch<SetStateAction<number>>,
-    commentsToBlock: number,
-    setCommentsToBlock: Dispatch<SetStateAction<number>>,
+    fromBlockComments: number,
+    setFromBlockComments: Dispatch<SetStateAction<number>>,
+    toBlockComments: number,
+    setToBlockComments: Dispatch<SetStateAction<number>>,
 }) {
     const [visibleCommentsSettings, setVisibleCommentsSettings] = useState(false);
 
@@ -38,16 +38,16 @@ export default function CommentsQuerySettings({
                     <div className="mt-4">
                         <label className="p-2">From block:</label>
                         <input className="text-right border-4 shadow-md" type="number"
-                            defaultValue={commentsFromBlock}
-                            onChange={e => setCommentsFromBlock(Number(e.target.value))}
+                            defaultValue={fromBlockComments}
+                            onChange={e => setFromBlockComments(Number(e.target.value))}
                             min={24_402} max={1000_000_000}>
                         </input>
                     </div>
                     <div className="mt-4">
                         <label className="p-2">To block:</label>
                         <input className="text-right border-4 shadow-md" type="number"
-                            defaultValue={commentsToBlock}
-                            onChange={e => setCommentsToBlock(Number(e.target.value))}
+                            defaultValue={toBlockComments}
+                            onChange={e => setToBlockComments(Number(e.target.value))}
                             min={24_403} max={1000_000_000}>
                         </input>
                     </div>
