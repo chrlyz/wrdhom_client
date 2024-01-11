@@ -9,8 +9,8 @@ export default function GetComments({
   commentTarget,
   setProfilePosterAddress,
   howManyComments,
-  commentsFromBlock,
-  commentsToBlock,
+  fromBlockComments,
+  toBlockComments,
   getComments,
   walletConnected,
   setCommentTarget,
@@ -20,8 +20,8 @@ export default function GetComments({
   commentTarget: any,
   setProfilePosterAddress: Dispatch<SetStateAction<string>>,
   howManyComments: number,
-  commentsFromBlock: number,
-  commentsToBlock: number,
+  fromBlockComments: number,
+  toBlockComments: number,
   getComments: boolean,
   walletConnected: boolean,
   setCommentTarget: Dispatch<SetStateAction<any>>,
@@ -45,8 +45,8 @@ export default function GetComments({
         const response = await fetch(`/comments`+
             `?targetKey=${commentTarget.postKey}`+
             `&howMany=${howManyComments}`+
-            `&fromBlock=${commentsFromBlock}`+
-            `&toBlock=${commentsToBlock}`,
+            `&fromBlock=${fromBlockComments}`+
+            `&toBlock=${toBlockComments}`,
           {
             headers: {'Cache-Control': 'no-cache'}
           }
@@ -110,9 +110,9 @@ export default function GetComments({
           }*/
   
           // Audit that all comments are between the block range in the user query
-          if (commentStateJSON.commentBlockHeight < commentsFromBlock ||  commentStateJSON.commentBlockHeight > commentsToBlock) {
+          if (commentStateJSON.commentBlockHeight < fromBlockComments ||  commentStateJSON.commentBlockHeight > toBlockComments) {
             throw new Error(`Block-length ${commentStateJSON.commentBlockHeight} for Comment ${commentStateJSON.targetCommentsCounter} isn't between the block range\
-            ${commentsFromBlock} to ${commentsToBlock}`);
+            ${fromBlockComments} to ${toBlockComments}`);
           }
   
           // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
