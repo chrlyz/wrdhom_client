@@ -3,6 +3,7 @@ import { getCID } from './utils/cid';
 import { Dispatch, SetStateAction } from "react";
 import ReactionButton from './reaction-button';
 import CommentButton from './comment-button';
+import RepostButton from './repost-button';
 
 export default function GetComments({
   commentTarget,
@@ -205,12 +206,13 @@ export default function GetComments({
                         <p className="text-xs mx-1 mt-2">{commentTarget.processedReactions.length > 0 ? commentTarget.processedReactions.length : null}</p>
                         <div className="flex-grow"></div>
                         {walletConnected && <ReactionButton
-                            posterAddress={commentTarget.postState.posterAddress}
-                            postContentID={commentTarget.postContentID}
+                          targetKey={commentTarget.postKey}
                         />}
                         {walletConnected && <CommentButton
-                            posterAddress={commentTarget.postState.posterAddress}
-                            postContentID={commentTarget.postContentID}
+                          targetKey={commentTarget.postKey}
+                        />}
+                        {walletConnected && <RepostButton
+                          targetKey={commentTarget.postKey}
                         />}
                     </div>
              </div>

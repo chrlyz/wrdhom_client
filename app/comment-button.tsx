@@ -4,25 +4,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment } from '@fortawesome/free-solid-svg-icons';
 
 export default function CommentButton({
-  posterAddress,
-  postContentID
+    targetKey
 }: {
-  posterAddress: string,
-  postContentID: string
+    targetKey: string
 }) {
     const [comment, setComment] = useState('');
     const [showCommentBox, setShowCommentBox] = useState(false);
     const [expandCommentBox, setExpandCommentBox] = useState('');
 
     const createComment = async () => {
-        const { Poseidon, PublicKey, CircuitString} = await import('o1js');
-        const posterAddressAsField = Poseidon.hash(PublicKey.fromBase58(posterAddress).toFields());
-        const postContentIDAsField = CircuitString.fromString(postContentID).hash();
-        const targetKey = Poseidon.hash([posterAddressAsField, postContentIDAsField]);
+        const { CircuitString } = await import('o1js');
         const commentCID = await getCID(comment);
         const s = await (window as any).mina
             .signFields({ message: [
-                targetKey.toString(),
+                targetKey,
                 CircuitString.fromString(commentCID).hash().toString()]})
             .catch(() => {
                 return {
@@ -36,11 +31,9 @@ export default function CommentButton({
             });
 
         const signedComment = {
-            posterAddress: posterAddress,
-            postContentID: postContentID,
             comment: comment,
             signedData: s
-            }
+        }
 
         const res = await fetch('/comments', {
             method: `POST`,
@@ -69,7 +62,7 @@ export default function CommentButton({
     return (
         <div className={expandCommentBox}>
             <button
-                className="hover:text-lg"
+                className="hover:text-lg mr-1"
                 onClick={() => handleCommentBoxView()}
             >
                 <FontAwesomeIcon icon={faComment} />
