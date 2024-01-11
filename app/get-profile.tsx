@@ -6,6 +6,7 @@ import { ProcessedReactions } from './get-posts';
 import CommentButton from './comment-button';
 import { faComments } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import RepostButton from './repost-button';
 
 export default function GetProfile({
   getProfile,
@@ -280,12 +281,13 @@ export default function GetProfile({
                   <p className="text-xs ml-2 mt-2">{post.numberOfComments > 0 ? post.numberOfComments : null}</p>
                   <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
-                    posterAddress={post.postState.posterAddress}
-                    postContentID={post.postContentID}
+                    targetKey={post.postKey}
                   />}
                   {walletConnected && <CommentButton
-                    posterAddress={post.postState.posterAddress}
-                    postContentID={post.postContentID}
+                    targetKey={post.postKey}
+                  />}
+                  {walletConnected && <RepostButton
+                    targetKey={post.postKey}
                   />}
                 </div>
             </div>

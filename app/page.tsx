@@ -24,7 +24,7 @@ export default function Home() {
   const [profileHowManyPosts, profileSetHowManyPosts] = useState(1);
   const [profileFromBlock, profileSetFromBlock] = useState(27_182);
   const [profileToBlock, profileSetToBlock] = useState(100_000);
-  const [hideGetPosts, setHideGetPosts] = useState('')
+  const [hideGetPosts, setHideGetPosts] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [howManyComments, setHowManyComments] = useState(3);
   const [commentsFromBlock, setCommentsFromBlock] = useState(27_182);
@@ -48,11 +48,13 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       if (walletConnected) {
-        const a = await (window as any).mina.requestAccounts()
-          .catch(() => {
-            setWalletConnected(false);
-          });
-        setAccount(a);
+        try {
+          const a = await (window as any).mina.requestAccounts();
+          setAccount(a);
+        } catch {
+          setWalletConnected(false);
+          setAccount(['Not connected']);
+        }
       }
     })();
   }, [walletConnected, accountChanged]);
@@ -135,7 +137,7 @@ export default function Home() {
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
-          {walletConnected && <QuerySettings
+          <QuerySettings
             howManyPosts={howManyPosts}
             setHowManyPosts={setHowManyPosts}
             fromBlock={fromBlock}
@@ -154,9 +156,9 @@ export default function Home() {
             setCommentsFromBlock={setCommentsFromBlock}
             commentsToBlock={commentsToBlock}
             setCommentsToBlock={setCommentsToBlock}
-          />}
+          />
         </div>
-        {walletConnected && !showProfile && !showComments && (
+        {!showProfile && !showComments && (
             <div className="p-4 w-full mb-32">
               <button 
                 className="w-full p-2 bg-black text-white"
@@ -165,7 +167,7 @@ export default function Home() {
               </button>
             </div>
           )}
-        {walletConnected && showProfile && (
+        {showProfile && (
           <div className="p-4 w-full mb-32">
             <button 
               className="w-full p-2 bg-black text-white"
@@ -174,7 +176,7 @@ export default function Home() {
             </button>
           </div>
         )}
-        {walletConnected && showComments && (
+        {showComments && (
           <div className="p-4 w-full mb-32">
             <button 
               className="w-full p-2 bg-black text-white"

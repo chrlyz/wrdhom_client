@@ -5,6 +5,7 @@ import ReactionButton from './reaction-button';
 import CommentButton from './comment-button';
 import { faComments } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import RepostButton from './repost-button';
 
 export default function GetPosts({
   getPosts,
@@ -228,9 +229,8 @@ export default function GetPosts({
       {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
       {!loading && warningMessage && <p className="border-4 p-2 shadow-lg">Warning: {warningMessage}</p>}
       {!loading && !errorMessage && Array.isArray(posts) && posts.map((post) => {
-        const postIdentifier = post.postState.posterAddress + post.postContentID;
         return (
-            <div key={postIdentifier} className="p-2 border-b-2 shadow-lg">
+            <div key={post.postKey} className="p-2 border-b-2 shadow-lg">
                 <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
                   <span 
                     className="mr-2 cursor-pointer hover:underline"
@@ -258,12 +258,13 @@ export default function GetPosts({
                   <p className="text-xs ml-2 mt-2">{post.numberOfComments > 0 ? post.numberOfComments : null}</p>
                   <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
-                    posterAddress={post.postState.posterAddress}
-                    postContentID={post.postContentID}
+                    targetKey={post.postKey}
                   />}
                   {walletConnected && <CommentButton
-                    posterAddress={post.postState.posterAddress}
-                    postContentID={post.postContentID}
+                    targetKey={post.postKey}
+                  />}
+                  {walletConnected && <RepostButton
+                    targetKey={post.postKey}
                   />}
                 </div>
             </div>
