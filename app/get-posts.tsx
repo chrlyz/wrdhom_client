@@ -41,7 +41,6 @@ export default function GetPosts({
   const [warningMessage, setWarningMessage] = useState(null);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [triggerAudit, setTriggerAudit] = useState(false);
-  const [whenZeroPosts, setWhenZeroPosts] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -49,7 +48,6 @@ export default function GetPosts({
       setLoading(true);
       setErrorMessage(null);
       setWarningMessage(null);
-      setWhenZeroPosts(false);
       const response = await fetch(`/posts`+
         `?howMany=${howManyPosts}`+
         `&fromBlock=${fromBlock}`+
@@ -63,8 +61,7 @@ export default function GetPosts({
       }
       const data: any[] = await response.json();
       if (data.length === 0) {
-        setLoading(false);
-        setWhenZeroPosts(true);
+        return;
       }
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState, ReactionState } = await import('wrdhom');
@@ -200,6 +197,9 @@ export default function GetPosts({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: any[] = await response.json();
+      if (data.length === 0) {
+        return;
+      }
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState, ReactionState, RepostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
@@ -340,11 +340,11 @@ export default function GetPosts({
     }
   };
 
-  const auditNoMissingContent = () => {
+  const auditNoMissingPosts = () => {
     try {
       for (let i = 0; i < posts.length-1; i++) {
         if (Number(posts[i].postState.allPostsCounter) !== Number(posts[i+1].postState.allPostsCounter)+1) {
-          throw new Error(`Gap between posts ${posts[i].postState.allPostsCounter} and ${posts[i+1].postState.allPostsCounter}.\
+          throw new Error(`Gap between Posts ${posts[i].postState.allPostsCounter} and ${posts[i+1].postState.allPostsCounter}.\
           The server may be experiencing some issues or censoring posts.`);
         }
 
@@ -357,21 +357,27 @@ export default function GetPosts({
           }
         }
       }
+      setLoading(false);
+    } catch (e: any) {
+        setLoading(false);
+        setErrorMessage(e.message);
+    }
+  }
 
-      if (howManyReposts > 0) {
-        for (let i = 0; i < reposts.length-1; i++) {
-          if (Number(reposts[i].repostState.allRepostsCounter) !== Number(reposts[i+1].repostState.allRepostsCounter)+1) {
-            throw new Error(`Gap between reposts ${reposts[i].repostState.allRepostsCounter} and ${reposts[i+1].repostState.allRepostsCounter}.\
-            The server may be experiencing some issues or censoring reposts.`);
-          }
-  
-          for (let r = 0; r < Number(reposts[i].processedReactions.length)-1; r++) {
-            if (Number(reposts[i].processedReactions[r].reactionState.targetReactionsCounter)
-            !== Number(reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
-              throw new Error(`Gap between Reactions ${reposts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
-              ${reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
-              The server may be experiencing some issues or censoring posts.`);
-            }
+  const auditNoMissingReposts = () => {
+    try {
+      for (let i = 0; i < reposts.length-1; i++) {
+        if (Number(reposts[i].repostState.allRepostsCounter) !== Number(reposts[i+1].repostState.allRepostsCounter)+1) {
+          throw new Error(`Gap between Reposts ${reposts[i].repostState.allRepostsCounter} and ${reposts[i+1].repostState.allRepostsCounter}.\
+          The server may be experiencing some issues or censoring reposts.`);
+        }
+
+        for (let r = 0; r < Number(reposts[i].processedReactions.length)-1; r++) {
+          if (Number(reposts[i].processedReactions[r].reactionState.targetReactionsCounter)
+          !== Number(reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
+            throw new Error(`Gap between Reactions ${reposts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
+            ${reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
+            The server may be experiencing some issues or censoring posts.`);
           }
         }
       }
@@ -394,17 +400,24 @@ export default function GetPosts({
 
   useEffect(() => {
     (async () => {
-      await fetchPosts();
+      if (howManyPosts > 0) {
+        await fetchPosts();
+      }
       if (howManyReposts > 0) {
         await fetchReposts();
       }
-      setTriggerAudit(!triggerAudit);
+      if (howManyPosts > 0 || howManyReposts > 0) {
+        setTriggerAudit(!triggerAudit);
+      }
     })();
   }, [getPosts]);
 
   useEffect(() => {
     if (posts.length > 0) {
-      auditNoMissingContent();
+      auditNoMissingPosts();
+    }
+    if (reposts.length > 0) {
+      auditNoMissingReposts();
     }
     mergeAndSortContent();
   }, [triggerAudit]);
@@ -435,7 +448,7 @@ export default function GetPosts({
                     >
                       <p className="mr-8">{post.shortPosterAddressEnd}</p>
                     </span>
-                  <p className="mr-4">{'Post:' + post.postState.userPostsCounter}</p>
+                  <p className="mr-4">{'Post:' + post.postState.allPostsCounter}</p>
                   <div className="flex-grow"></div>
                   <p className="mr-1">{'Block:' + post.postState.postBlockHeight}</p>
                 </div>
@@ -468,11 +481,6 @@ export default function GetPosts({
             </div>
         );
       })}
-      {whenZeroPosts && <div className="p-2 border-b-2 shadow-lg">
-        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
-            <p >The query threw zero posts</p>
-        </div>
-      </div>}
     </div>
   );
 };

@@ -32,7 +32,7 @@ export default function CommentsQuerySettings({
                         <input className="text-right border-4 shadow-md" type="number"
                             defaultValue={howManyComments}
                             onChange={e => setHowManyComments(Number(e.target.value))}
-                            min={1} max={100}>
+                            min={0} max={100}>
                         </input>
                     </div>
                     <div className="mt-4">

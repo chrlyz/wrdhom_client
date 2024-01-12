@@ -62,7 +62,7 @@ export default function CommentButton({
     return (
         <div className={`${expandCommentBox}`}>
             <button
-                className="hover:text-lg mr-1"
+                className="hover:text-lg ml-3"
                 onClick={() => handleCommentBoxView()}
             >
                 <FontAwesomeIcon icon={faComment} />
