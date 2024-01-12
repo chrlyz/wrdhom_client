@@ -45,7 +45,6 @@ export default function GetProfile({
   const [errorMessage, setErrorMessage] = useState(null);
   const [warningMessage, setWarningMessage] = useState(null);
   const [triggerAudit, setTriggerAudit] = useState(false);
-  const [whenZeroPosts, setWhenZeroPosts] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -53,7 +52,6 @@ export default function GetProfile({
       setLoading(true);
       setErrorMessage(null);
       setWarningMessage(null);
-      setWhenZeroPosts(false);
       const response = await fetch(`/posts`+
       `?posterAddress=${profileAddress}`+
       `&howMany=${howManyPostsProfile}`+
@@ -68,8 +66,7 @@ export default function GetProfile({
       }
       const data: any[] = await response.json();
       if (data.length === 0) {
-        setLoading(false);
-        setWhenZeroPosts(true);
+        return;
       }
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState, ReactionState } = await import('wrdhom');
@@ -211,6 +208,9 @@ export default function GetProfile({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: any[] = await response.json();
+      if (data.length === 0) {
+        return;
+      }
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState, ReactionState, RepostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
@@ -357,7 +357,7 @@ export default function GetProfile({
     }
   };
 
-  const auditNoMissingContent = () => {
+  const auditNoMissingPosts = () => {
     try {
       for (let i = 0; i < posts.length-1; i++) {
         if (Number(posts[i].postState.userPostsCounter) !== Number(posts[i+1].postState.userPostsCounter)+1) {
@@ -374,21 +374,27 @@ export default function GetProfile({
           }
         }
       }
+      setLoading(false);
+    } catch (e: any) {
+        setLoading(false);
+        setErrorMessage(e.message);
+    }
+  }
 
-      if (howManyReposts > 0) {
-        for (let i = 0; i < reposts.length-1; i++) {
-          if (Number(reposts[i].repostState.userRepostsCounter) !== Number(reposts[i+1].repostState.userRepostsCounter)+1) {
-            throw new Error(`Gap between User Reposts ${reposts[i].repostState.userRepostsCounter} and ${reposts[i+1].repostState.userRepostsCounter}.\
-            The server may be experiencing some issues or censoring reposts.`);
-          }
-  
-          for (let r = 0; r < Number(reposts[i].processedReactions.length)-1; r++) {
-            if (Number(reposts[i].processedReactions[r].reactionState.targetReactionsCounter)
-            !== Number(reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
-              throw new Error(`Gap between Reactions ${reposts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
-              ${reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter}\
-              The server may be experiencing some issues or censoring posts.`);
-            }
+  const auditNoMissingReposts = () => {
+    try {
+      for (let i = 0; i < reposts.length-1; i++) {
+        if (Number(reposts[i].repostState.userRepostsCounter) !== Number(reposts[i+1].repostState.userRepostsCounter)+1) {
+          throw new Error(`Gap between User Reposts ${reposts[i].repostState.userRepostsCounter} and ${reposts[i+1].repostState.userRepostsCounter}.\
+          The server may be experiencing some issues or censoring reposts.`);
+        }
+
+        for (let r = 0; r < Number(reposts[i].processedReactions.length)-1; r++) {
+          if (Number(reposts[i].processedReactions[r].reactionState.targetReactionsCounter)
+          !== Number(reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
+            throw new Error(`Gap between Reactions ${reposts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
+            ${reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter}\
+            The server may be experiencing some issues or censoring posts.`);
           }
         }
       }
@@ -419,17 +425,24 @@ export default function GetProfile({
 
   useEffect(() => {
     (async () => {
-      await fetchPosts();
+      if (howManyPostsProfile > 0) {
+        await fetchPosts();
+      }
       if (howManyReposts > 0) {
         await fetchReposts();
       }
-      setTriggerAudit(!triggerAudit);
+      if (howManyPostsProfile > 0 || howManyReposts > 0) {
+        setTriggerAudit(!triggerAudit);
+      }
     })();
   }, [getProfile, profileAddress]);
 
   useEffect(() => {
     if (posts.length > 0) {
-      auditNoMissingContent();
+      auditNoMissingPosts();
+    }
+    if (reposts.length > 0) {
+      auditNoMissingReposts();
     }
     mergeAndSortContent();
   }, [triggerAudit]);
@@ -500,11 +513,6 @@ export default function GetProfile({
             </div>
         );
       })}
-      {whenZeroPosts && <div className="p-2 border-b-2 shadow-lg">
-        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
-            <p >The query threw zero posts</p>
-        </div>
-      </div>}
     </div>
   );
 };

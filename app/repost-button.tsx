@@ -27,7 +27,7 @@ export default function RepostButton({
       <div>
         <button
           onClick={() => createRepost()}
-          className="hover:text-lg mr-2"
+          className="hover:text-lg ml-3"
         >
           <FontAwesomeIcon icon={faRetweet}/>
         </button>

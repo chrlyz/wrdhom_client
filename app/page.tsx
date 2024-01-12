@@ -16,7 +16,7 @@ export default function Home() {
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
   const [getPosts, setGetPosts] = useState(false);
-  const [howManyPosts, setHowManyPosts] = useState(7);
+  const [howManyPosts, setHowManyPosts] = useState(3);
   const [fromBlock, setFromBlock] = useState(27_182);
   const [toBlock, setToBlock] = useState(100_000);
   const [getProfile, setGetProfile] = useState(false);
@@ -32,7 +32,7 @@ export default function Home() {
   const [getComments, setGetComments] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentTarget, setCommentTarget] = useState(null as any);
-  const [howManyReposts, setHowManyReposts] = useState(3);
+  const [howManyReposts, setHowManyReposts] = useState(1);
   const [fromBlockReposts, setFromBlockReposts] = useState(27_182);
   const [toBlockReposts, setToBlockReposts] = useState(100_000);
 

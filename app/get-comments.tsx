@@ -34,14 +34,12 @@ export default function GetComments({
     const [warningMessage, setWarningMessage] = useState(null);
     const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
     const [triggerAudit, setTriggerAudit] = useState(false);
-    const [whenZeroPosts, setWhenZeroPosts] = useState(false);
   
     const fetchComments = async () => {
       try {
         setLoading(true);
         setErrorMessage(null);
         setWarningMessage(null);
-        setWhenZeroPosts(false);
         const response = await fetch(`/comments`+
             `?targetKey=${commentTarget.postKey}`+
             `&howMany=${howManyComments}`+
@@ -56,8 +54,7 @@ export default function GetComments({
         }
         const data: any[] = await response.json();
         if (data.length === 0) {
-          setLoading(false);
-          setWhenZeroPosts(true);
+          return;
         }
         const { MerkleMapWitness, fetchAccount } = await import('o1js');
         const { CommentState } = await import('wrdhom');
@@ -170,7 +167,9 @@ export default function GetComments({
   
     useEffect(() => {
       (async () => {
-        await fetchComments();
+        if (howManyComments > 0) {
+          await fetchComments();
+        }
         setTriggerAudit(!triggerAudit);
       })();
     }, [getComments, commentTarget]);
@@ -241,11 +240,6 @@ export default function GetComments({
                     </div>
                 );
             })}
-            {whenZeroPosts && <div className="p-2 border-b-2 shadow-lg">
-                <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
-                    <p >The query threw zero posts</p>
-                </div>
-            </div>}
         </div>
     )
 }
