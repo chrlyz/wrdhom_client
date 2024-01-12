@@ -45,13 +45,17 @@ export default function GetProfile({
   const [errorMessage, setErrorMessage] = useState(null);
   const [warningMessage, setWarningMessage] = useState(null);
   const [triggerAudit, setTriggerAudit] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [whenZeroContent, setWhenZeroContent] = useState(false);
 
   const fetchPosts = async () => {
     try {
+      setPosts([]);
       setReposts([]);
       setLoading(true);
       setErrorMessage(null);
       setWarningMessage(null);
+      setWhenZeroContent(false);
       const response = await fetch(`/posts`+
       `?posterAddress=${profileAddress}`+
       `&howMany=${howManyPostsProfile}`+
@@ -65,6 +69,11 @@ export default function GetProfile({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: any[] = await response.json();
+      // Audit numbe of posts query
+      if (data.length !== howManyPostsProfile) {
+        setWarningMessage(`Expected ${howManyPostsProfile} posts, but got ${data.length}. This could be because there are not\
+        as many posts that match your query, but the server could also be censoring posts.` as any);
+      }
       if (data.length === 0) {
         return;
       }
@@ -86,13 +95,6 @@ export default function GetProfile({
 
       // Remove reaction to cause a gap error
       // data[2].reactionsResponse.splice(4, 1);
-
-      // Audit that no post is missing at the edges
-      if (data.length !== howManyPostsProfile) {
-        setWarningMessage(`Expected ${howManyPostsProfile} posts, but got ${data.length}. This could be because there are not\
-        as many posts that match your query, but the server could also be censoring posts at the edges of your query\
-        (for example, if you expected to get posts 1, 2, 3, 4, and 5; post 1 or post 5 may be missing).` as any);
-      }
 
       const processedPosts: ProcessedPosts[] = [];
       for (let i = 0; i < data.length; i++) {
@@ -197,9 +199,9 @@ export default function GetProfile({
     try {
       const response = await fetch(`/reposts`+
         `?reposterAddress=${profileAddress}`+
-        `&howMany=${howManyPostsProfile}`+
-        `&fromBlock=${fromBlockProfile}`+
-        `&toBlock=${toBlockProfile}`,
+        `&howMany=${howManyReposts}`+
+        `&fromBlock=${fromBlockReposts}`+
+        `&toBlock=${toBlockReposts}`,
         {
           headers: {'Cache-Control': 'no-cache'}
         }
@@ -208,6 +210,11 @@ export default function GetProfile({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: any[] = await response.json();
+      // Audit number of reposts query
+      if (data.length !== howManyReposts) {
+        setWarningMessage(`Expected ${howManyReposts} reposts, but got ${data.length}. This could be because there are not\
+        as many reposts that match your query, but the server could also be censoring reposts.` as any);
+      }
       if (data.length === 0) {
         return;
       }
@@ -234,13 +241,6 @@ export default function GetProfile({
 
       // Remove reaction to cause a gap error
       // data[2].reactionsResponse.splice(4, 1);
-
-      // Audit that no repost is missing at the edges
-      if (data.length !== howManyReposts) {
-        setWarningMessage(`Expected ${howManyReposts} reposts, but got ${data.length}. This could be because there are not\
-        as many reposts that match your query, but the server could also be censoring reposts at the edges of your query\
-        (for example, if you expected to get reposts 1, 2, 3, 4, and 5; repost 1 or repost 5 may be missing).` as any);
-      }
 
       const processedReposts: ProcessedReposts[] = [];
       for (let i = 0; i < data.length; i++) {
@@ -279,7 +279,7 @@ export default function GetProfile({
         }
 
         // Audit that all reposts are between the block range in the user query
-        if (repostStateJSON.repostBlockHeight < fromBlockProfile ||  repostStateJSON.repostBlockHeight > toBlockProfile) {
+        if (repostStateJSON.repostBlockHeight < fromBlockReposts ||  repostStateJSON.repostBlockHeight > toBlockReposts) {
           throw new Error(`Block-length ${repostStateJSON.repostBlockHeight} for Repost ${repostStateJSON.userRepostsCounter} isn't between the block range\
           ${fromBlockReposts} to ${toBlockReposts}`);
         }
@@ -374,7 +374,6 @@ export default function GetProfile({
           }
         }
       }
-      setLoading(false);
     } catch (e: any) {
         setLoading(false);
         setErrorMessage(e.message);
@@ -398,9 +397,7 @@ export default function GetProfile({
           }
         }
       }
-      setLoading(false);
     } catch (e: any) {
-        setLoading(false);
         setErrorMessage(e.message);
     }
   }
@@ -421,31 +418,32 @@ export default function GetProfile({
         return blockHeightB - blockHeightA;
     });
     setMergedContent(sortedAndMerged);
+    if (sortedAndMerged.length === 0 && ready !== false) {
+      setWhenZeroContent(true);
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
     (async () => {
-      if (howManyPostsProfile > 0) {
-        await fetchPosts();
-      }
-      if (howManyReposts > 0) {
-        await fetchReposts();
-      }
-      if (howManyPostsProfile > 0 || howManyReposts > 0) {
-        setTriggerAudit(!triggerAudit);
-      }
+      await fetchPosts();
+      await fetchReposts();
+      setTriggerAudit(!triggerAudit);
     })();
   }, [getProfile, profileAddress]);
 
   useEffect(() => {
-    if (posts.length > 0) {
-      auditNoMissingPosts();
-    }
-    if (reposts.length > 0) {
-      auditNoMissingReposts();
-    }
+    auditNoMissingPosts();
+    auditNoMissingReposts();
     mergeAndSortContent();
+    setReady(!ready);
   }, [triggerAudit]);
+
+  useEffect(() => {
+    if (mergedContent.length > 0) {
+      setLoading(false);
+    }
+  }, [ready]);
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
@@ -468,7 +466,7 @@ export default function GetProfile({
                     onClick={() => setProfileAddress(selectedProfileAddress)}
                   >
                   <span className="cursor-pointer hover:underline">{post.shortReposterAddressEnd}</span> 
-                    {` reposted at block ${post.repostState.repostBlockHeight}`}
+                    {` reposted at block ${post.repostState.repostBlockHeight} (User Repost:${post.repostState.userRepostsCounter})`}
                 </div>}
                 <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
                   <span 
@@ -513,6 +511,11 @@ export default function GetProfile({
             </div>
         );
       })}
+      {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
+        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
+            <p >The query threw zero results</p>
+        </div>
+      </div>}
     </div>
   );
 };
