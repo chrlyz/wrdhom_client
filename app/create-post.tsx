@@ -52,16 +52,16 @@ export default function CreatePost() {
     }, [signedData]);
 
     return (
-        <div className="w-full">
+        <div className="w-full p-2 border-b-2 shadow-lg">
             <textarea
-                className="w-full h-48 p-2 border-2 border-gray-300 mb-2"
+                className="w-full h-28 p-2 border-2 border-gray-300"
                 placeholder="Spread the wrd..."
                 value={post}
                 onChange={e => setPost(e.target.value)}
             >
             </textarea>
             <button
-                className="w-full p-2 bg-black text-white"
+                className="w-full p-1 bg-neutral-500 text-white"
                 onClick={handleClick}
             >Wrd</button>
         </div>

@@ -16,23 +16,23 @@ export default function Home() {
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
   const [getPosts, setGetPosts] = useState(false);
-  const [howManyPosts, setHowManyPosts] = useState(3);
+  const [howManyPosts, setHowManyPosts] = useState(7);
   const [fromBlock, setFromBlock] = useState(27_182);
   const [toBlock, setToBlock] = useState(100_000);
   const [getProfile, setGetProfile] = useState(false);
-  const [profilePosterAddress, setProfilePosterAddress] = useState('');
+  const [profileAddress, setProfileAddress] = useState('');
   const [howManyPostsProfile, setHowManyPostsProfile] = useState(1);
   const [fromBlockProfile, setFromBlockProfile] = useState(27_182);
   const [toBlockProfile, setToBlockProfile] = useState(100_000);
   const [hideGetPosts, setHideGetPosts] = useState('');
   const [showProfile, setShowProfile] = useState(false);
-  const [howManyComments, setHowManyComments] = useState(3);
+  const [howManyComments, setHowManyComments] = useState(1);
   const [fromBlockComments, setFromBlockComments] = useState(27_182);
   const [toBlockComments, setToBlockComments] = useState(100_000);
   const [getComments, setGetComments] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentTarget, setCommentTarget] = useState(null as any);
-  const [howManyReposts, setHowManyReposts] = useState(0);
+  const [howManyReposts, setHowManyReposts] = useState(3);
   const [fromBlockReposts, setFromBlockReposts] = useState(27_182);
   const [toBlockReposts, setToBlockReposts] = useState(100_000);
 
@@ -73,19 +73,19 @@ export default function Home() {
   });
 
   useEffect(() => {
-    if (profilePosterAddress !== '') {
+    if (profileAddress !== '') {
       setHideGetPosts('hidden');
       setShowComments(false);
       setCommentTarget(null);
       setShowProfile(true);
     }
-  }, [profilePosterAddress]);
+  }, [profileAddress]);
 
   useEffect(() => {
     if (commentTarget !== null) {
       setHideGetPosts('hidden');
       setShowProfile(false);
-      setProfilePosterAddress('');
+      setProfileAddress('');
       setShowComments(true);
     }
   }, [commentTarget]);
@@ -101,15 +101,12 @@ export default function Home() {
           <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
           {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
         </div>
-        <div className="p-4 w-full mb-32">
-          {loading ? null : walletConnected && <CreatePost />}
-        </div>
       </div>
       <GetPosts getPosts={getPosts}
         howManyPosts={howManyPosts}
         fromBlock={fromBlock}
         toBlock={toBlock}
-        setProfilePosterAddress={setProfilePosterAddress}
+        setProfileAddress={setProfileAddress}
         hideGetPosts={hideGetPosts}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
@@ -119,8 +116,8 @@ export default function Home() {
       />
       {showProfile && <GetProfile
         getProfile={getProfile}
-        profilePosterAddress={profilePosterAddress}
-        setProfilePosterAddress={setProfilePosterAddress}
+        profileAddress={profileAddress}
+        setProfileAddress={setProfileAddress}
         howManyPostsProfile={howManyPostsProfile}
         fromBlockProfile={fromBlockProfile}
         toBlockProfile={toBlockProfile}
@@ -128,10 +125,13 @@ export default function Home() {
         setHideGetPosts={setHideGetPosts}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
+        howManyReposts={howManyReposts}
+        fromBlockReposts={fromBlockReposts}
+        toBlockReposts={toBlockReposts}
       />}
       {showComments && <GetComments
         commentTarget={commentTarget}
-        setProfilePosterAddress={setProfilePosterAddress}
+        setProfileAddress={setProfileAddress}
         howManyComments={howManyComments}
         fromBlockComments={fromBlockComments}
         toBlockComments={toBlockComments}

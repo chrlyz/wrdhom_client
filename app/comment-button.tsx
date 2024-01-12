@@ -60,7 +60,7 @@ export default function CommentButton({
     }
   
     return (
-        <div className={expandCommentBox}>
+        <div className={`${expandCommentBox}`}>
             <button
                 className="hover:text-lg mr-1"
                 onClick={() => handleCommentBoxView()}

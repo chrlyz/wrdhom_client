@@ -6,13 +6,14 @@ import CommentButton from './comment-button';
 import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import RepostButton from './repost-button';
+import CreatePost from './create-post';
 
 export default function GetPosts({
   getPosts,
   howManyPosts,
   fromBlock,
   toBlock,
-  setProfilePosterAddress,
+  setProfileAddress,
   hideGetPosts,
   walletConnected,
   setCommentTarget,
@@ -24,7 +25,7 @@ export default function GetPosts({
   howManyPosts: number,
   fromBlock: number,
   toBlock: number,
-  setProfilePosterAddress: Dispatch<SetStateAction<string>>,
+  setProfileAddress: Dispatch<SetStateAction<string>>,
   hideGetPosts: string,
   walletConnected: boolean,
   setCommentTarget: Dispatch<SetStateAction<any>>,
@@ -38,7 +39,7 @@ export default function GetPosts({
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   const [warningMessage, setWarningMessage] = useState(null);
-  const [selectedPosterAddress, setSelectedPosterAddress] = useState('');
+  const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [triggerAudit, setTriggerAudit] = useState(false);
   const [whenZeroPosts, setWhenZeroPosts] = useState(false);
 
@@ -199,9 +200,6 @@ export default function GetPosts({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: any[] = await response.json();
-      if (data.length === 0) {
-        setLoading(false);
-      }
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState, ReactionState, RepostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
@@ -320,6 +318,7 @@ export default function GetPosts({
 
         processedReposts.push({
             repostState: repostStateJSON,
+            repostKey: data[i].repostKey,
             shortReposterAddressEnd: shortReposterAddressEnd,
             postState: postStateJSON,
             postKey: data[i].postKey,
@@ -369,13 +368,14 @@ export default function GetPosts({
           for (let r = 0; r < Number(reposts[i].processedReactions.length)-1; r++) {
             if (Number(reposts[i].processedReactions[r].reactionState.targetReactionsCounter)
             !== Number(reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
-              throw new Error(`Gap between Reactions ${posts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
-              ${posts[i].processedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
+              throw new Error(`Gap between Reactions ${reposts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
+              ${reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
               The server may be experiencing some issues or censoring posts.`);
             }
           }
         }
       }
+      setLoading(false);
     } catch (e: any) {
         setLoading(false);
         setErrorMessage(e.message);
@@ -390,8 +390,6 @@ export default function GetPosts({
         return blockHeightB - blockHeightA;
     });
     setMergedContent(sortedAndMerged);
-    setLoading(false);
-    console.log(sortedAndMerged);
   }
 
   useEffect(() => {
@@ -413,31 +411,33 @@ export default function GetPosts({
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh] ${hideGetPosts}`}>
-      {loading && <p className="border-4 p-2 shadow-lg">Loading posts...</p>}
-      {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
+      {loading ? null : walletConnected && <CreatePost />}
+      {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
+      {errorMessage && <p className="border-4 p-2 shadow-lg break-words">Error: {errorMessage}</p>}
       {!loading && warningMessage && <p className="border-4 p-2 shadow-lg">Warning: {warningMessage}</p>}
       {!loading && !errorMessage && Array.isArray(mergedContent) && mergedContent.map((post) => {
         return (
-            <div key={post.repostState === undefined ? post.postKey : post.repostKey} className="p-2 border-b-2 shadow-lg">
+            <div key={post.repostKey === undefined ? post.postKey : post.repostKey} className="p-2 border-b-2 shadow-lg">
                 {post.repostState === undefined ? null :
                 <div
                   className="text-xs text-stone-400"
-                  onMouseEnter={() => setSelectedPosterAddress(post.repostState.reposterAddress)}
-                  onClick={() => setProfilePosterAddress(selectedPosterAddress)}
+                  onMouseEnter={() => setSelectedProfileAddress(post.repostState.reposterAddress)}
+                  onClick={() => setProfileAddress(selectedProfileAddress)}
                 >
-                 <span className="cursor-pointer hover:underline">{post.shortReposterAddressEnd}</span> reposted
+                 <span className="cursor-pointer hover:underline">{post.shortReposterAddressEnd}</span> 
+                  {` reposted at block ${post.repostState.repostBlockHeight}`}
                 </div>}
                 <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
                   <span 
                     className="mr-2 cursor-pointer hover:underline"
-                    onMouseEnter={() => setSelectedPosterAddress(post.postState.posterAddress)}
-                    onClick={() => setProfilePosterAddress(selectedPosterAddress)}
+                    onMouseEnter={() => setSelectedProfileAddress(post.postState.posterAddress)}
+                    onClick={() => setProfileAddress(selectedProfileAddress)}
                     >
                       <p className="mr-8">{post.shortPosterAddressEnd}</p>
                     </span>
-                    <p className="mr-4">{'Post:' + post.postState.allPostsCounter}</p>
-                    <div className="flex-grow"></div>
-                    <p className="mr-1">{'Block:' + post.postState.postBlockHeight}</p>
+                  <p className="mr-4">{'Post:' + post.postState.userPostsCounter}</p>
+                  <div className="flex-grow"></div>
+                  <p className="mr-1">{'Block:' + post.postState.postBlockHeight}</p>
                 </div>
                 <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                     <p>{post.content}</p>
@@ -446,13 +446,13 @@ export default function GetPosts({
                   {post.top3Emojis.map((emoji: string) => emoji)}
                   <p className="text-xs ml-1 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
                   {post.numberOfComments > 0 ? <button
-                  className="hover:text-lg ml-2"
+                  className="hover:text-lg ml-3"
                   onClick={() => setCommentTarget(post)}
                   >
                     <FontAwesomeIcon icon={faComments} />
                   </button> : null}
                   <p className="text-xs ml-1 mt-2">{post.numberOfComments > 0 ? post.numberOfComments : null}</p>
-                  {post.numberOfReposts > 0 ? <div className="ml-1"><FontAwesomeIcon icon={faRetweet} /></div> : null}
+                  {post.numberOfReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
                   <p className="text-xs ml-1 mt-2">{post.numberOfReposts > 0 ? post.numberOfReposts : null}</p>
                   <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
@@ -498,6 +498,7 @@ export type ProcessedPosts = {
 
 export type ProcessedReposts = {
   repostState: JSON,
+  repostKey: string,
   shortReposterAddressEnd: string,
   postState: JSON,
   postKey: string,
