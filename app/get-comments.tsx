@@ -7,7 +7,7 @@ import RepostButton from './repost-button';
 
 export default function GetComments({
   commentTarget,
-  setProfilePosterAddress,
+  setProfileAddress,
   howManyComments,
   fromBlockComments,
   toBlockComments,
@@ -18,7 +18,7 @@ export default function GetComments({
   setShowComments
 }: {
   commentTarget: any,
-  setProfilePosterAddress: Dispatch<SetStateAction<string>>,
+  setProfileAddress: Dispatch<SetStateAction<string>>,
   howManyComments: number,
   fromBlockComments: number,
   toBlockComments: number,
@@ -32,7 +32,7 @@ export default function GetComments({
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState(null);
     const [warningMessage, setWarningMessage] = useState(null);
-    const [selectedPosterAddress, setSelectedPosterAddress] = useState('');
+    const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
     const [triggerAudit, setTriggerAudit] = useState(false);
     const [whenZeroPosts, setWhenZeroPosts] = useState(false);
   
@@ -164,7 +164,7 @@ export default function GetComments({
     const goBack = () => {
         setShowComments(false);
         setCommentTarget(null);
-        setProfilePosterAddress('');
+        setProfileAddress('');
         setHideGetPosts('');
     }
   
@@ -189,8 +189,8 @@ export default function GetComments({
                     <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
                     <span 
                         className="mr-2 cursor-pointer hover:underline"
-                        onMouseEnter={() => setSelectedPosterAddress(commentTarget.postState.posterAddress)}
-                        onClick={() => setProfilePosterAddress(selectedPosterAddress)}
+                        onMouseEnter={() => setSelectedProfileAddress(commentTarget.postState.posterAddress)}
+                        onClick={() => setProfileAddress(selectedProfileAddress)}
                         >
                         <p className="mr-8">{commentTarget.shortPosterAddressEnd}</p>
                         </span>
@@ -226,8 +226,8 @@ export default function GetComments({
                         <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
                         <span 
                             className="mr-2 cursor-pointer hover:underline"
-                            onMouseEnter={() => setSelectedPosterAddress(comment.commentState.commenterAddress)}
-                            onClick={() => setProfilePosterAddress(selectedPosterAddress)}
+                            onMouseEnter={() => setSelectedProfileAddress(comment.commentState.commenterAddress)}
+                            onClick={() => setProfileAddress(selectedProfileAddress)}
                             >
                             <p className="mr-8">{comment.shortCommenterAddressEnd}</p>
                             </span>

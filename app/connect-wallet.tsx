@@ -5,7 +5,7 @@ export default function ConnectWallet({
 }) {
     return (
         <button onClick={walletConnection} className="hover:underline mb-4">
-            {'-> Connect wallet to be able to post'}
+            {'-> Connect wallet to be able to post, react, comment, and repost n_n'}
         </button>
     )
 }
