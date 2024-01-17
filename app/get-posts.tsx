@@ -42,6 +42,7 @@ export default function GetPosts({
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [triggerAudit, setTriggerAudit] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
+  const [firstLoad, setFirstLoad] = useState(true);
 
   const fetchPosts = async () => {
     try {
@@ -393,10 +394,14 @@ export default function GetPosts({
         return blockHeightB - blockHeightA;
     });
     setMergedContent(sortedAndMerged);
-    if (sortedAndMerged.length === 0) {
+    if (sortedAndMerged.length === 0 && firstLoad === false) {
       setWhenZeroContent(true);
     }
-    setLoading(false);
+    if (firstLoad === true) {
+      setFirstLoad(false);
+    } else {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
