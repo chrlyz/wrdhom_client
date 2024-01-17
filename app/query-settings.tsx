@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
 import PostsQuerySettings from "./posts-query-settings";
-import ProfileQuerySettings from './profile-query-settings';
 import CommentsQuerySettings from "./comments-query-settings";
 import RepostsQuerySettings from "./reposts-query-settings";
 
@@ -11,12 +10,6 @@ export default function QuerySettings({
     setFromBlock,
     toBlock,
     setToBlock,
-    howManyPostsProfile,
-    setHowManyPostsProfile,
-    fromBlockProfile,
-    setFromBlockProfile,
-    toBlockProfile,
-    setToBlockProfile,
     howManyComments,
     setHowManyComments,
     fromBlockComments,
@@ -36,12 +29,6 @@ export default function QuerySettings({
     setFromBlock: Dispatch<SetStateAction<number>>,
     toBlock: number,
     setToBlock: Dispatch<SetStateAction<number>>,
-    howManyPostsProfile: number,
-    setHowManyPostsProfile: Dispatch<SetStateAction<number>>,
-    fromBlockProfile: number,
-    setFromBlockProfile: Dispatch<SetStateAction<number>>,
-    toBlockProfile: number,
-    setToBlockProfile: Dispatch<SetStateAction<number>>,
     howManyComments: number,
     setHowManyComments: Dispatch<SetStateAction<number>>,
     fromBlockComments: number,
@@ -66,14 +53,6 @@ export default function QuerySettings({
                 setFromBlock={setFromBlock}
                 toBlock={toBlock}
                 setToBlock={setToBlock}
-            />
-            <ProfileQuerySettings
-                howManyPostsProfile={howManyPostsProfile}
-                setHowManyPostsProfile={setHowManyPostsProfile}
-                fromBlockProfile={fromBlockProfile}
-                setFromBlockProfile={setFromBlockProfile}
-                toBlockProfile={toBlockProfile}
-                setToBlockProfile={setToBlockProfile}
             />
             <CommentsQuerySettings
                 howManyComments={howManyComments}
