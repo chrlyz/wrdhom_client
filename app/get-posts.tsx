@@ -41,7 +41,6 @@ export default function GetPosts({
   const [warningMessage, setWarningMessage] = useState(null);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [triggerAudit, setTriggerAudit] = useState(false);
-  const [ready, setReady] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
 
   const fetchPosts = async () => {
@@ -75,17 +74,17 @@ export default function GetPosts({
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState, ReactionState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
-        publicKey: 'B62qkWodZBcAAMtw6Q8bG37CYRgKjurS84tdhacLmSmnu3P719eUydF'
+        publicKey: 'B62qrJpgp9SJDoFsvoqkHiFqTBXbijoSag4ABoxoMwjUE12vooiuPZE'
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
       const reactionsContractData = await fetchAccount({
-        publicKey: 'B62qoiVJBGMS3zip5QDUVvCtK2ENPsg2GGyjaqMFV8fN6H265GoiomY'
+        publicKey: 'B62qrxKYabYuSYtbY9ngcsx6ovMf4YtYjMwWAZVwgdgZYrHwR5RhGQV'
       }, '/graphql');
       const fetchedReactionsRoot = reactionsContractData.account?.zkapp?.appState[3].toString();
       console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
 
-      // Remove post to cause a gap error
+      //Remove post to cause a gap error
       //data.splice(2, 1);
 
       // Remove reaction to cause a gap error
@@ -210,17 +209,17 @@ export default function GetPosts({
       const { MerkleMapWitness, fetchAccount } = await import('o1js');
       const { PostState, ReactionState, RepostState } = await import('wrdhom');
       const postsContractData = await fetchAccount({
-        publicKey: 'B62qkWodZBcAAMtw6Q8bG37CYRgKjurS84tdhacLmSmnu3P719eUydF'
+        publicKey: 'B62qrJpgp9SJDoFsvoqkHiFqTBXbijoSag4ABoxoMwjUE12vooiuPZE'
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
       const reactionsContractData = await fetchAccount({
-        publicKey: 'B62qoiVJBGMS3zip5QDUVvCtK2ENPsg2GGyjaqMFV8fN6H265GoiomY'
+        publicKey: 'B62qrxKYabYuSYtbY9ngcsx6ovMf4YtYjMwWAZVwgdgZYrHwR5RhGQV'
       }, '/graphql');
       const fetchedReactionsRoot = reactionsContractData.account?.zkapp?.appState[3].toString();
       console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
       const repostsContractData = await fetchAccount({
-        publicKey: 'B62qppUERZTvay1Na4TdA7M5p2V3Nz2dbBYvj6NPhsKk2WLHYpfkQfA'
+        publicKey: 'B62qoPgKPCyYAEzv5cRhWknJzqA6uyA8YTfkNEecmNHT7KQwSbVcG9n'
       }, '/graphql');
       const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
       console.log('fetchedRepostsRoot: ' + fetchedRepostsRoot);
@@ -394,10 +393,10 @@ export default function GetPosts({
         return blockHeightB - blockHeightA;
     });
     setMergedContent(sortedAndMerged);
-    if (sortedAndMerged.length === 0 && ready !== false) {
+    if (sortedAndMerged.length === 0) {
       setWhenZeroContent(true);
-      setLoading(false);
     }
+    setLoading(false);
   }
 
   useEffect(() => {
@@ -412,14 +411,7 @@ export default function GetPosts({
     auditNoMissingPosts();
     auditNoMissingReposts();
     mergeAndSortContent();
-    setReady(!ready);
   }, [triggerAudit]);
-
-  useEffect(() => {
-    if (mergedContent.length > 0) {
-      setLoading(false);
-    }
-  }, [ready]);
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh] ${hideGetPosts}`}>

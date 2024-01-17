@@ -59,7 +59,7 @@ export default function GetComments({
         const { MerkleMapWitness, fetchAccount } = await import('o1js');
         const { CommentState } = await import('wrdhom');
         const commentsContractData = await fetchAccount({
-          publicKey: 'B62qnxJbevpvzHFSRAJJo1MTGLkfsyWTNimPj33jDXEtYjiNvbA34wY'
+          publicKey: 'B62qpogDPkCJwaLPHBmbuH9BFmiEaFVUeXcx4XzBH59qDYdSoU6uNEF'
         }, '/graphql');
         const fetchedCommentsRoot = commentsContractData.account?.zkapp?.appState[3].toString();
         console.log('fetchedCommentsRoot: ' + fetchedCommentsRoot);
@@ -70,8 +70,7 @@ export default function GetComments({
         // Audit that no comment is missing at the edges
         if (data.length !== howManyComments) {
           setWarningMessage(`Expected ${howManyComments} comments, but got ${data.length}. This could be because there are not\
-          as many comments that match your query, but the server could also be censoring comments at the edges of your query\
-          (for example, if you expected to get comments 1, 2, 3, 4, and 5; comment 1 or comment 5 may be missing).` as any);
+          as many comments that match your query, but the server could also be censoring comments.` as any);
         }
   
         const processedData: {
