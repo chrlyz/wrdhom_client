@@ -64,10 +64,15 @@ export default function GetPosts({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: any[] = await response.json();
+
+      // Remove post to cause a gap error
+      // data.splice(1, 1);
+
       // Audit number of posts query
       if (data.length !== howManyPosts) {
         setWarningMessage(`Expected ${howManyPosts} posts, but got ${data.length}. This could be because there are not\
-        as many posts that match your query, but the server could also be censoring posts.` as any);
+        as many posts that match your query, but the server could also be censoring posts at the at the edges of your query\
+        (for example, if you expected to get posts 1, 2, 3, 4, and 5; post 1 or post 5 may be missing).` as any);
       }
       if (data.length === 0) {
         return;
@@ -85,11 +90,8 @@ export default function GetPosts({
       const fetchedReactionsRoot = reactionsContractData.account?.zkapp?.appState[3].toString();
       console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
 
-      //Remove post to cause a gap error
-      //data.splice(2, 1);
-
       // Remove reaction to cause a gap error
-      // data[2].reactionsResponse.splice(4, 1);
+      // data[1].reactionsResponse.splice(1,1);
 
       const processedPosts: ProcessedPosts[] = [];
       for (let i = 0; i < data.length; i++) {
@@ -99,7 +101,7 @@ export default function GetPosts({
         const postState = PostState.fromJSON(postStateJSON);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
         console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
-        const processedReactions: ProcessedReactions = [];
+        const processedReactions: ProcessedReactions[] = [];
 
         // Introduce different root to cause a root mismatch
         /*if (index === 0) {
@@ -199,10 +201,15 @@ export default function GetPosts({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: any[] = await response.json();
+
+      // Remove repost to cause a gap error
+      // data.splice(1, 1);
+
       // Audit number of reposts query
       if (data.length !== howManyReposts) {
         setWarningMessage(`Expected ${howManyReposts} reposts, but got ${data.length}. This could be because there are not\
-        as many reposts that match your query, but the server could also be censoring reposts.` as any);
+        as many reposts that match your query, but the server could also be censoring reposts at the at the edges of your query\
+        (for example, if you expected to get reposts 1, 2, 3, 4, and 5; repost 1 or repost 5 may be missing).` as any);
       }
       if (data.length === 0) {
         return;
@@ -225,11 +232,8 @@ export default function GetPosts({
       const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
       console.log('fetchedRepostsRoot: ' + fetchedRepostsRoot);
 
-      // Remove repost to cause a gap error
-      //data.splice(2, 1);
-
       // Remove reaction to cause a gap error
-      // data[2].reactionsResponse.splice(4, 1);
+      // data[1].reactionsResponse.splice(1, 1);
 
       const processedReposts: ProcessedReposts[] = [];
       for (let i = 0; i < data.length; i++) {
@@ -245,7 +249,7 @@ export default function GetPosts({
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
         console.log('calculatedRepostsRoot: ' + calculatedRepostsRoot);
         console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
-        const processedReactions: ProcessedReactions = [];
+        const processedReactions: ProcessedReactions[] = [];
 
         // Introduce different root to cause a root mismatch
         /*if (index === 0) {
@@ -353,7 +357,7 @@ export default function GetPosts({
           !== Number(posts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
             throw new Error(`Gap between Reactions ${posts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
             ${posts[i].processedReactions[r+1].reactionState.targetReactionsCounter}, from Post ${posts[i].postState.allPostsCounter}\
-            The server may be experiencing some issues or censoring posts.`);
+            The server may be experiencing some issues or censoring reactions.`);
           }
         }
       }
@@ -376,7 +380,7 @@ export default function GetPosts({
           !== Number(reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
             throw new Error(`Gap between Reactions ${reposts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
             ${reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
-            The server may be experiencing some issues or censoring posts.`);
+            The server may be experiencing some issues or censoring reactions.`);
           }
         }
       }
@@ -490,7 +494,7 @@ export type ProcessedReactions = {
   reactionState: JSON,
   reactionEmoji: string,
   reactionsRoot: string
-}[];
+};
 
 export type ProcessedPosts = {
   postState: JSON,
@@ -499,7 +503,7 @@ export type ProcessedPosts = {
   content: string,
   shortPosterAddressEnd: string,
   postsRoot: string,
-  processedReactions: ProcessedReactions,
+  processedReactions: ProcessedReactions[],
   top3Emojis: string[],
   numberOfComments: number,
   numberOfReposts: number
@@ -515,7 +519,7 @@ export type ProcessedReposts = {
   content: string,
   shortPosterAddressEnd: string,
   postsRoot: string,
-  processedReactions: ProcessedReactions,
+  processedReactions: ProcessedReactions[],
   top3Emojis: string[],
   numberOfComments: number,
   numberOfReposts: number

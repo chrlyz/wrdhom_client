@@ -21,9 +21,6 @@ export default function Home() {
   const [toBlock, setToBlock] = useState(100_000);
   const [getProfile, setGetProfile] = useState(false);
   const [profileAddress, setProfileAddress] = useState('');
-  const [howManyPostsProfile, setHowManyPostsProfile] = useState(1);
-  const [fromBlockProfile, setFromBlockProfile] = useState(27_182);
-  const [toBlockProfile, setToBlockProfile] = useState(100_000);
   const [hideGetPosts, setHideGetPosts] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [howManyComments, setHowManyComments] = useState(1);
@@ -118,9 +115,9 @@ export default function Home() {
         getProfile={getProfile}
         profileAddress={profileAddress}
         setProfileAddress={setProfileAddress}
-        howManyPostsProfile={howManyPostsProfile}
-        fromBlockProfile={fromBlockProfile}
-        toBlockProfile={toBlockProfile}
+        howManyPosts={howManyPosts}
+        fromBlock={fromBlock}
+        toBlock={toBlock}
         setShowProfile={setShowProfile}
         setHideGetPosts={setHideGetPosts}
         walletConnected={walletConnected}
@@ -150,12 +147,6 @@ export default function Home() {
             setFromBlock={setFromBlock}
             toBlock={toBlock}
             setToBlock={setToBlock}
-            howManyPostsProfile={howManyPostsProfile}
-            setHowManyPostsProfile={setHowManyPostsProfile}
-            fromBlockProfile={fromBlockProfile}
-            setFromBlockProfile={setFromBlockProfile}
-            toBlockProfile={toBlockProfile}
-            setToBlockProfile={setToBlockProfile}
             howManyComments={howManyComments}
             setHowManyComments={setHowManyComments}
             fromBlockComments={fromBlockComments}
