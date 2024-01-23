@@ -73,12 +73,6 @@ export default function GetProfile({
       // Remove post to cause a gap error
       // data.splice(1, 1);
 
-      // Audit numbe of posts query
-      if (data.length !== howManyPosts) {
-        setWarningMessage(`Expected ${howManyPosts} posts, but got ${data.length}. This could be because there are not\
-        as many posts that match your query, but the server could also be censoring posts at the at the edges of your query\
-        (for example, if you expected to get posts 1, 2, 3, 4, and 5; post 1 or post 5 may be missing).` as any);
-      }
       if (data.length === 0) {
         return;
       }
@@ -216,12 +210,6 @@ export default function GetProfile({
       // Remove repost to cause a gap error
       // data.splice(1, 1);
 
-      // Audit number of reposts query
-      if (data.length !== howManyReposts) {
-        setWarningMessage(`Expected ${howManyReposts} reposts, but got ${data.length}. This could be because there are not\
-        as many reposts that match your query, but the server could also be censoring reposts at the at the edges of your query\
-        (for example, if you expected to get reposts 1, 2, 3, 4, and 5; repost 1 or repost 5 may be missing).` as any);
-      }
       if (data.length === 0) {
         return;
       }
@@ -450,13 +438,13 @@ export default function GetProfile({
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
       <div className="p-2 border-b-2 shadow-lg">
         <button className="hover:underline m-2" onClick={goBack}>{'<- Go back to feed'}</button>
-        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
+        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap">
             <p >{`Posts from user:\n\n${profileAddress}`}</p>
         </div>
       </div>
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
-      {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
-      {!loading && warningMessage && <p className="border-4 p-2 shadow-lg">Warning: {warningMessage}</p>}
+      {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
+      {!loading && warningMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Warning: {warningMessage}</p>}
       {!loading && !errorMessage && Array.isArray(mergedContent) && mergedContent.map((post) => {
         return (
             <div key={post.repostKey === undefined ? post.postKey : post.repostKey} className="p-2 border-b-2 shadow-lg">
@@ -483,7 +471,7 @@ export default function GetProfile({
                     <div className="flex-grow"></div>
                     <p className="mr-1">{'Block:' + post.postState.postBlockHeight}</p>
                 </div>
-                <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
+                <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
                     <p>{post.content}</p>
                 </div>
                 <div className="flex flex-row">
@@ -513,7 +501,7 @@ export default function GetProfile({
         );
       })}
       {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
-        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
+        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
             <p >The query threw zero results</p>
         </div>
       </div>}

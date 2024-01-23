@@ -1,6 +1,5 @@
 'use client';
 
-import CreatePost from '@/app/create-post';
 import { useState, useEffect } from 'react';
 import InstallWallet from '@/app/install-wallet';
 import ConnectWallet from './connect-wallet';
