@@ -52,26 +52,32 @@ export default function GetComments({
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data: any[] = await response.json();
-        if (data.length === 0) {
+        const data: any = await response.json();
+        if (data.commentsResponse.length === 0) {
           return;
         }
-        const { MerkleMapWitness, fetchAccount } = await import('o1js');
+        const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
         const { CommentState } = await import('wrdhom');
         const commentsContractData = await fetchAccount({
           publicKey: 'B62qpogDPkCJwaLPHBmbuH9BFmiEaFVUeXcx4XzBH59qDYdSoU6uNEF'
         }, '/graphql');
+        const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
+        console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
         const fetchedCommentsRoot = commentsContractData.account?.zkapp?.appState[3].toString();
         console.log('fetchedCommentsRoot: ' + fetchedCommentsRoot);
+
+        const numberOfCommentsWitness = MerkleMapWitness.fromJSON(data.numberOfCommentsWitness);
+        let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
+          Field(data.numberOfComments))[0].toString();
+        console.log('calculatedTargetsCommentsCountersRoot: ' + calculatedTargetsCommentsCountersRoot);
+  
+        if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
+          throw new Error(`The server stated that there are ${data.numberOfComments} comments for post ${commentTarget.postState.allPostsCounter},\
+          but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
+        }
   
         // Remove comment to cause a gap error
-        //data.splice(2, 1);
-  
-        // Audit that no comment is missing at the edges
-        if (data.length !== howManyComments) {
-          setWarningMessage(`Expected ${howManyComments} comments, but got ${data.length}. This could be because there are not\
-          as many comments that match your query, but the server could also be censoring comments.` as any);
-        }
+        //data.commentsResponse.splice(2, 1);
   
         const processedData: {
           commentState: JSON,
@@ -82,10 +88,10 @@ export default function GetComments({
           commentsRoot: string
         }[] = [];
         
-        for (let i = 0; i < data.length; i++) {
-          const commentStateJSON = JSON.parse(data[i].commentState);
+        for (let i = 0; i < data.commentsResponse.length; i++) {
+          const commentStateJSON = JSON.parse(data.commentsResponse[i].commentState);
           const shortCommenterAddressEnd = commentStateJSON.commenterAddress.slice(-12);
-          const commentWitness = MerkleMapWitness.fromJSON(data[i].commentWitness);
+          const commentWitness = MerkleMapWitness.fromJSON(data.commentsResponse[i].commentWitness);
           const commentState = CommentState.fromJSON(commentStateJSON);
           let calculatedCommentsRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
           console.log('calculatedCommentsRoot: ' + calculatedCommentsRoot);
@@ -102,7 +108,7 @@ export default function GetComments({
   
           // Introduce different content to cause content mismatch
           /*if (i === 0) {
-            data[i].content = 'wrong content';
+            data.commentsResponse[i].content = 'wrong content';
           }*/
   
           // Audit that all comments are between the block range in the user query
@@ -118,17 +124,17 @@ export default function GetComments({
           }    
   
           // Audit that the content of comments matches the contentID signed by the author
-          const cid = await getCID(data[i].content);
-          if (cid !== data[i].commentContentID) {
+          const cid = await getCID(data.commentsResponse[i].content);
+          if (cid !== data.commentsResponse[i].commentContentID) {
             throw new Error(`The content for Comment ${commentStateJSON.targetCommentsCounter} doesn't match the expected contentID. The server may be experiencing\
             some issues or manipulating the content it shows.`);
           }
   
           processedData.push({
               commentState: commentStateJSON,
-              commentKey: data[i].commentKey,
-              commentContentID: data[i].commentContentID,
-              content: data[i].content,
+              commentKey: data.commentsResponse[i].commentKey,
+              commentContentID: data.commentsResponse[i].commentContentID,
+              content: data.commentsResponse[i].content,
               shortCommenterAddressEnd: shortCommenterAddressEnd,
               commentsRoot: calculatedCommentsRoot
           });
