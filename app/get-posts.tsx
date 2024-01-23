@@ -79,8 +79,6 @@ export default function GetPosts({
       }, '/graphql');
       const fetchedAllPostsCounter = postsContractData.account?.zkapp?.appState[0].toString();
       console.log('fetchedAllPostsCounter: ' + fetchedAllPostsCounter);
-      const fetchedUsersPostsCountersRoot = postsContractData.account?.zkapp?.appState[1].toString();
-      console.log('fetchedUsersPostsCountersRoot: ' + fetchedUsersPostsCountersRoot);
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
 
@@ -269,8 +267,6 @@ export default function GetPosts({
       const postsContractData = await fetchAccount({
         publicKey: 'B62qrJpgp9SJDoFsvoqkHiFqTBXbijoSag4ABoxoMwjUE12vooiuPZE'
       }, '/graphql');
-      const fetchedUsersPostsCountersRoot = postsContractData.account?.zkapp?.appState[1].toString();
-      console.log('fetchedUsersPostsCountersRoot: ' + fetchedUsersPostsCountersRoot);
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
 
