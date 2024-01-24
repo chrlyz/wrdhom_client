@@ -416,8 +416,8 @@ export default function GetProfile({
 
         // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
         if(data.repostsResponse[i].reactionsResponse.length !== data.repostsResponse[i].numberOfReactions) {
-          throw new Error(`Server stated that there are ${data.postsResponse[i].numberOfReactions} reactions for post ${postStateJSON.allPostsCounter}\
-          from repost ${repostStateJSON.allRepostsCounter} but it only provided ${data.postsResponse[i].reactionsResponse.length} reactions. The server\
+          throw new Error(`Server stated that there are ${data.repostsResponse[i].numberOfReactions} reactions for post ${postStateJSON.allPostsCounter}\
+          from repost ${repostStateJSON.allRepostsCounter} but it only provided ${data.repostsResponse[i].reactionsResponse.length} reactions. The server\
           may be experiencing some issues or manipulating the content it shows.`)
         }
 
