@@ -59,7 +59,7 @@ export default function GetComments({
         const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
         const { CommentState } = await import('wrdhom');
         const commentsContractData = await fetchAccount({
-          publicKey: 'B62qpogDPkCJwaLPHBmbuH9BFmiEaFVUeXcx4XzBH59qDYdSoU6uNEF'
+          publicKey: 'B62qmEfk2AC677Y8J7GJUHRjA1CAsVyrcfuipVu4zc6wrPyHdz2PQFY'
         }, '/graphql');
         const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
         console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
