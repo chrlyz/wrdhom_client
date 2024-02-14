@@ -16,20 +16,20 @@ export default function Home() {
   const [accountChanged, setAccountChanged] = useState(false);
   const [getPosts, setGetPosts] = useState(false);
   const [howManyPosts, setHowManyPosts] = useState(3);
-  const [fromBlock, setFromBlock] = useState(27_182);
+  const [fromBlock, setFromBlock] = useState(0);
   const [toBlock, setToBlock] = useState(100_000);
   const [getProfile, setGetProfile] = useState(false);
   const [profileAddress, setProfileAddress] = useState('');
   const [hideGetPosts, setHideGetPosts] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [howManyComments, setHowManyComments] = useState(1);
-  const [fromBlockComments, setFromBlockComments] = useState(27_182);
+  const [fromBlockComments, setFromBlockComments] = useState(0);
   const [toBlockComments, setToBlockComments] = useState(100_000);
   const [getComments, setGetComments] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentTarget, setCommentTarget] = useState(null as any);
   const [howManyReposts, setHowManyReposts] = useState(1);
-  const [fromBlockReposts, setFromBlockReposts] = useState(27_182);
+  const [fromBlockReposts, setFromBlockReposts] = useState(0);
   const [toBlockReposts, setToBlockReposts] = useState(100_000);
 
   const walletConnection = () => setWalletConnected(!walletConnected);

@@ -80,7 +80,7 @@ export default function GetProfile({
       const { PostState, ReactionState } = await import('wrdhom');
 
       const postsContractData = await fetchAccount({
-        publicKey: 'B62qrJpgp9SJDoFsvoqkHiFqTBXbijoSag4ABoxoMwjUE12vooiuPZE'
+        publicKey: 'B62qjmB7ixT56qfBeNDwvkpn4XfoNYZYdotor2gkmGqJ34fawiX6y1J'
       }, '/graphql');
       const fetchedUsersPostsCountersRoot = postsContractData.account?.zkapp?.appState[1].toString();
       console.log('fetchedUsersPostsCountersRoot: ' + fetchedUsersPostsCountersRoot);
@@ -88,7 +88,7 @@ export default function GetProfile({
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
 
       const reactionsContractData = await fetchAccount({
-        publicKey: 'B62qrxKYabYuSYtbY9ngcsx6ovMf4YtYjMwWAZVwgdgZYrHwR5RhGQV'
+        publicKey: 'B62qjAcv5DCDqAD8nmKnXEPz926Qx7NjTBTVbZ1BevASNtr7ccXrCKF'
       }, '/graphql');
       const fetchedTargetsReactionsCountersRoot = reactionsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedTargetsReactionsCountersRoot: ' + fetchedTargetsReactionsCountersRoot);
@@ -96,13 +96,13 @@ export default function GetProfile({
       console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
 
       const commentsContractData = await fetchAccount({
-        publicKey: 'B62qpogDPkCJwaLPHBmbuH9BFmiEaFVUeXcx4XzBH59qDYdSoU6uNEF'
+        publicKey: 'B62qmEfk2AC677Y8J7GJUHRjA1CAsVyrcfuipVu4zc6wrPyHdz2PQFY'
       }, '/graphql');
       const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
 
       const repostsContractData = await fetchAccount({
-        publicKey: 'B62qoPgKPCyYAEzv5cRhWknJzqA6uyA8YTfkNEecmNHT7KQwSbVcG9n'
+        publicKey: 'B62qp4CtQEmTSwcTj9qXkNJNtD4JpYW4EcHq1b3Rna2FQcKzaeJafsd'
       }, '/graphql');
       const fetchedTargetsRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedTargetsRepostsCountersRoot: ' + fetchedTargetsRepostsCountersRoot);
@@ -281,13 +281,13 @@ export default function GetProfile({
       const { PostState, ReactionState, RepostState } = await import('wrdhom');
 
       const postsContractData = await fetchAccount({
-        publicKey: 'B62qrJpgp9SJDoFsvoqkHiFqTBXbijoSag4ABoxoMwjUE12vooiuPZE'
+        publicKey: 'B62qjmB7ixT56qfBeNDwvkpn4XfoNYZYdotor2gkmGqJ34fawiX6y1J'
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
 
       const reactionsContractData = await fetchAccount({
-        publicKey: 'B62qrxKYabYuSYtbY9ngcsx6ovMf4YtYjMwWAZVwgdgZYrHwR5RhGQV'
+        publicKey: 'B62qjAcv5DCDqAD8nmKnXEPz926Qx7NjTBTVbZ1BevASNtr7ccXrCKF'
       }, '/graphql');
       const fetchedTargetsReactionsCountersRoot = reactionsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedTargetsReactionsCountersRoot: ' + fetchedTargetsReactionsCountersRoot);
@@ -295,13 +295,13 @@ export default function GetProfile({
       console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
 
       const commentsContractData = await fetchAccount({
-        publicKey: 'B62qpogDPkCJwaLPHBmbuH9BFmiEaFVUeXcx4XzBH59qDYdSoU6uNEF'
+        publicKey: 'B62qmEfk2AC677Y8J7GJUHRjA1CAsVyrcfuipVu4zc6wrPyHdz2PQFY'
       }, '/graphql');
       const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
       console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
 
       const repostsContractData = await fetchAccount({
-        publicKey: 'B62qoPgKPCyYAEzv5cRhWknJzqA6uyA8YTfkNEecmNHT7KQwSbVcG9n'
+        publicKey: 'B62qp4CtQEmTSwcTj9qXkNJNtD4JpYW4EcHq1b3Rna2FQcKzaeJafsd'
       }, '/graphql');
       const fetchedUsersRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[1].toString();
       console.log('fetchedUsersRepostsCountersRoot: ' + fetchedUsersRepostsCountersRoot);
