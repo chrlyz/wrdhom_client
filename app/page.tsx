@@ -31,6 +31,10 @@ export default function Home() {
   const [howManyReposts, setHowManyReposts] = useState(1);
   const [fromBlockReposts, setFromBlockReposts] = useState(0);
   const [toBlockReposts, setToBlockReposts] = useState(100_000);
+  const [postsContractAddress, setPostsContractAddress] = useState('B62qjmB7ixT56qfBeNDwvkpn4XfoNYZYdotor2gkmGqJ34fawiX6y1J');
+  const [reactionsContractAddress, setReactionsContractAddress] = useState('B62qjAcv5DCDqAD8nmKnXEPz926Qx7NjTBTVbZ1BevASNtr7ccXrCKF');
+  const [commentsContractAddress, setCommentsContractAddress] =  useState('B62qmEfk2AC677Y8J7GJUHRjA1CAsVyrcfuipVu4zc6wrPyHdz2PQFY');
+  const [repostsContractAddress, setRepostsContractAddress] = useState('B62qp4CtQEmTSwcTj9qXkNJNtD4JpYW4EcHq1b3Rna2FQcKzaeJafsd');
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
@@ -109,6 +113,10 @@ export default function Home() {
         howManyReposts={howManyReposts}
         fromBlockReposts={fromBlockReposts}
         toBlockReposts={toBlockReposts}
+        postsContractAddress={postsContractAddress}
+        reactionsContractAddress={reactionsContractAddress}
+        commentsContractAddress={commentsContractAddress}
+        repostsContractAddress={repostsContractAddress}
       />
       {showProfile && <GetProfile
         getProfile={getProfile}
@@ -124,6 +132,10 @@ export default function Home() {
         howManyReposts={howManyReposts}
         fromBlockReposts={fromBlockReposts}
         toBlockReposts={toBlockReposts}
+        postsContractAddress={postsContractAddress}
+        reactionsContractAddress={reactionsContractAddress}
+        commentsContractAddress={commentsContractAddress}
+        repostsContractAddress={repostsContractAddress}
       />}
       {showComments && <GetComments
         commentTarget={commentTarget}
@@ -136,6 +148,7 @@ export default function Home() {
         setCommentTarget={setCommentTarget}
         setHideGetPosts={setHideGetPosts}
         setShowComments={setShowComments}
+        commentsContractAddress={commentsContractAddress}
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
