@@ -15,7 +15,8 @@ export default function GetComments({
   walletConnected,
   setCommentTarget,
   setHideGetPosts,
-  setShowComments
+  setShowComments,
+  commentsContractAddress
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -26,7 +27,8 @@ export default function GetComments({
   walletConnected: boolean,
   setCommentTarget: Dispatch<SetStateAction<any>>,
   setHideGetPosts: Dispatch<SetStateAction<string>>,
-  setShowComments: Dispatch<SetStateAction<boolean>>
+  setShowComments: Dispatch<SetStateAction<boolean>>,
+  commentsContractAddress: string
 }) {
     const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
@@ -59,7 +61,7 @@ export default function GetComments({
         const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
         const { CommentState } = await import('wrdhom');
         const commentsContractData = await fetchAccount({
-          publicKey: 'B62qmEfk2AC677Y8J7GJUHRjA1CAsVyrcfuipVu4zc6wrPyHdz2PQFY'
+          publicKey: commentsContractAddress
         }, '/graphql');
         const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
         console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
