@@ -46,7 +46,6 @@ export default function GetPosts({
   const [mergedContent, setMergedContent] = useState([] as any);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [warningMessage, setWarningMessage] = useState(null);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [triggerAudit, setTriggerAudit] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
@@ -58,7 +57,6 @@ export default function GetPosts({
       setReposts([]);
       setLoading(true);
       setErrorMessage(null);
-      setWarningMessage(null);
       setWhenZeroContent(false);
       const response = await fetch(`/posts`+
         `?howMany=${howManyPosts}`+
@@ -115,6 +113,9 @@ export default function GetPosts({
         The server may be experiencing issues or manipulating responses.`);
       }
 
+      // Remove reaction to cause a gap error
+      // data.postsResponse[0].reactionsResponse.splice(1, 1);
+
       const processedPosts: ProcessedPosts[] = [];
       for (let i = 0; i < data.postsResponse.length; i++) {
         const postStateJSON = JSON.parse(data.postsResponse[i].postState);
@@ -138,12 +139,12 @@ export default function GetPosts({
         const processedReactions: ProcessedReactions[] = [];
 
         // Introduce different root to cause a root mismatch
-        /*if (index === 0) {
+        /*if (i === 0) {
           calculatedPostsRoot = 'badRoot'
         }*/
 
         // Introduce different block-length to cause block mismatch
-        /*if (index === 2) {
+        /*if (i === 0) {
           postStateJSON.postBlockHeight = 10000000000;
         }*/
 
@@ -261,7 +262,7 @@ export default function GetPosts({
       const data: any = await response.json();
 
       // Remove repost to cause a gap error
-      // data.splice(1, 1);
+      //data.repostsResponse.splice(1, 1);
 
       if (data.repostsResponse.length === 0) {
         return;
@@ -336,12 +337,12 @@ export default function GetPosts({
         const processedReactions: ProcessedReactions[] = [];
 
         // Introduce different root to cause a root mismatch
-        /*if (index === 0) {
+        /*if (i === 0) {
           calculatedRepostsRoot = 'badRoot'
         }*/
 
         // Introduce different block-length to cause block mismatch
-        /*if (index === 2) {
+        /*if (i === 0) {
           repostStateJSON.repostBlockHeight = 10000000000;
         }*/
 
@@ -537,8 +538,7 @@ export default function GetPosts({
       {loading ? null : walletConnected && <CreatePost />}
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
       {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
-      {!loading && warningMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Warning: {warningMessage}</p>}
-      {!loading && !errorMessage && Array.isArray(mergedContent) && mergedContent.map((post) => {
+      {!loading && Array.isArray(mergedContent) && mergedContent.map((post) => {
         return (
             <div key={post.repostKey === undefined ? post.postKey : post.repostKey} className="p-2 border-b-2 shadow-lg">
                 {post.repostState === undefined ? null :
