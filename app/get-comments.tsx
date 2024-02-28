@@ -33,7 +33,6 @@ export default function GetComments({
     const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState(null);
-    const [warningMessage, setWarningMessage] = useState(null);
     const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
     const [triggerAudit, setTriggerAudit] = useState(false);
   
@@ -41,7 +40,6 @@ export default function GetComments({
       try {
         setLoading(true);
         setErrorMessage(null);
-        setWarningMessage(null);
         const response = await fetch(`/comments`+
             `?targetKey=${commentTarget.postKey}`+
             `&howMany=${howManyComments}`+
@@ -79,7 +77,7 @@ export default function GetComments({
         }
   
         // Remove comment to cause a gap error
-        //data.commentsResponse.splice(2, 1);
+        // data.commentsResponse.splice(1, 1);
   
         const processedData: {
           commentState: JSON,
@@ -99,17 +97,17 @@ export default function GetComments({
           console.log('calculatedCommentsRoot: ' + calculatedCommentsRoot);
   
           // Introduce different root to cause a root mismatch
-          /*if (index === 0) {
-            calculatedPostsRoot = 'badRoot'
+          /*if (i === 1) {
+            calculatedCommentsRoot = 'badRoot'
           }*/
   
           // Introduce different block-length to cause block mismatch
-          /*if (index === 2) {
-            postStateJSON.postBlockHeight = 10000000000;
+          /*if (i === 1) {
+            commentStateJSON.commentBlockHeight = 10000000000;
           }*/
   
           // Introduce different content to cause content mismatch
-          /*if (i === 0) {
+          /*if (i === 1) {
             data.commentsResponse[i].content = 'wrong content';
           }*/
   
@@ -225,8 +223,7 @@ export default function GetComments({
             </div>
             {loading && <p className="border-4 p-2 shadow-lg">Loading comments...</p>}
             {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
-            {!loading && warningMessage && <p className="border-4 p-2 shadow-lg">Warning: {warningMessage}</p>}
-            {!loading && !errorMessage && Array.isArray(comments) && comments.map((comment) => {
+            {!loading && Array.isArray(comments) && comments.map((comment) => {
                 return (
                     <div key={comment.commentKey} className="p-2 border-b-2 shadow-lg">
                         <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
