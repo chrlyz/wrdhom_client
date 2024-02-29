@@ -34,8 +34,9 @@ export default function GetComments({
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState(null);
     const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
-    const [triggerAudit, setTriggerAudit] = useState(false);
-  
+    const [triggerAudit1, setTriggerAudit1] = useState(false);
+    const [triggerAudit2, setTriggerAudit2] = useState(false);
+
     const fetchComments = async () => {
       try {
         setLoading(true);
@@ -56,6 +57,40 @@ export default function GetComments({
         if (data.commentsResponse.length === 0) {
           return;
         }
+  
+        const processedData: {
+          commentState: JSON,
+          commentWitness: JSON,
+          commentKey: string,
+          commentContentID: string,
+          content: string,
+          shortCommenterAddressEnd: string,
+        }[] = [];
+        
+        for (let i = 0; i < data.commentsResponse.length; i++) {
+          const commentStateJSON = JSON.parse(data.commentsResponse[i].commentState);
+          const shortCommenterAddressEnd = commentStateJSON.commenterAddress.slice(-12);
+  
+          processedData.push({
+              commentState: commentStateJSON,
+              commentWitness: data.commentResponse[i].commentWitness,
+              commentKey: data.commentsResponse[i].commentKey,
+              commentContentID: data.commentsResponse[i].commentContentID,
+              content: data.commentsResponse[i].content,
+              shortCommenterAddressEnd: shortCommenterAddressEnd
+          });
+        };
+  
+        setComments(processedData);
+
+      } catch (e: any) {
+          setLoading(false);
+          setErrorMessage(e.message);
+      }
+    };
+  
+    const auditComments = async () => {
+      try {
         const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
         const { CommentState } = await import('wrdhom');
         const commentsContractData = await fetchAccount({
@@ -65,34 +100,14 @@ export default function GetComments({
         console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
         const fetchedCommentsRoot = commentsContractData.account?.zkapp?.appState[3].toString();
         console.log('fetchedCommentsRoot: ' + fetchedCommentsRoot);
-
-        const numberOfCommentsWitness = MerkleMapWitness.fromJSON(data.numberOfCommentsWitness);
-        let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
-          Field(data.numberOfComments))[0].toString();
-        console.log('calculatedTargetsCommentsCountersRoot: ' + calculatedTargetsCommentsCountersRoot);
-  
-        if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
-          throw new Error(`The server stated that there are ${data.numberOfComments} comments for post ${commentTarget.postState.allPostsCounter},\
-          but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
-        }
   
         // Remove comment to cause a gap error
-        // data.commentsResponse.splice(1, 1);
-  
-        const processedData: {
-          commentState: JSON,
-          commentKey: string,
-          commentContentID: string,
-          content: string,
-          shortCommenterAddressEnd: string,
-          commentsRoot: string
-        }[] = [];
+        comments.splice(1, 1);
         
-        for (let i = 0; i < data.commentsResponse.length; i++) {
-          const commentStateJSON = JSON.parse(data.commentsResponse[i].commentState);
-          const shortCommenterAddressEnd = commentStateJSON.commenterAddress.slice(-12);
-          const commentWitness = MerkleMapWitness.fromJSON(data.commentsResponse[i].commentWitness);
-          const commentState = CommentState.fromJSON(commentStateJSON);
+        for (let i = 0; i < comments.length; i++) {
+          const shortCommenterAddressEnd = comments[i].commentState.commenterAddress.slice(-12);
+          const commentWitness = MerkleMapWitness.fromJSON(comments[i].commentWitness);
+          const commentState = CommentState.fromJSON(comments[i].commentState);
           let calculatedCommentsRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
           console.log('calculatedCommentsRoot: ' + calculatedCommentsRoot);
   
@@ -103,44 +118,33 @@ export default function GetComments({
   
           // Introduce different block-length to cause block mismatch
           /*if (i === 1) {
-            commentStateJSON.commentBlockHeight = 10000000000;
+            comments[i].commentState.commentBlockHeight = 10000000000;
           }*/
   
           // Introduce different content to cause content mismatch
           /*if (i === 1) {
-            data.commentsResponse[i].content = 'wrong content';
+            comments[i].content = 'wrong content';
           }*/
   
           // Audit that all comments are between the block range in the user query
-          if (commentStateJSON.commentBlockHeight < fromBlockComments ||  commentStateJSON.commentBlockHeight > toBlockComments) {
-            throw new Error(`Block-length ${commentStateJSON.commentBlockHeight} for Comment ${commentStateJSON.targetCommentsCounter} isn't between the block range\
+          if (comments[i].commentState.commentBlockHeight < fromBlockComments ||  comments[i].commentState.commentBlockHeight > toBlockComments) {
+            throw new Error(`Block-length ${comments[i].commentState.commentBlockHeight} for Comment ${comments[i].commentState.targetCommentsCounter} isn't between the block range\
             ${fromBlockComments} to ${toBlockComments}`);
           }
   
           // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
           if (fetchedCommentsRoot !== calculatedCommentsRoot) {
-            throw new Error(`Comment ${commentStateJSON.targetCommentsCounter} has different root than zkApp state. The server may be experiencing some issues or\
+            throw new Error(`Comment ${comments[i].commentState.targetCommentsCounter} has different root than zkApp state. The server may be experiencing some issues or\
             manipulating results for your query.`);
           }    
   
           // Audit that the content of comments matches the contentID signed by the author
-          const cid = await getCID(data.commentsResponse[i].content);
-          if (cid !== data.commentsResponse[i].commentContentID) {
-            throw new Error(`The content for Comment ${commentStateJSON.targetCommentsCounter} doesn't match the expected contentID. The server may be experiencing\
+          const cid = await getCID(comments[i].content);
+          if (cid !== comments[i].commentContentID) {
+            throw new Error(`The content for Comment ${comments[i].commentState.targetCommentsCounter} doesn't match the expected contentID. The server may be experiencing\
             some issues or manipulating the content it shows.`);
           }
-  
-          processedData.push({
-              commentState: commentStateJSON,
-              commentKey: data.commentsResponse[i].commentKey,
-              commentContentID: data.commentsResponse[i].commentContentID,
-              content: data.commentsResponse[i].content,
-              shortCommenterAddressEnd: shortCommenterAddressEnd,
-              commentsRoot: calculatedCommentsRoot
-          });
         };
-  
-        setComments(processedData);
 
       } catch (e: any) {
           setLoading(false);
@@ -175,15 +179,22 @@ export default function GetComments({
         if (howManyComments > 0) {
           await fetchComments();
         }
-        setTriggerAudit(!triggerAudit);
+        setTriggerAudit1(!triggerAudit1);
       })();
     }, [getComments, commentTarget]);
+
+    useEffect(() => {
+      (async () => {
+        await auditComments();
+        setTriggerAudit2(!triggerAudit2);
+      })();
+    }, [triggerAudit1]);
   
     useEffect(() => {
       if (comments.length > 0) {
         auditNoMissingContent();
       }
-    }, [triggerAudit]);
+    }, [triggerAudit2]);
 
     return (
         <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
