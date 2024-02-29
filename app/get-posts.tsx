@@ -47,7 +47,8 @@ export default function GetPosts({
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
-  const [triggerAudit, setTriggerAudit] = useState(false);
+  const [triggerAudit1, setTriggerAudit1] = useState(false);
+  const [triggerAudit2, setTriggerAudit2] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
 
@@ -71,147 +72,23 @@ export default function GetPosts({
       }
       const data: any = await response.json();
 
-      // Remove post to cause a gap error
-      //data.postsResponse.splice(1, 1);
-
       if (data.postsResponse.length === 0) {
         return;
       }
-      const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
-      const { PostState, ReactionState } = await import('wrdhom');
-
-      const postsContractData = await fetchAccount({
-        publicKey: postsContractAddress
-      }, '/graphql');
-      const fetchedAllPostsCounter = postsContractData.account?.zkapp?.appState[0].toString();
-      console.log('fetchedAllPostsCounter: ' + fetchedAllPostsCounter);
-      const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
-      console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
-
-      const reactionsContractData = await fetchAccount({
-        publicKey: reactionsContractAddress
-      }, '/graphql');
-      const fetchedTargetsReactionsCountersRoot = reactionsContractData.account?.zkapp?.appState[2].toString();
-      console.log('fetchedTargetsReactionsCountersRoot: ' + fetchedTargetsReactionsCountersRoot);
-      const fetchedReactionsRoot = reactionsContractData.account?.zkapp?.appState[3].toString();
-      console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
-
-      const commentsContractData = await fetchAccount({
-        publicKey: commentsContractAddress
-      }, '/graphql');
-      const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
-      console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
-
-      const repostsContractData = await fetchAccount({
-        publicKey: repostsContractAddress
-      }, '/graphql');
-      const fetchedTargetsRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[2].toString();
-      console.log('fetchedTargetsRepostsCountersRoot: ' + fetchedTargetsRepostsCountersRoot);
-
-      if (Number(fetchedAllPostsCounter) !== data.numberOfPosts) {
-        throw new Error(`The server stated that there are ${data.numberOfPosts} total posts, but the contract accounts for ${fetchedAllPostsCounter}\
-        The server may be experiencing issues or manipulating responses.`);
-      }
-
-      // Remove reaction to cause a gap error
-      // data.postsResponse[0].reactionsResponse.splice(1, 1);
 
       const processedPosts: ProcessedPosts[] = [];
       for (let i = 0; i < data.postsResponse.length; i++) {
         const postStateJSON = JSON.parse(data.postsResponse[i].postState);
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
-        const postWitness = MerkleMapWitness.fromJSON(data.postsResponse[i].postWitness);
-        const numberOfReactionsWitness = MerkleMapWitness.fromJSON(data.postsResponse[i].numberOfReactionsWitness);
-        const numberOfCommentsWitness = MerkleMapWitness.fromJSON(data.postsResponse[i].numberOfCommentsWitness);
-        const numberOfRepostsWitness = MerkleMapWitness.fromJSON(data.postsResponse[i].numberOfRepostsWitness);
-        const postState = PostState.fromJSON(postStateJSON);
-        let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
-        console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
-        let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKey(
-          Field(data.postsResponse[i].numberOfReactions))[0].toString();
-        console.log('calculatedTargetsReactionsCountersRoot: ' + calculatedTargetsReactionsCountersRoot);
-        let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
-          Field(data.postsResponse[i].numberOfComments))[0].toString();
-        console.log('calculatedTargetsCommentsCountersRoot: ' + calculatedTargetsCommentsCountersRoot);
-        let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
-          Field(data.postsResponse[i].numberOfReposts))[0].toString();
-        console.log('calculatedTargetsRepostsCountersRoot: ' + calculatedTargetsRepostsCountersRoot);
         const processedReactions: ProcessedReactions[] = [];
-
-        // Introduce different root to cause a root mismatch
-        /*if (i === 0) {
-          calculatedPostsRoot = 'badRoot'
-        }*/
-
-        // Introduce different block-length to cause block mismatch
-        /*if (i === 0) {
-          postStateJSON.postBlockHeight = 10000000000;
-        }*/
-
-        // Introduce different content to cause content mismatch
-        /*if (i === 0) {
-          data.postsResponse[i].content = 'wrong content';
-        }*/
-
-        // Audit that all posts are between the block range in the user query
-        if (postStateJSON.postBlockHeight < fromBlock ||  postStateJSON.postBlockHeight > toBlock) {
-          throw new Error(`Block-length ${postStateJSON.postBlockHeight} for Post ${postStateJSON.allPostsCounter} isn't between the block range\
-          ${fromBlock} to ${toBlock}`);
-        }
-
-        // Audit that the on-chain state matches the off-chain state
-
-        if (fetchedPostsRoot !== calculatedPostsRoot) {
-          throw new Error(`Post ${postStateJSON.allPostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
-          manipulating results for your query.`);
-        }
-
-        if (fetchedTargetsReactionsCountersRoot !== calculatedTargetsReactionsCountersRoot ) {
-          throw new Error(`Server stated that there are ${data.postsResponse[i].numberOfReactions} reactions for post ${postStateJSON.allPostsCounter},\
-          but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
-        }
-
-        if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
-          throw new Error(`Server stated that there are ${data.postsResponse[i].numberOfComments} comments for post ${postStateJSON.allPostsCounter},\
-          but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
-        }
-
-        if (fetchedTargetsRepostsCountersRoot !== calculatedTargetsRepostsCountersRoot) {
-          throw new Error(`Server stated that there are ${data.postsResponse[i].numberOfReposts} reposts for post ${postStateJSON.allPostsCounter},\
-          but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
-        }
-
-        // Audit that the content of posts matches the contentID signed by the author
-        const cid = await getCID(data.postsResponse[i].content);
-        if (cid !== data.postsResponse[i].postContentID) {
-          throw new Error(`The content for Post ${postStateJSON.allPostsCounter} doesn't match the expected contentID. The server may be experiencing\
-          some issues or manipulating the content it shows.`);
-        }
-
-        // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
-        if(data.postsResponse[i].reactionsResponse.length !== data.postsResponse[i].numberOfReactions) {
-          throw new Error(`Server stated that there are ${data.postsResponse[i].numberOfReactions} reactions for post ${postStateJSON.allPostsCounter},\
-          but it only provided ${data.postsResponse[i].reactionsResponse.length} reactions. The server may be experiencing some issues or manipulating
-          the content it shows.`)
-        }
 
         for (let r = 0; r < data.postsResponse[i].reactionsResponse.length; r++) {
           const reactionStateJSON = JSON.parse(data.postsResponse[i].reactionsResponse[r].reactionState);
-          const reactionWitness = MerkleMapWitness.fromJSON(data.postsResponse[i].reactionsResponse[r].reactionWitness);
-          const reactionState = ReactionState.fromJSON(reactionStateJSON);
-          let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
-          console.log('calculatedReactionRoot: ' + calculatedReactionRoot);
-
-          // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
-          if (fetchedReactionsRoot !== calculatedReactionRoot) {
-            throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
-            The server may be experiencing some issues or manipulating results for the reactions to Post ${postStateJSON.allPostsCounter}.`);
-          }
 
           processedReactions.push({
             reactionState: reactionStateJSON,
-            reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
-            reactionsRoot: calculatedReactionRoot
+            reactionWitness: data.postsResponse[i].reactionsResponse[r].reactionWitness,
+            reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint)
           });
         }
 
@@ -226,20 +103,162 @@ export default function GetPosts({
 
         processedPosts.push({
             postState: postStateJSON,
+            postWitness: data.postsResponse[i].postWitness,
             postKey: data.postsResponse[i].postKey,
             postContentID: data.postsResponse[i].postContentID,
             content: data.postsResponse[i].content,
             shortPosterAddressEnd: shortPosterAddressEnd,
-            postsRoot: calculatedPostsRoot,
             processedReactions: processedReactions,
             top3Emojis: top3Emojis,
             numberOfReactions: data.postsResponse[i].numberOfReactions,
+            numberOfReactionsWitness: data.postsResponse[i].numberOfReactionsWitness,
             numberOfComments: data.postsResponse[i].numberOfComments,
-            numberOfReposts: data.postsResponse[i].numberOfReposts
+            numberOfCommentsWitness: data.postsResponse[i].numberOfCommentsWitness,
+            numberOfReposts: data.postsResponse[i].numberOfReposts,
+            numberOfRepostsWitness: data.postsResponse[i].numberOfRepostsWitness
         });
       };
 
       setPosts(processedPosts);
+
+    } catch (e: any) {
+        setLoading(false);
+        setErrorMessage(e.message);
+    }
+  };
+
+  const auditPosts = async () => {
+    try {
+      // Remove post to cause a gap error
+      // posts.splice(1, 1);
+
+      const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
+      const { PostState, ReactionState } = await import('wrdhom');
+
+      const postsContractData = await fetchAccount({
+        publicKey: postsContractAddress
+      }, '/graphql');
+      const fetchedAllPostsCounter = postsContractData.account?.zkapp?.appState[0].toString();
+      //console.log('fetchedAllPostsCounter: ' + fetchedAllPostsCounter);
+      const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
+      //console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
+
+      const reactionsContractData = await fetchAccount({
+        publicKey: reactionsContractAddress
+      }, '/graphql');
+      const fetchedTargetsReactionsCountersRoot = reactionsContractData.account?.zkapp?.appState[2].toString();
+      //console.log('fetchedTargetsReactionsCountersRoot: ' + fetchedTargetsReactionsCountersRoot);
+      const fetchedReactionsRoot = reactionsContractData.account?.zkapp?.appState[3].toString();
+      //console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
+
+      const commentsContractData = await fetchAccount({
+        publicKey: commentsContractAddress
+      }, '/graphql');
+      const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
+      //console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
+
+      const repostsContractData = await fetchAccount({
+        publicKey: repostsContractAddress
+      }, '/graphql');
+      const fetchedTargetsRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[2].toString();
+      //console.log('fetchedTargetsRepostsCountersRoot: ' + fetchedTargetsRepostsCountersRoot);
+
+      // Remove reaction to cause a gap error
+      // posts[0].processedReactions.splice(1, 1);
+
+      console.log(posts)
+
+      for (let i = 0; i < posts.length; i++) {
+        console.log('post' + i)
+        const postWitness = MerkleMapWitness.fromJSON(posts[i].postWitness);
+        const numberOfReactionsWitness = MerkleMapWitness.fromJSON(posts[i].numberOfReactionsWitness);
+        const numberOfCommentsWitness = MerkleMapWitness.fromJSON(posts[i].numberOfCommentsWitness);
+        const numberOfRepostsWitness = MerkleMapWitness.fromJSON(posts[i].numberOfRepostsWitness);
+        const postState = PostState.fromJSON(posts[i].postState);
+        let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
+        //console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
+        let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKey(
+          Field(posts[i].numberOfReactions))[0].toString();
+        //console.log('calculatedTargetsReactionsCountersRoot: ' + calculatedTargetsReactionsCountersRoot);
+        let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
+          Field(posts[i].numberOfComments))[0].toString();
+        //console.log('calculatedTargetsCommentsCountersRoot: ' + calculatedTargetsCommentsCountersRoot);
+        let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
+          Field(posts[i].numberOfReposts))[0].toString();
+        //console.log('calculatedTargetsRepostsCountersRoot: ' + calculatedTargetsRepostsCountersRoot);
+        const processedReactions: ProcessedReactions[] = [];
+
+        // Introduce different root to cause a root mismatch
+        /*if (i === 0) {
+          calculatedPostsRoot = 'badRoot'
+        }*/
+
+        // Introduce different block-length to cause block mismatch
+        /*if (i === 0) {
+          posts[i].postState.postBlockHeight = 10000000000;
+        }*/
+
+        // Introduce different content to cause content mismatch
+        /*if (i === 0) {
+          posts[i].content = 'wrong content';
+        }*/
+
+        // Audit that all posts are between the block range in the user query
+        if (posts[i].postState.postBlockHeight < fromBlock ||  posts[i].postState.postBlockHeight > toBlock) {
+          throw new Error(`Block-length ${posts[i].postState.postBlockHeight} for Post ${posts[i].postState.allPostsCounter} isn't between the block range\
+          ${fromBlock} to ${toBlock}`);
+        }
+
+        // Audit that the on-chain state matches the off-chain state
+
+        if (fetchedPostsRoot !== calculatedPostsRoot) {
+          throw new Error(`Post ${posts[i].postState.allPostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
+          manipulating results for your query.`);
+        }
+
+        if (fetchedTargetsReactionsCountersRoot !== calculatedTargetsReactionsCountersRoot ) {
+          throw new Error(`Server stated that there are ${posts[i].numberOfReactions} reactions for post ${posts[i].postState.allPostsCounter},\
+          but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
+        }
+
+        if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
+          throw new Error(`Server stated that there are ${posts[i].numberOfComments} comments for post ${posts[i].postState.allPostsCounter},\
+          but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
+        }
+
+        if (fetchedTargetsRepostsCountersRoot !== calculatedTargetsRepostsCountersRoot) {
+          throw new Error(`Server stated that there are ${posts[i].numberOfReposts} reposts for post ${posts[i].postState.allPostsCounter},\
+          but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
+        }
+
+        // Audit that the content of posts matches the contentID signed by the author
+        const cid = await getCID(posts[i].content);
+        if (cid !== posts[i].postContentID) {
+          throw new Error(`The content for Post ${posts[i].postState.allPostsCounter} doesn't match the expected contentID. The server may be experiencing\
+          some issues or manipulating the content it shows.`);
+        }
+
+        // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
+        if(posts[i].processedReactions.length !== posts[i].numberOfReactions) {
+          throw new Error(`Server stated that there are ${posts[i].numberOfReactions} reactions for post ${posts[i].postState.allPostsCounter},\
+          but it only provided ${posts[i].processedReactions.length} reactions. The server may be experiencing some issues or manipulating
+          the content it shows.`)
+        }
+
+        for (let r = 0; r < posts[i].processedReactions.length; r++) {
+          const reactionStateJSON = JSON.parse(posts[i].processedReactions[r].reactionState);
+          const reactionWitness = MerkleMapWitness.fromJSON(posts[i].processedReactions[r].reactionWitness);
+          const reactionState = ReactionState.fromJSON(reactionStateJSON);
+          let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
+          //console.log('calculatedReactionRoot: ' + calculatedReactionRoot);
+
+          // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
+          if (fetchedReactionsRoot !== calculatedReactionRoot) {
+            throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
+            The server may be experiencing some issues or manipulating results for the reactions to Post ${posts[i].postState.allPostsCounter}.`);
+          }
+        }
+      };
     } catch (e: any) {
         setLoading(false);
         setErrorMessage(e.message);
@@ -261,52 +280,9 @@ export default function GetPosts({
       }
       const data: any = await response.json();
 
-      // Remove repost to cause a gap error
-      //data.repostsResponse.splice(1, 1);
-
       if (data.repostsResponse.length === 0) {
         return;
       }
-      const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
-      const { PostState, ReactionState, RepostState } = await import('wrdhom');
-
-      const postsContractData = await fetchAccount({
-        publicKey: postsContractAddress
-      }, '/graphql');
-      const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
-      console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
-
-      const reactionsContractData = await fetchAccount({
-        publicKey: reactionsContractAddress
-      }, '/graphql');
-      const fetchedTargetsReactionsCountersRoot = reactionsContractData.account?.zkapp?.appState[2].toString();
-      console.log('fetchedTargetsReactionsCountersRoot: ' + fetchedTargetsReactionsCountersRoot);
-      const fetchedReactionsRoot = reactionsContractData.account?.zkapp?.appState[3].toString();
-      console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
-
-      const commentsContractData = await fetchAccount({
-        publicKey: commentsContractAddress
-      }, '/graphql');
-      const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
-      console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
-
-      const repostsContractData = await fetchAccount({
-        publicKey: repostsContractAddress
-      }, '/graphql');
-      const fetchedAllRepostsCounter = repostsContractData.account?.zkapp?.appState[0].toString();
-      console.log('fetchedAllRepostsCounter: ' + fetchedAllRepostsCounter);
-      const fetchedTargetsRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[2].toString();
-      console.log('fetchedTargetsRepostsCountersRoot: ' + fetchedTargetsRepostsCountersRoot);
-      const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
-      console.log('fetchedRepostsRoot: ' + fetchedRepostsRoot);
-
-      if (Number(fetchedAllRepostsCounter) !== data.numberOfReposts) {
-        throw new Error(`The server stated that there are ${data.numberOfReposts} total reposts, but the contract accounts for ${fetchedAllRepostsCounter}\
-        The server may be experiencing issues or manipulating responses.`);
-      }
-
-      // Remove reaction to cause a gap error
-      // data.repostsResponse[0].reactionsResponse.splice(1, 1);
 
       const processedReposts: ProcessedReposts[] = [];
       for (let i = 0; i < data.repostsResponse.length; i++) {
@@ -314,110 +290,15 @@ export default function GetPosts({
         const postStateJSON = JSON.parse(data.repostsResponse[i].postState);
         const shortReposterAddressEnd = repostStateJSON.reposterAddress.slice(-12);
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
-        const repostWitness = MerkleMapWitness.fromJSON(data.repostsResponse[i].repostWitness);
-        const postWitness = MerkleMapWitness.fromJSON(data.repostsResponse[i].postWitness);
-        const numberOfReactionsWitness = MerkleMapWitness.fromJSON(data.repostsResponse[i].numberOfReactionsWitness);
-        const numberOfCommentsWitness = MerkleMapWitness.fromJSON(data.repostsResponse[i].numberOfCommentsWitness);
-        const numberOfRepostsWitness = MerkleMapWitness.fromJSON(data.repostsResponse[i].numberOfRepostsWitness);
-        const repostState = RepostState.fromJSON(repostStateJSON);
-        const postState = PostState.fromJSON(postStateJSON);
-        let calculatedRepostsRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
-        console.log('calculatedRepostsRoot: ' + calculatedRepostsRoot);
-        let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
-        console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
-        let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKey(
-          Field(data.repostsResponse[i].numberOfReactions))[0].toString();
-        console.log('calculatedTargetsReactionsCountersRoot: ' + calculatedTargetsReactionsCountersRoot);
-        let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
-          Field(data.repostsResponse[i].numberOfComments))[0].toString();
-        console.log('calculatedTargetsCommentsCountersRoot: ' + calculatedTargetsCommentsCountersRoot);
-        let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
-          Field(data.repostsResponse[i].numberOfReposts))[0].toString();
-        console.log('calculatedTargetsRepostsCountersRoot: ' + calculatedTargetsRepostsCountersRoot);
         const processedReactions: ProcessedReactions[] = [];
-
-        // Introduce different root to cause a root mismatch
-        /*if (i === 0) {
-          calculatedRepostsRoot = 'badRoot'
-        }*/
-
-        // Introduce different block-length to cause block mismatch
-        /*if (i === 0) {
-          repostStateJSON.repostBlockHeight = 10000000000;
-        }*/
-
-        // Introduce different content to cause content mismatch
-        /*if (i === 0) {
-          data.repostsResponse[i].content = 'wrong content';
-        }*/
-
-        // Audit that all reposts are between the block range in the user query
-        if (repostStateJSON.repostBlockHeight < fromBlockReposts ||  repostStateJSON.repostBlockHeight > toBlockReposts) {
-          throw new Error(`Block-length ${repostStateJSON.repostBlockHeight} for Repost ${repostStateJSON.allRepostsCounter} isn't between the block range\
-          ${fromBlockReposts} to ${toBlockReposts}`);
-        }
-
-        // Audit that the on-chain state matches the off-chain state
-
-        if (fetchedRepostsRoot !== calculatedRepostsRoot) {
-          throw new Error(`Repost ${repostStateJSON.allRepostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
-          manipulating results for your query.`);
-        }    
-
-        if (fetchedPostsRoot !== calculatedPostsRoot) {
-          throw new Error(`Post ${postStateJSON.allPostsCounter} from repost ${repostStateJSON.allRepostsCounter} has different root than zkApp state.\
-          The server may be experiencing some issues or manipulating results for your query.`);
-        }
-
-        if (fetchedTargetsReactionsCountersRoot !== calculatedTargetsReactionsCountersRoot ) {
-          throw new Error(`Server stated that there are ${data.repostsResponse[i].numberOfReactions} reactions for post ${postStateJSON.allPostsCounter}\
-          from repost ${repostStateJSON.allRepostsCounter} but the contract accounts for a different amount. The server may be experiencing issues or\
-          manipulating responses.`);
-        }
-
-        if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
-          throw new Error(`Server stated that there are ${data.repostsResponse[i].numberOfComments} comments for post ${postStateJSON.allPostsCounter}\
-          from repost ${repostStateJSON.allRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
-          manipulating responses.`);
-        }
-
-        if (fetchedTargetsRepostsCountersRoot !== calculatedTargetsRepostsCountersRoot) {
-          throw new Error(`Server stated that there are ${data.repostsResponse[i].numberOfReposts} reposts for post ${postStateJSON.allPostsCounter}\
-          from repost ${repostStateJSON.allRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
-          manipulating responses.`);
-        }
-
-        // Audit that the content of the reposted posts matches the contentID signed by the post author
-        const cid = await getCID(data.repostsResponse[i].content);
-        if (cid !== data.repostsResponse[i].postContentID) {
-          throw new Error(`The content for Post ${postStateJSON.allPostsCounter} from Repost ${repostStateJSON.allRepostsCounter} doesn't match\
-          the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`);
-        }
-
-        // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
-        if(data.repostsResponse[i].reactionsResponse.length !== data.repostsResponse[i].numberOfReactions) {
-          throw new Error(`Server stated that there are ${data.repostsResponse[i].numberOfReactions} reactions for post ${postStateJSON.allPostsCounter}\
-          from repost ${repostStateJSON.allRepostsCounter} but it only provided ${data.repostsResponse[i].reactionsResponse.length} reactions. The server\
-          may be experiencing some issues or manipulating the content it shows.`)
-        }
 
         for (let r = 0; r < data.repostsResponse[i].reactionsResponse.length; r++) {
           const reactionStateJSON = JSON.parse(data.repostsResponse[i].reactionsResponse[r].reactionState);
-          const reactionWitness = MerkleMapWitness.fromJSON(data.repostsResponse[i].reactionsResponse[r].reactionWitness);
-          const reactionState = ReactionState.fromJSON(reactionStateJSON);
-          let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
-          console.log('calculatedReactionRoot: ' + calculatedReactionRoot);
-
-          // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
-          if (fetchedReactionsRoot !== calculatedReactionRoot) {
-            throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
-            The server may be experiencing some issues or manipulating results for the reactions to Post ${postStateJSON.allPostsCounter}.`);
-          }
 
           processedReactions.push({
             reactionState: reactionStateJSON,
+            reactionWitness: data.repostsResponse[i].reactionsResponse[r].reactionWitness,
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
-            reactionsRoot: calculatedReactionRoot
           });
         }
 
@@ -432,23 +313,183 @@ export default function GetPosts({
 
         processedReposts.push({
             repostState: repostStateJSON,
+            repostWitness: data.repostsResponse[i].repostWitness,
             repostKey: data.repostsResponse[i].repostKey,
             shortReposterAddressEnd: shortReposterAddressEnd,
             postState: postStateJSON,
+            postWitness: data.repostsResponse[i].postWitness,
             postKey: data.repostsResponse[i].postKey,
             postContentID: data.repostsResponse[i].postContentID,
             content: data.repostsResponse[i].content,
             shortPosterAddressEnd: shortPosterAddressEnd,
-            postsRoot: calculatedPostsRoot,
             processedReactions: processedReactions,
             top3Emojis: top3Emojis,
             numberOfReactions: data.repostsResponse[i].numberOfReactions,
+            numberOfReactionsWitness: data.repostsResponse[i].numberOfReactionsWitness,
             numberOfComments: data.repostsResponse[i].numberOfComments,
-            numberOfReposts: data.repostsResponse[i].numberOfReposts
+            numberOfCommentsWitness: data.repostsResponse[i].numberOfCommentsWitness,
+            numberOfReposts: data.repostsResponse[i].numberOfReposts,
+            numberOfRepostsWitness: data.repostsResponse[i].numberOfRepostsWitness,
         });
       };
 
       setReposts(processedReposts);
+
+    } catch (e: any) {
+        setLoading(false);
+        setErrorMessage(e.message);
+    }
+  };
+
+  const auditReposts = async () => {
+    try {
+      // Remove repost to cause a gap error
+      // reposts.splice(1, 1);
+
+      if (reposts.length === 0) {
+        return;
+      }
+      const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
+      const { PostState, ReactionState, RepostState } = await import('wrdhom');
+
+      const postsContractData = await fetchAccount({
+        publicKey: postsContractAddress
+      }, '/graphql');
+      const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
+      //console.log('fetchedPostsRoot: ' + fetchedPostsRoot);
+
+      const reactionsContractData = await fetchAccount({
+        publicKey: reactionsContractAddress
+      }, '/graphql');
+      const fetchedTargetsReactionsCountersRoot = reactionsContractData.account?.zkapp?.appState[2].toString();
+      //console.log('fetchedTargetsReactionsCountersRoot: ' + fetchedTargetsReactionsCountersRoot);
+      const fetchedReactionsRoot = reactionsContractData.account?.zkapp?.appState[3].toString();
+      //console.log('fetchedReactionsRoot: ' + fetchedReactionsRoot);
+
+      const commentsContractData = await fetchAccount({
+        publicKey: commentsContractAddress
+      }, '/graphql');
+      const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
+      //console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
+
+      const repostsContractData = await fetchAccount({
+        publicKey: repostsContractAddress
+      }, '/graphql');
+      const fetchedAllRepostsCounter = repostsContractData.account?.zkapp?.appState[0].toString();
+      //console.log('fetchedAllRepostsCounter: ' + fetchedAllRepostsCounter);
+      const fetchedTargetsRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[2].toString();
+      //console.log('fetchedTargetsRepostsCountersRoot: ' + fetchedTargetsRepostsCountersRoot);
+      const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
+      //console.log('fetchedRepostsRoot: ' + fetchedRepostsRoot);
+
+      // Remove reaction to cause a gap error
+      // reposts[0].processedReactions.splice(1, 1);
+
+      console.log(reposts);
+
+      for (let i = 0; i < reposts.length; i++) {
+        console.log('repost' + i)
+        const repostWitness = MerkleMapWitness.fromJSON(reposts[i].repostWitness);
+        const postWitness = MerkleMapWitness.fromJSON(reposts[i].postWitness);
+        const numberOfReactionsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfReactionsWitness);
+        const numberOfCommentsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfCommentsWitness);
+        const numberOfRepostsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfRepostsWitness);
+        const repostState = RepostState.fromJSON(reposts[i].repostState);
+        const postState = PostState.fromJSON(reposts[i].postState);
+        let calculatedRepostsRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
+        //console.log('calculatedRepostsRoot: ' + calculatedRepostsRoot);
+        let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
+        //console.log('calculatedPostsRoot: ' + calculatedPostsRoot);
+        let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKey(
+          Field(reposts[i].numberOfReactions))[0].toString();
+        //console.log('calculatedTargetsReactionsCountersRoot: ' + calculatedTargetsReactionsCountersRoot);
+        let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
+          Field(reposts[i].numberOfComments))[0].toString();
+        //console.log('calculatedTargetsCommentsCountersRoot: ' + calculatedTargetsCommentsCountersRoot);
+        let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
+          Field(reposts[i].numberOfReposts))[0].toString();
+        //console.log('calculatedTargetsRepostsCountersRoot: ' + calculatedTargetsRepostsCountersRoot);
+        const processedReactions: ProcessedReactions[] = [];
+
+        // Introduce different root to cause a root mismatch
+        /*if (i === 0) {
+          calculatedRepostsRoot = 'badRoot'
+        }*/
+
+        // Introduce different block-length to cause block mismatch
+        /*if (i === 0) {
+          reposts[i].repostState.repostBlockHeight = 10000000000;
+        }*/
+
+        // Introduce different content to cause content mismatch
+        /*if (i === 0) {
+          reposts[i].content = 'wrong content';
+        }*/
+
+        // Audit that all reposts are between the block range in the user query
+        if (reposts[i].repostState.repostBlockHeight < fromBlockReposts ||  reposts[i].repostState.repostBlockHeight > toBlockReposts) {
+          throw new Error(`Block-length ${reposts[i].repostState.repostBlockHeight} for Repost ${reposts[i].repostState.allRepostsCounter} isn't between the block range\
+          ${fromBlockReposts} to ${toBlockReposts}`);
+        }
+
+        // Audit that the on-chain state matches the off-chain state
+
+        if (fetchedRepostsRoot !== calculatedRepostsRoot) {
+          throw new Error(`Repost ${reposts[i].repostState.allRepostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
+          manipulating results for your query.`);
+        }    
+
+        if (fetchedPostsRoot !== calculatedPostsRoot) {
+          throw new Error(`Post ${reposts[i].postState.allPostsCounter} from Repost ${reposts[i].repostState.allRepostsCounter} has different root than zkApp state.\
+          The server may be experiencing some issues or manipulating results for your query.`);
+        }
+
+        if (fetchedTargetsReactionsCountersRoot !== calculatedTargetsReactionsCountersRoot ) {
+          throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
+          from Repost ${reposts[i].repostState.allRepostsCounter} but the contract accounts for a different amount. The server may be experiencing issues or\
+          manipulating responses.`);
+        }
+
+        if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
+          throw new Error(`Server stated that there are ${reposts[i].numberOfComments} comments for Post ${reposts[i].postState.allPostsCounter}\
+          from Repost ${reposts[i].repostState.allRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
+          manipulating responses.`);
+        }
+
+        if (fetchedTargetsRepostsCountersRoot !== calculatedTargetsRepostsCountersRoot) {
+          throw new Error(`Server stated that there are ${reposts[i].numberOfReposts} reposts for Post ${reposts[i].postState.allPostsCounter}\
+          from Repost ${reposts[i].repostState.allRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
+          manipulating responses.`);
+        }
+
+        // Audit that the content of the reposted posts matches the contentID signed by the post author
+        const cid = await getCID(reposts[i].content);
+        if (cid !== reposts[i].postContentID) {
+          throw new Error(`The content for Post ${reposts[i].postState.allPostsCounter} from Repost ${reposts[i].repostState.allRepostsCounter} doesn't match\
+          the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`);
+        }
+
+        // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
+        if(reposts[i].processedReactions.length !== reposts[i].numberOfReactions) {
+          throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
+          from Repost ${reposts[i].repostState.allRepostsCounter} but it only provided ${reposts[i].processedReactions.length} reactions. The server\
+          may be experiencing some issues or manipulating the content it shows.`)
+        }
+
+        for (let r = 0; r < reposts[i].processedReactions.length; r++) {
+          const reactionStateJSON = JSON.parse(reposts[i].processedReactions[r].reactionState);
+          const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].processedReactions[r].reactionWitness);
+          const reactionState = ReactionState.fromJSON(reactionStateJSON);
+          let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
+          //console.log('calculatedReactionRoot: ' + calculatedReactionRoot);
+
+          // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
+          if (fetchedReactionsRoot !== calculatedReactionRoot) {
+            throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
+            The server may be experiencing some issues or manipulating results for the reactions to Post ${reposts[i].postState.allPostsCounter}.`);
+          }
+        }
+      };
     } catch (e: any) {
         setLoading(false);
         setErrorMessage(e.message);
@@ -523,15 +564,23 @@ export default function GetPosts({
     (async () => {
       await fetchPosts();
       await fetchReposts();
-      setTriggerAudit(!triggerAudit);
+      setTriggerAudit1(!triggerAudit1);
     })();
   }, [getPosts]);
+
+  useEffect(() => {
+    (async () => {
+      await auditPosts();
+      await auditReposts();
+      setTriggerAudit2(!triggerAudit2);
+    })();
+  }, [triggerAudit1]);
 
   useEffect(() => {
     auditNoMissingPosts();
     auditNoMissingReposts();
     mergeAndSortContent();
-  }, [triggerAudit]);
+  }, [triggerAudit2]);
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh] ${hideGetPosts}`}>
@@ -602,37 +651,44 @@ export default function GetPosts({
 
 export type ProcessedReactions = {
   reactionState: JSON,
-  reactionEmoji: string,
-  reactionsRoot: string
+  reactionWitness: JSON,
+  reactionEmoji: string
 };
 
 export type ProcessedPosts = {
   postState: JSON,
+  postWitness: JSON,
   postKey: string,
   postContentID: string,
   content: string,
   shortPosterAddressEnd: string,
-  postsRoot: string,
   processedReactions: ProcessedReactions[],
   top3Emojis: string[],
   numberOfReactions: number,
+  numberOfReactionsWitness: JSON,
   numberOfComments: number,
-  numberOfReposts: number
+  numberOfCommentsWitness: JSON,
+  numberOfReposts: number,
+  numberOfRepostsWitness: JSON
 };
 
 export type ProcessedReposts = {
   repostState: JSON,
+  repostWitness: JSON,
   repostKey: string,
   shortReposterAddressEnd: string,
   postState: JSON,
+  postWitness: JSON,
   postKey: string,
   postContentID: string,
   content: string,
   shortPosterAddressEnd: string,
-  postsRoot: string,
   processedReactions: ProcessedReactions[],
   top3Emojis: string[],
   numberOfReactions: number,
+  numberOfReactionsWitness: JSON,
   numberOfComments: number,
-  numberOfReposts: number
+  numberOfCommentsWitness: JSON,
+  numberOfReposts: number,
+  numberOfRepostsWitness: JSON
 };
