@@ -73,7 +73,7 @@ export default function GetComments({
   
           processedData.push({
               commentState: commentStateJSON,
-              commentWitness: data.commentResponse[i].commentWitness,
+              commentWitness: JSON.parse(data.commentsResponse[i].commentWitness),
               commentKey: data.commentsResponse[i].commentKey,
               commentContentID: data.commentsResponse[i].commentContentID,
               content: data.commentsResponse[i].content,
@@ -102,10 +102,9 @@ export default function GetComments({
         console.log('fetchedCommentsRoot: ' + fetchedCommentsRoot);
   
         // Remove comment to cause a gap error
-        comments.splice(1, 1);
+        // comments.splice(1, 1);
         
         for (let i = 0; i < comments.length; i++) {
-          const shortCommenterAddressEnd = comments[i].commentState.commenterAddress.slice(-12);
           const commentWitness = MerkleMapWitness.fromJSON(comments[i].commentWitness);
           const commentState = CommentState.fromJSON(comments[i].commentState);
           let calculatedCommentsRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
