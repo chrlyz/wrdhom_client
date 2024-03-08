@@ -87,7 +87,7 @@ export default function GetPosts({
 
           processedReactions.push({
             reactionState: reactionStateJSON,
-            reactionWitness: data.postsResponse[i].reactionsResponse[r].reactionWitness,
+            reactionWitness: JSON.parse(data.postsResponse[i].reactionsResponse[r].reactionWitness),
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint)
           });
         }
@@ -103,7 +103,7 @@ export default function GetPosts({
 
         processedPosts.push({
             postState: postStateJSON,
-            postWitness: data.postsResponse[i].postWitness,
+            postWitness: JSON.parse(data.postsResponse[i].postWitness),
             postKey: data.postsResponse[i].postKey,
             postContentID: data.postsResponse[i].postContentID,
             content: data.postsResponse[i].content,
@@ -111,11 +111,11 @@ export default function GetPosts({
             processedReactions: processedReactions,
             top3Emojis: top3Emojis,
             numberOfReactions: data.postsResponse[i].numberOfReactions,
-            numberOfReactionsWitness: data.postsResponse[i].numberOfReactionsWitness,
+            numberOfReactionsWitness: JSON.parse(data.postsResponse[i].numberOfReactionsWitness),
             numberOfComments: data.postsResponse[i].numberOfComments,
-            numberOfCommentsWitness: data.postsResponse[i].numberOfCommentsWitness,
+            numberOfCommentsWitness: JSON.parse(data.postsResponse[i].numberOfCommentsWitness),
             numberOfReposts: data.postsResponse[i].numberOfReposts,
-            numberOfRepostsWitness: data.postsResponse[i].numberOfRepostsWitness
+            numberOfRepostsWitness: JSON.parse(data.postsResponse[i].numberOfRepostsWitness)
         });
       };
 
@@ -164,7 +164,7 @@ export default function GetPosts({
       //console.log('fetchedTargetsRepostsCountersRoot: ' + fetchedTargetsRepostsCountersRoot);
 
       // Remove reaction to cause a gap error
-      // posts[0].processedReactions.splice(1, 1);
+      // posts[4].processedReactions.splice(1, 1);
 
       console.log(posts)
 
@@ -246,7 +246,7 @@ export default function GetPosts({
         }
 
         for (let r = 0; r < posts[i].processedReactions.length; r++) {
-          const reactionStateJSON = JSON.parse(posts[i].processedReactions[r].reactionState);
+          const reactionStateJSON = posts[i].processedReactions[r].reactionState;
           const reactionWitness = MerkleMapWitness.fromJSON(posts[i].processedReactions[r].reactionWitness);
           const reactionState = ReactionState.fromJSON(reactionStateJSON);
           let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
@@ -297,7 +297,7 @@ export default function GetPosts({
 
           processedReactions.push({
             reactionState: reactionStateJSON,
-            reactionWitness: data.repostsResponse[i].reactionsResponse[r].reactionWitness,
+            reactionWitness: JSON.parse(data.repostsResponse[i].reactionsResponse[r].reactionWitness),
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
           });
         }
@@ -313,11 +313,11 @@ export default function GetPosts({
 
         processedReposts.push({
             repostState: repostStateJSON,
-            repostWitness: data.repostsResponse[i].repostWitness,
+            repostWitness: JSON.parse(data.repostsResponse[i].repostWitness),
             repostKey: data.repostsResponse[i].repostKey,
             shortReposterAddressEnd: shortReposterAddressEnd,
             postState: postStateJSON,
-            postWitness: data.repostsResponse[i].postWitness,
+            postWitness: JSON.parse(data.repostsResponse[i].postWitness),
             postKey: data.repostsResponse[i].postKey,
             postContentID: data.repostsResponse[i].postContentID,
             content: data.repostsResponse[i].content,
@@ -325,11 +325,11 @@ export default function GetPosts({
             processedReactions: processedReactions,
             top3Emojis: top3Emojis,
             numberOfReactions: data.repostsResponse[i].numberOfReactions,
-            numberOfReactionsWitness: data.repostsResponse[i].numberOfReactionsWitness,
+            numberOfReactionsWitness: JSON.parse(data.repostsResponse[i].numberOfReactionsWitness),
             numberOfComments: data.repostsResponse[i].numberOfComments,
-            numberOfCommentsWitness: data.repostsResponse[i].numberOfCommentsWitness,
+            numberOfCommentsWitness: JSON.parse(data.repostsResponse[i].numberOfCommentsWitness),
             numberOfReposts: data.repostsResponse[i].numberOfReposts,
-            numberOfRepostsWitness: data.repostsResponse[i].numberOfRepostsWitness,
+            numberOfRepostsWitness: JSON.parse(data.repostsResponse[i].numberOfRepostsWitness),
         });
       };
 
@@ -383,7 +383,7 @@ export default function GetPosts({
       //console.log('fetchedRepostsRoot: ' + fetchedRepostsRoot);
 
       // Remove reaction to cause a gap error
-      // reposts[0].processedReactions.splice(1, 1);
+      // reposts[2].processedReactions.splice(1, 1);
 
       console.log(reposts);
 
@@ -477,7 +477,7 @@ export default function GetPosts({
         }
 
         for (let r = 0; r < reposts[i].processedReactions.length; r++) {
-          const reactionStateJSON = JSON.parse(reposts[i].processedReactions[r].reactionState);
+          const reactionStateJSON = reposts[i].processedReactions[r].reactionState;
           const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].processedReactions[r].reactionWitness);
           const reactionState = ReactionState.fromJSON(reactionStateJSON);
           let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
