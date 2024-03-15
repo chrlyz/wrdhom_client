@@ -8,6 +8,10 @@ const nextConfig = {
             destination: "http://localhost:3001/posts",
           },
           {
+            source: "/posts/delete",
+            destination: "http://localhost:3001/posts/delete",
+          },
+          {
             source: "/reactions",
             destination: "http://localhost:3001/reactions",
           },

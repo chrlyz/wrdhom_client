@@ -7,6 +7,7 @@ import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import RepostButton from './repost-button';
 import CreatePost from './create-post';
+import DeleteButton from './delete-button';
 
 export default function GetPosts({
   getPosts,
@@ -23,7 +24,8 @@ export default function GetPosts({
   postsContractAddress,
   reactionsContractAddress,
   commentsContractAddress,
-  repostsContractAddress
+  repostsContractAddress,
+  account
 }: {
   getPosts: boolean,
   howManyPosts: number,
@@ -39,7 +41,8 @@ export default function GetPosts({
   postsContractAddress: string,
   reactionsContractAddress: string,
   commentsContractAddress: string,
-  repostsContractAddress: string
+  repostsContractAddress: string,
+  account: string[]
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [reposts, setReposts] = useState([] as any[]);
@@ -636,6 +639,13 @@ export default function GetPosts({
                   {walletConnected && <RepostButton
                     targetKey={post.postKey}
                   />}
+                  {account[0] === post.postState.posterAddress ?
+                    <DeleteButton
+                      postState={post.postState}
+                      postKey={post.postKey}  
+                      />
+                      : null
+                  }
                 </div>
             </div>
         );
