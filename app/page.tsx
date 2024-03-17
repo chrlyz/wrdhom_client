@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import InstallWallet from '@/app/install-wallet';
 import ConnectWallet from './connect-wallet';
-import GetPosts from './get-posts';
+import GetGlobalPosts from './get-global-posts';
 import QuerySettings from './query-settings';
-import GetProfile from './get-profile';
+import GetProfilePosts from './get-profile-posts';
 import GetComments from './get-comments';
 
 export default function Home() {
@@ -14,13 +14,13 @@ export default function Home() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
-  const [getPosts, setGetPosts] = useState(false);
+  const [getPosts, setGetGlobalPosts] = useState(false);
   const [howManyPosts, setHowManyPosts] = useState(3);
   const [fromBlock, setFromBlock] = useState(0);
   const [toBlock, setToBlock] = useState(100_000);
   const [getProfile, setGetProfile] = useState(false);
   const [profileAddress, setProfileAddress] = useState('');
-  const [hideGetPosts, setHideGetPosts] = useState('');
+  const [hideGetGlobalPosts, setHideGetGlobalPosts] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [howManyComments, setHowManyComments] = useState(1);
   const [fromBlockComments, setFromBlockComments] = useState(0);
@@ -74,7 +74,7 @@ export default function Home() {
 
   useEffect(() => {
     if (profileAddress !== '') {
-      setHideGetPosts('hidden');
+      setHideGetGlobalPosts('hidden');
       setShowComments(false);
       setCommentTarget(null);
       setShowProfile(true);
@@ -83,7 +83,7 @@ export default function Home() {
 
   useEffect(() => {
     if (commentTarget !== null) {
-      setHideGetPosts('hidden');
+      setHideGetGlobalPosts('hidden');
       setShowProfile(false);
       setProfileAddress('');
       setShowComments(true);
@@ -102,12 +102,12 @@ export default function Home() {
           {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
         </div>
       </div>
-      <GetPosts getPosts={getPosts}
+      <GetGlobalPosts getPosts={getPosts}
         howManyPosts={howManyPosts}
         fromBlock={fromBlock}
         toBlock={toBlock}
         setProfileAddress={setProfileAddress}
-        hideGetPosts={hideGetPosts}
+        hideGetGlobalPosts={hideGetGlobalPosts}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
         howManyReposts={howManyReposts}
@@ -119,7 +119,7 @@ export default function Home() {
         repostsContractAddress={repostsContractAddress}
         account={account}
       />
-      {showProfile && <GetProfile
+      {showProfile && <GetProfilePosts
         getProfile={getProfile}
         profileAddress={profileAddress}
         setProfileAddress={setProfileAddress}
@@ -127,7 +127,7 @@ export default function Home() {
         fromBlock={fromBlock}
         toBlock={toBlock}
         setShowProfile={setShowProfile}
-        setHideGetPosts={setHideGetPosts}
+        setHideGetGlobalPosts={setHideGetGlobalPosts}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
         howManyReposts={howManyReposts}
@@ -137,6 +137,7 @@ export default function Home() {
         reactionsContractAddress={reactionsContractAddress}
         commentsContractAddress={commentsContractAddress}
         repostsContractAddress={repostsContractAddress}
+        account={account}
       />}
       {showComments && <GetComments
         commentTarget={commentTarget}
@@ -147,7 +148,7 @@ export default function Home() {
         getComments={getComments}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
-        setHideGetPosts={setHideGetPosts}
+        setHideGetGlobalPosts={setHideGetGlobalPosts}
         setShowComments={setShowComments}
         commentsContractAddress={commentsContractAddress}
       />}
@@ -178,7 +179,7 @@ export default function Home() {
             <div className="p-4 w-full mb-32">
               <button 
                 className="w-full p-2 bg-black text-white"
-                onClick={() => setGetPosts(!getPosts)}>
+                onClick={() => setGetGlobalPosts(!getPosts)}>
                 Update Feed
               </button>
             </div>
