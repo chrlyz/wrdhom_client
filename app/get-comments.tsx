@@ -14,7 +14,7 @@ export default function GetComments({
   getComments,
   walletConnected,
   setCommentTarget,
-  setHideGetPosts,
+  setHideGetGlobalPosts,
   setShowComments,
   commentsContractAddress
 }: {
@@ -26,7 +26,7 @@ export default function GetComments({
   getComments: boolean,
   walletConnected: boolean,
   setCommentTarget: Dispatch<SetStateAction<any>>,
-  setHideGetPosts: Dispatch<SetStateAction<string>>,
+  setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
   setShowComments: Dispatch<SetStateAction<boolean>>,
   commentsContractAddress: string
 }) {
@@ -170,7 +170,7 @@ export default function GetComments({
         setShowComments(false);
         setCommentTarget(null);
         setProfileAddress('');
-        setHideGetPosts('');
+        setHideGetGlobalPosts('');
     }
   
     useEffect(() => {
