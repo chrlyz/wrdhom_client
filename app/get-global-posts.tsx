@@ -560,7 +560,7 @@ export default function GetGlobalPosts({
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh] ${hideGetGlobalPosts}`}>
-      {loading ? null : walletConnected && <CreatePost />}
+      {loading ? null : walletConnected && <CreatePost account={account} />}
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
       {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
       {!loading && Array.isArray(mergedContent) && mergedContent.map((post) => {

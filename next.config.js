@@ -12,6 +12,10 @@ const nextConfig = {
             destination: "http://localhost:3001/posts/delete",
           },
           {
+            source: "/posts/restore",
+            destination: "http://localhost:3001/posts/restore",
+          },
+          {
             source: "/reactions",
             destination: "http://localhost:3001/reactions",
           },
