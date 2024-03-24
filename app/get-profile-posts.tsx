@@ -7,7 +7,7 @@ import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import RepostButton from './repost-button';
 import { ProcessedReactions, ProcessedPosts, ProcessedReposts } from './get-global-posts';
-import DeleteButton from './delete-button';
+import DeletePostButton from './delete-post-button';
 
 export default function GetProfilePosts({
   getProfile,
@@ -641,7 +641,7 @@ export default function GetProfilePosts({
                     targetKey={post.postKey}
                   />}
                   {account[0] === post.postState.posterAddress ?
-                    <DeleteButton
+                    <DeletePostButton
                       postState={post.postState}
                       postKey={post.postKey}  
                       />

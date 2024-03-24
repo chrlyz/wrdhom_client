@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction } from "react";
 import ReactionButton from './reaction-button';
 import CommentButton from './comment-button';
 import RepostButton from './repost-button';
+import DeleteCommentButton from './delete-comment-button';
 
 export default function GetComments({
   commentTarget,
@@ -16,7 +17,8 @@ export default function GetComments({
   setCommentTarget,
   setHideGetGlobalPosts,
   setShowComments,
-  commentsContractAddress
+  commentsContractAddress,
+  account
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -28,7 +30,8 @@ export default function GetComments({
   setCommentTarget: Dispatch<SetStateAction<any>>,
   setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
   setShowComments: Dispatch<SetStateAction<boolean>>,
-  commentsContractAddress: string
+  commentsContractAddress: string,
+  account: string[]
 }) {
     const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
@@ -251,6 +254,17 @@ export default function GetComments({
                         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                             <p>{comment.content}</p>
                         </div>
+                        <div className="flex flex-row">
+                        <div className="flex-grow"></div>
+                          {account[0] === comment.commentState.commenterAddress ?
+                            <DeleteCommentButton
+                              commentTarget={commentTarget}
+                              commentState={comment.commentState}
+                              commentKey={comment.commentKey}  
+                            />
+                          : null
+                  }
+                </div>
                     </div>
                 );
             })}

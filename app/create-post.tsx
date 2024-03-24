@@ -12,6 +12,7 @@ export default function CreatePost({
 
     const handleClick = async () => {
         const cid = await getCID(post);
+        console.log(cid);
         setPostCID(cid);
     }
 

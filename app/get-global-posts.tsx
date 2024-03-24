@@ -7,7 +7,7 @@ import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import RepostButton from './repost-button';
 import CreatePost from './create-post';
-import DeleteButton from './delete-button';
+import DeleteButton from './delete-post-button';
 
 export default function GetGlobalPosts({
   getPosts,
@@ -133,7 +133,7 @@ export default function GetGlobalPosts({
   const auditPosts = async () => {
     try {
       // Remove post to cause a gap error
-      // posts.splice(1, 1);
+      //posts.splice(0, 2);
 
       const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
       const { PostState, ReactionState } = await import('wrdhom');
