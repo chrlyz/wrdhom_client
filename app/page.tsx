@@ -31,10 +31,10 @@ export default function Home() {
   const [howManyReposts, setHowManyReposts] = useState(1);
   const [fromBlockReposts, setFromBlockReposts] = useState(0);
   const [toBlockReposts, setToBlockReposts] = useState(100_000);
-  const [postsContractAddress, setPostsContractAddress] = useState('B62qkCkLrnSmMAsBNjZM69grEk4huwgFfQHW5CozMao27WCSr6MYLkN');
-  const [reactionsContractAddress, setReactionsContractAddress] = useState('B62qjWkBx7zW3owMH6HMWgVoAMdWxHeCNbaQJY2yE248S48hQs5s5x7');
-  const [commentsContractAddress, setCommentsContractAddress] =  useState('B62qnLfCLwEhTK8kmrkrWAt6pUAVjZJo1dWff3qUC8BTagtgpSJuSuB');
-  const [repostsContractAddress, setRepostsContractAddress] = useState('B62qq8YQFZWtUzqSpxnBw2AcJSF7N9Yuueg3BFCAL8fkf9Pdr4t8vhk');
+  const [postsContractAddress, setPostsContractAddress] = useState('B62qnWkK9uYaWHDLeM6TEnUGki1K7MW8Zit7RAucZ26mLh2BfAA9L1h');
+  const [reactionsContractAddress, setReactionsContractAddress] = useState('B62qnyXXN8e999ttGzBxtf3yxBo8QAn4GNmPFiB7RGpZTpSUpWUu6ot');
+  const [commentsContractAddress, setCommentsContractAddress] =  useState('B62qjnyz14TRZ3kp3EShZgVJBYRyWfVuE8RFPNQMkftuJezue2BUUyf');
+  const [repostsContractAddress, setRepostsContractAddress] = useState('B62qmHKp87QoE2uGhUL97b8hE4HDT4nQQ1oJm75swFURPKTXbwR6ypF');
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
@@ -151,6 +151,7 @@ export default function Home() {
         setHideGetGlobalPosts={setHideGetGlobalPosts}
         setShowComments={setShowComments}
         commentsContractAddress={commentsContractAddress}
+        account={account}
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
