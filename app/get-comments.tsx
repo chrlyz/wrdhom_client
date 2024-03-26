@@ -112,11 +112,17 @@ export default function GetComments({
           const commentState = CommentState.fromJSON(comments[i].commentState);
           let calculatedCommentsRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
           console.log('calculatedCommentsRoot: ' + calculatedCommentsRoot);
-  
+
           // Introduce different root to cause a root mismatch
           /*if (i === 1) {
             calculatedCommentsRoot = 'badRoot'
           }*/
+
+          // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
+          if (fetchedCommentsRoot !== calculatedCommentsRoot) {
+            throw new Error(`Comment ${comments[i].commentState.targetCommentsCounter} has different root than zkApp state. The server may be experiencing some issues or\
+            manipulating results for your query.`);
+          }
   
           // Introduce different block-length to cause block mismatch
           /*if (i === 1) {
@@ -127,24 +133,20 @@ export default function GetComments({
           /*if (i === 1) {
             comments[i].content = 'wrong content';
           }*/
-  
-          // Audit that all comments are between the block range in the user query
-          if (comments[i].commentState.commentBlockHeight < fromBlockComments ||  comments[i].commentState.commentBlockHeight > toBlockComments) {
-            throw new Error(`Block-length ${comments[i].commentState.commentBlockHeight} for Comment ${comments[i].commentState.targetCommentsCounter} isn't between the block range\
-            ${fromBlockComments} to ${toBlockComments}`);
-          }
-  
-          // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
-          if (fetchedCommentsRoot !== calculatedCommentsRoot) {
-            throw new Error(`Comment ${comments[i].commentState.targetCommentsCounter} has different root than zkApp state. The server may be experiencing some issues or\
-            manipulating results for your query.`);
-          }    
-  
-          // Audit that the content of comments matches the contentID signed by the author
-          const cid = await getCID(comments[i].content);
-          if (cid !== comments[i].commentContentID) {
-            throw new Error(`The content for Comment ${comments[i].commentState.targetCommentsCounter} doesn't match the expected contentID. The server may be experiencing\
-            some issues or manipulating the content it shows.`);
+
+          if (Number(comments[i].commentState.deletionBlockHeight) === 0) {
+            // Audit that all comments are between the block range in the user query
+            if (comments[i].commentState.commentBlockHeight < fromBlockComments ||  comments[i].commentState.commentBlockHeight > toBlockComments) {
+              throw new Error(`Block-length ${comments[i].commentState.commentBlockHeight} for Comment ${comments[i].commentState.targetCommentsCounter} isn't between the block range\
+              ${fromBlockComments} to ${toBlockComments}`);
+            }
+    
+            // Audit that the content of comments matches the contentID signed by the author
+            const cid = await getCID(comments[i].content);
+            if (cid !== comments[i].commentContentID) {
+              throw new Error(`The content for Comment ${comments[i].commentState.targetCommentsCounter} doesn't match the expected contentID. The server may be experiencing\
+              some issues or manipulating the content it shows.`);
+            }
           }
         };
 
@@ -167,6 +169,11 @@ export default function GetComments({
           setLoading(false);
           setErrorMessage(e.message);
       }
+    }
+
+    const filterDeleted = () => {
+      const filtered = comments.filter(comment => Number(comment.commentState.deletionBlockHeight) === 0);
+      setComments(filtered);
     }
 
     const goBack = () => {
@@ -195,6 +202,7 @@ export default function GetComments({
     useEffect(() => {
       if (comments.length > 0) {
         auditNoMissingContent();
+        filterDeleted();
       }
     }, [triggerAudit2]);
 

@@ -145,7 +145,6 @@ export default function GetProfilePosts({
       const postsContractData = await fetchAccount({
         publicKey: postsContractAddress
       }, '/graphql');
-      const fetchedUsersPostsCountersRoot = postsContractData.account?.zkapp?.appState[1].toString();
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
 
       const reactionsContractData = await fetchAccount({
@@ -371,7 +370,6 @@ export default function GetProfilePosts({
       const repostsContractData = await fetchAccount({
         publicKey: repostsContractAddress
       }, '/graphql');
-      const fetchedUsersRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[1].toString();
       const fetchedTargetsRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[2].toString();
       const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
 
