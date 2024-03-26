@@ -85,16 +85,6 @@ export default function GetGlobalPosts({
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
         const processedReactions: ProcessedReactions[] = [];
 
-        for (let r = 0; r < data.postsResponse[i].reactionsResponse.length; r++) {
-          const reactionStateJSON = JSON.parse(data.postsResponse[i].reactionsResponse[r].reactionState);
-
-          processedReactions.push({
-            reactionState: reactionStateJSON,
-            reactionWitness: JSON.parse(data.postsResponse[i].reactionsResponse[r].reactionWitness),
-            reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint)
-          });
-        }
-
         const emojis = processedReactions.map(reaction => reaction.reactionEmoji);
         const frequencyMap = new Map<string, number>();
         emojis.forEach(emoji => {
@@ -141,7 +131,6 @@ export default function GetGlobalPosts({
       const postsContractData = await fetchAccount({
         publicKey: postsContractAddress
       }, '/graphql');
-      const fetchedAllPostsCounter = postsContractData.account?.zkapp?.appState[0].toString();
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
 
       const reactionsContractData = await fetchAccount({
@@ -362,7 +351,6 @@ export default function GetGlobalPosts({
       const repostsContractData = await fetchAccount({
         publicKey: repostsContractAddress
       }, '/graphql');
-      const fetchedAllRepostsCounter = repostsContractData.account?.zkapp?.appState[0].toString();
       const fetchedTargetsRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[2].toString();
       const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
 
