@@ -83,8 +83,17 @@ export default function GetGlobalPosts({
       for (let i = 0; i < data.postsResponse.length; i++) {
         const postStateJSON = JSON.parse(data.postsResponse[i].postState);
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
-        const processedReactions: ProcessedReactions[] = [];
 
+        const processedReactions: ProcessedReactions[] = [];
+        for (let r = 0; r < data.postsResponse[i].embeddedReactions.length; r++) {
+          const reactionStateJSON = JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionState);
+
+          processedReactions.push({
+            reactionState: reactionStateJSON,
+            reactionWitness: JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionWitness),
+            reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint)
+          });
+        }
         const emojis = processedReactions.map(reaction => reaction.reactionEmoji);
         const frequencyMap = new Map<string, number>();
         emojis.forEach(emoji => {
@@ -93,6 +102,19 @@ export default function GetGlobalPosts({
         });
         const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
         const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
+
+        const processedComments: ProcessedComments[] = [];
+        let numberOfDeletedComments = 0;
+        for (let c = 0; c < data.postsResponse[i].embeddedComments.length; c++) {
+          const commentStateJSON = JSON.parse(data.postsResponse[i].embeddedComments[c].commentState);
+
+          processedComments.push({
+            commentState: commentStateJSON,
+            commentWitness: JSON.parse(data.postsResponse[i].embeddedComments[c].commentWitness)
+          });
+          numberOfDeletedComments += Number(commentStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
+        }
+        const numberOfNonDeletedComments = Number(data.postsResponse[i].numberOfComments) - numberOfDeletedComments;
 
         processedPosts.push({
             postState: postStateJSON,
@@ -105,8 +127,10 @@ export default function GetGlobalPosts({
             top3Emojis: top3Emojis,
             numberOfReactions: data.postsResponse[i].numberOfReactions,
             numberOfReactionsWitness: JSON.parse(data.postsResponse[i].numberOfReactionsWitness),
+            processedComments: processedComments,
             numberOfComments: data.postsResponse[i].numberOfComments,
             numberOfCommentsWitness: JSON.parse(data.postsResponse[i].numberOfCommentsWitness),
+            numberOfNonDeletedComments: numberOfNonDeletedComments,
             numberOfReposts: data.postsResponse[i].numberOfReposts,
             numberOfRepostsWitness: JSON.parse(data.postsResponse[i].numberOfRepostsWitness)
         });
@@ -126,7 +150,7 @@ export default function GetGlobalPosts({
       //posts.splice(0, 2);
 
       const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
-      const { PostState, ReactionState } = await import('wrdhom');
+      const { PostState, ReactionState, CommentState } = await import('wrdhom');
 
       const postsContractData = await fetchAccount({
         publicKey: postsContractAddress
@@ -143,6 +167,7 @@ export default function GetGlobalPosts({
         publicKey: commentsContractAddress
       }, '/graphql');
       const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
+      const fetchedCommentsRoot = commentsContractData.account?.zkapp?.appState[3].toString();
 
       const repostsContractData = await fetchAccount({
         publicKey: repostsContractAddress
@@ -238,6 +263,26 @@ export default function GetGlobalPosts({
               The server may be experiencing some issues or manipulating results for the reactions to Post ${posts[i].postState.allPostsCounter}.`);
             }
           }
+
+          // Audit that the number of comments the server retrieves, matches the number of comments accounted on the zkApp state
+          if(posts[i].processedComments.length !== posts[i].numberOfComments) {
+            throw new Error(`Server stated that there are ${posts[i].numberOfComments} comments for post ${posts[i].postState.allPostsCounter},\
+            but it only provided ${posts[i].processedComments.length} comments. The server may be experiencing some issues or manipulating
+            the content it shows.`)
+          }
+  
+          for (let c = 0; c < posts[i].processedComments.length; c++) {
+            const commentStateJSON = posts[i].processedComments[c].commentState;
+            const commentWitness = MerkleMapWitness.fromJSON(posts[i].processedComments[c].commentWitness);
+            const commentState = CommentState.fromJSON(commentStateJSON);
+            let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
+  
+            // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
+            if (fetchedCommentsRoot !== calculatedCommentRoot) {
+              throw new Error(`Comment ${commentStateJSON.allCommentsCounter} has different root than zkApp state.\
+              The server may be experiencing some issues or manipulating results for the comments to Post ${posts[i].postState.allPostsCounter}.`);
+            }
+          }
         }
       };
     } catch (e: any) {
@@ -273,12 +318,12 @@ export default function GetGlobalPosts({
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
         const processedReactions: ProcessedReactions[] = [];
 
-        for (let r = 0; r < data.repostsResponse[i].reactionsResponse.length; r++) {
-          const reactionStateJSON = JSON.parse(data.repostsResponse[i].reactionsResponse[r].reactionState);
+        for (let r = 0; r < data.repostsResponse[i].embeddedReactions.length; r++) {
+          const reactionStateJSON = JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionState);
 
           processedReactions.push({
             reactionState: reactionStateJSON,
-            reactionWitness: JSON.parse(data.repostsResponse[i].reactionsResponse[r].reactionWitness),
+            reactionWitness: JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionWitness),
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
           });
         }
@@ -475,6 +520,15 @@ export default function GetGlobalPosts({
             The server may be experiencing some issues or censoring reactions.`);
           }
         }
+
+        for (let c = 0; c < Number(posts[i].processedComments.length)-1; c++) {
+          if (Number(posts[i].processedComments[c].commentState.targetCommentsCounter)
+          !== Number(posts[i].processedComments[c+1].commentState.targetCommentsCounter)+1) {
+            throw new Error(`Gap between Comments ${posts[i].processedComments[c].commentState.targetCommentsCounter} and\
+            ${posts[i].processedComments[c+1].commentState.targetCommentsCounter}, from Post ${posts[i].postState.allPostsCounter}\
+            The server may be experiencing some issues or censoring comments.`);
+          }
+        }
       }
     } catch (e: any) {
         setLoading(false);
@@ -581,13 +635,13 @@ export default function GetGlobalPosts({
                 <div className="flex flex-row">
                   {post.top3Emojis.map((emoji: string) => emoji)}
                   <p className="text-xs ml-1 mt-2">{post.numberOfReactions > 0 ? post.numberOfReactions : null}</p>
-                  {post.numberOfComments > 0 ? <button
+                  {post.numberOfNonDeletedComments > 0 ? <button
                   className="hover:text-lg ml-3"
                   onClick={() => setCommentTarget(post)}
                   >
                     <FontAwesomeIcon icon={faComments} />
                   </button> : null}
-                  <p className="text-xs ml-1 mt-2">{post.numberOfComments > 0 ? post.numberOfComments : null}</p>
+                  <p className="text-xs ml-1 mt-2">{post.numberOfNonDeletedComments > 0 ? post.numberOfNonDeletedComments : null}</p>
                   {post.numberOfReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
                   <p className="text-xs ml-1 mt-2">{post.numberOfReposts > 0 ? post.numberOfReposts : null}</p>
                   <div className="flex-grow"></div>
@@ -626,6 +680,11 @@ export type ProcessedReactions = {
   reactionEmoji: string
 };
 
+export type ProcessedComments = {
+  commentState: JSON,
+  commentWitness: JSON
+}
+
 export type ProcessedPosts = {
   postState: JSON,
   postWitness: JSON,
@@ -637,8 +696,10 @@ export type ProcessedPosts = {
   top3Emojis: string[],
   numberOfReactions: number,
   numberOfReactionsWitness: JSON,
+  processedComments: ProcessedComments[],
   numberOfComments: number,
   numberOfCommentsWitness: JSON,
+  numberOfNonDeletedComments: Number,
   numberOfReposts: number,
   numberOfRepostsWitness: JSON
 };
