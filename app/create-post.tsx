@@ -50,16 +50,13 @@ export default function CreatePost({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(signedPost),
                 });
+                const resJSON = await res.json();
 
-                console.log(res);
-                if (await res.text() === 'Restore?') {
+                if (await resJSON.option === 'Restore?') {
                     const restore = confirm('Post already exists but was deleted. Do you want to restore it?');
                     if (restore) {
-                        const { Poseidon, CircuitString, PublicKey } = await import('o1js');
                         const { PostState, fieldToFlagPostsAsRestored } = await import('wrdhom');
-                        const posterAddress = PublicKey.fromBase58(account[0]);
-                        const posterAddressAsField = Poseidon.hash(posterAddress.toFields());
-                        const postKey = Poseidon.hash([posterAddressAsField, CircuitString.fromString(postCID).hash()]);
+                        const postKey = resJSON.postKey;
                         const response = await fetch(`/posts`+
                         `?postKey=${postKey.toString()}`,
                         {

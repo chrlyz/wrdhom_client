@@ -35,12 +35,48 @@ export default function CommentButton({
             signedData: s
         }
 
+
+
         const res = await fetch('/comments', {
             method: `POST`,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(signedComment),
         });
-        console.log(await res.text());
+        const resJSON = await res.json();
+
+        if (await resJSON.option === 'Restore?') {
+            const restore = confirm('Comment already exists but was deleted. Do you want to restore it?');
+            if (restore) {
+                const { CommentState, fieldToFlagCommentsAsRestored } = await import('wrdhom');
+                const commentKey = resJSON.commentKey;
+                const response = await fetch(`/comments`+
+                `?commentKey=${commentKey.toString()}`,
+                {
+                  headers: {'Cache-Control': 'no-cache'}
+                }
+              );
+              const data: any = await response.json();
+              const commentStateJSON = JSON.parse(data.commentState);
+              const commentState = CommentState.fromJSON(commentStateJSON);
+              const s = await (window as any).mina
+                            .signFields({ message: [
+                                commentState.hash().toString(),
+                                fieldToFlagCommentsAsRestored.toString()
+                            ] });
+              const signedCommentRestoration = {
+                targetKey: targetKey,
+                commentKey: commentKey.toString(),
+                signedData: s
+              }
+
+              const restorationRes = await fetch('/comments/restore', {
+                method: `POST`,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(signedCommentRestoration),
+              });
+            }
+        }
+
         setComment('');
         setShowCommentBox(false);
         if (expandCommentBox === '') {
