@@ -6,7 +6,7 @@ import CommentButton from './comment-button';
 import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import RepostButton from './repost-button';
-import { ProcessedReactions, ProcessedPosts, ProcessedReposts } from './get-global-posts';
+import { ProcessedReactions, ProcessedPosts, ProcessedReposts, ProcessedComments } from './get-global-posts';
 import DeletePostButton from './delete-post-button';
 
 export default function GetProfilePosts({
@@ -90,12 +90,12 @@ export default function GetProfilePosts({
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
         const processedReactions: ProcessedReactions[] = [];
 
-        for (let r = 0; r < data.postsResponse[i].reactionsResponse.length; r++) {
-          const reactionStateJSON = JSON.parse(data.postsResponse[i].reactionsResponse[r].reactionState);
+        for (let r = 0; r < data.postsResponse[i].embeddedReactions.length; r++) {
+          const reactionStateJSON = JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionState);
 
           processedReactions.push({
             reactionState: reactionStateJSON,
-            reactionWitness: JSON.parse(data.postsResponse[i].reactionsResponse[r].reactionWitness),
+            reactionWitness: JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionWitness),
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint)
           });
         }
@@ -109,6 +109,19 @@ export default function GetProfilePosts({
         const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
         const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
 
+        const processedComments: ProcessedComments[] = [];
+        let numberOfDeletedComments = 0;
+        for (let c = 0; c < data.postsResponse[i].embeddedComments.length; c++) {
+          const commentStateJSON = JSON.parse(data.postsResponse[i].embeddedComments[c].commentState);
+
+          processedComments.push({
+            commentState: commentStateJSON,
+            commentWitness: JSON.parse(data.postsResponse[i].embeddedComments[c].commentWitness)
+          });
+          numberOfDeletedComments += Number(commentStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
+        }
+        const numberOfNonDeletedComments = Number(data.postsResponse[i].numberOfComments) - numberOfDeletedComments;
+
         processedPosts.push({
           postState: postStateJSON,
           postWitness: JSON.parse(data.postsResponse[i].postWitness),
@@ -120,8 +133,10 @@ export default function GetProfilePosts({
           top3Emojis: top3Emojis,
           numberOfReactions: data.postsResponse[i].numberOfReactions,
           numberOfReactionsWitness: JSON.parse(data.postsResponse[i].numberOfReactionsWitness),
+          processedComments: processedComments,
           numberOfComments: data.postsResponse[i].numberOfComments,
           numberOfCommentsWitness: JSON.parse(data.postsResponse[i].numberOfCommentsWitness),
+          numberOfNonDeletedComments: numberOfNonDeletedComments,
           numberOfReposts: data.postsResponse[i].numberOfReposts,
           numberOfRepostsWitness: JSON.parse(data.postsResponse[i].numberOfRepostsWitness)
       });
@@ -140,7 +155,7 @@ export default function GetProfilePosts({
       // posts.splice(1, 1);
 
       const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
-      const { PostState, ReactionState } = await import('wrdhom');
+      const { PostState, ReactionState, CommentState } = await import('wrdhom');
 
       const postsContractData = await fetchAccount({
         publicKey: postsContractAddress
@@ -157,6 +172,7 @@ export default function GetProfilePosts({
         publicKey: commentsContractAddress
       }, '/graphql');
       const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
+      const fetchedCommentsRoot = commentsContractData.account?.zkapp?.appState[3].toString();
 
       const repostsContractData = await fetchAccount({
         publicKey: repostsContractAddress
@@ -258,6 +274,26 @@ export default function GetProfilePosts({
               The server may be experiencing some issues or manipulating results for the reactions to User Post ${posts[i].postState.userPostsCounter}.`);
             }
           }
+
+          // Audit that the number of comments the server retrieves, matches the number of comments accounted on the zkApp state
+          if(posts[i].processedComments.length !== posts[i].numberOfComments) {
+            throw new Error(`Server stated that there are ${posts[i].numberOfComments} comments for post ${posts[i].postState.allPostsCounter},\
+            but it only provided ${posts[i].processedComments.length} comments. The server may be experiencing some issues or manipulating
+            the content it shows.`)
+          }
+
+          for (let c = 0; c < posts[i].processedComments.length; c++) {
+            const commentStateJSON = posts[i].processedComments[c].commentState;
+            const commentWitness = MerkleMapWitness.fromJSON(posts[i].processedComments[c].commentWitness);
+            const commentState = CommentState.fromJSON(commentStateJSON);
+            let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
+
+            // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
+            if (fetchedCommentsRoot !== calculatedCommentRoot) {
+              throw new Error(`Comment ${commentStateJSON.allCommentsCounter} has different root than zkApp state.\
+              The server may be experiencing some issues or manipulating results for the comments to Post ${posts[i].postState.allPostsCounter}.`);
+            }
+          }
         }
       };
       
@@ -295,12 +331,12 @@ export default function GetProfilePosts({
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
         const processedReactions: ProcessedReactions[] = [];
 
-        for (let r = 0; r < data.repostsResponse[i].reactionsResponse.length; r++) {
-          const reactionStateJSON = JSON.parse(data.repostsResponse[i].reactionsResponse[r].reactionState);
+        for (let r = 0; r < data.repostsResponse[i].embeddedReactions.length; r++) {
+          const reactionStateJSON = JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionState);
 
           processedReactions.push({
             reactionState: reactionStateJSON,
-            reactionWitness: JSON.parse(data.repostsResponse[i].reactionsResponse[r].reactionWitness),
+            reactionWitness: JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionWitness),
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
           });
         }
@@ -619,13 +655,13 @@ export default function GetProfilePosts({
                 <div className="flex flex-row">
                   {post.top3Emojis.map((emoji: string) => emoji)}
                   <p className="text-xs ml-1 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
-                  {post.numberOfComments > 0 ? <button
+                  {post.numberOfNonDeletedComments > 0 ? <button
                   className="hover:text-lg ml-3"
                   onClick={() => setCommentTarget(post)}
                   >
                     <FontAwesomeIcon icon={faComments} />
                   </button> : null}
-                  <p className="text-xs ml-1 mt-2">{post.numberOfComments > 0 ? post.numberOfComments : null}</p>
+                  <p className="text-xs ml-1 mt-2">{post.numberOfNonDeletedComments > 0 ? post.numberOfNonDeletedComments : null}</p>
                   {post.numberOfReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
                   <p className="text-xs ml-1 mt-2">{post.numberOfReposts > 0 ? post.numberOfReposts : null}</p>
                   <div className="flex-grow"></div>
