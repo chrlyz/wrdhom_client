@@ -292,7 +292,7 @@ export default function GetGlobalPosts({
   };
 
   const fetchReposts = async () => {
-    //try {
+    try {
       const response = await fetch(`/reposts`+
         `?howMany=${howManyReposts}`+
         `&fromBlock=${fromBlockReposts}`+
@@ -376,10 +376,10 @@ export default function GetGlobalPosts({
 
       setReposts(processedReposts);
 
-   /* } catch (e: any) {
+    } catch (e: any) {
         setLoading(false);
         setErrorMessage(e.message);
-    }*/
+    }
   };
 
   const auditReposts = async () => {
