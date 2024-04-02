@@ -350,6 +350,19 @@ export default function GetProfilePosts({
         const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
         const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
 
+        const processedComments: ProcessedComments[] = [];
+        let numberOfDeletedComments = 0;
+        for (let c = 0; c < data.repostsResponse[i].embeddedComments.length; c++) {
+          const commentStateJSON = JSON.parse(data.repostsResponse[i].embeddedComments[c].commentState);
+
+          processedComments.push({
+            commentState: commentStateJSON,
+            commentWitness: JSON.parse(data.repostsResponse[i].embeddedComments[c].commentWitness)
+          });
+          numberOfDeletedComments += Number(commentStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
+        }
+        const numberOfNonDeletedComments = Number(data.repostsResponse[i].numberOfComments) - numberOfDeletedComments;
+
         processedReposts.push({
           repostState: repostStateJSON,
           repostWitness: JSON.parse(data.repostsResponse[i].repostWitness),
@@ -365,8 +378,10 @@ export default function GetProfilePosts({
           top3Emojis: top3Emojis,
           numberOfReactions: data.repostsResponse[i].numberOfReactions,
           numberOfReactionsWitness: JSON.parse(data.repostsResponse[i].numberOfReactionsWitness),
+          processedComments: processedComments,
           numberOfComments: data.repostsResponse[i].numberOfComments,
           numberOfCommentsWitness: JSON.parse(data.repostsResponse[i].numberOfCommentsWitness),
+          numberOfNonDeletedComments: numberOfNonDeletedComments,
           numberOfReposts: data.repostsResponse[i].numberOfReposts,
           numberOfRepostsWitness: JSON.parse(data.repostsResponse[i].numberOfRepostsWitness),
       });
@@ -385,7 +400,7 @@ export default function GetProfilePosts({
       // reposts.splice(1, 1);
 
       const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
-      const { PostState, ReactionState, RepostState } = await import('wrdhom');
+      const { PostState, ReactionState, RepostState, CommentState } = await import('wrdhom');
 
       const postsContractData = await fetchAccount({
         publicKey: postsContractAddress
@@ -402,6 +417,7 @@ export default function GetProfilePosts({
         publicKey: commentsContractAddress
       }, '/graphql');
       const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
+      const fetchedCommentsRoot = commentsContractData.account?.zkapp?.appState[3].toString();
 
       const repostsContractData = await fetchAccount({
         publicKey: repostsContractAddress
@@ -510,6 +526,27 @@ export default function GetProfilePosts({
           if (fetchedReactionsRoot !== calculatedReactionRoot) {
             throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
             The server may be experiencing some issues or manipulating results for the reactions to Post ${reposts[i].postState.allPostsCounter}.`);
+          }
+        }
+
+        // Audit that the number of comments the server retrieves, matches the number of comments accounted on the zkApp state
+        if(reposts[i].processedComments.length !== reposts[i].numberOfComments) {
+          throw new Error(`Server stated that there are ${reposts[i].numberOfComments} comments for repost ${reposts[i].repostState.allRepostsCounter},\
+          but it only provided ${reposts[i].processedComments.length} comments. The server may be experiencing some issues or manipulating
+          the content it shows.`)
+        }
+
+        for (let c = 0; c < reposts[i].processedComments.length; c++) {
+          const commentStateJSON = reposts[i].processedComments[c].commentState;
+          const commentWitness = MerkleMapWitness.fromJSON(reposts[i].processedComments[c].commentWitness);
+          const commentState = CommentState.fromJSON(commentStateJSON);
+          let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
+
+          // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
+          if (fetchedCommentsRoot !== calculatedCommentRoot) {
+            throw new Error(`Comment ${commentStateJSON.allCommentsCounter} has different root than zkApp state.\
+            The server may be experiencing some issues or manipulating results for the comments to Post ${reposts[i].postState.allPostsCounter}
+            from Repost ${reposts[i].repostState.allRepostsCounter}`);
           }
         }
       };
