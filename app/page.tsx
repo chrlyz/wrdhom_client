@@ -31,10 +31,10 @@ export default function Home() {
   const [howManyReposts, setHowManyReposts] = useState(1);
   const [fromBlockReposts, setFromBlockReposts] = useState(0);
   const [toBlockReposts, setToBlockReposts] = useState(100_000);
-  const [postsContractAddress, setPostsContractAddress] = useState('B62qrpjhsdns2pnRaC5jxJDdtqxRmTtuocYMztKnoXbDdjK17stfW29');
-  const [reactionsContractAddress, setReactionsContractAddress] = useState('B62qmoKafpMVcFa6bTevwqKbDbnEdp7mCLV3fGuhm9HpnDopCvQYasd');
-  const [commentsContractAddress, setCommentsContractAddress] =  useState('B62qn4gybwqQ8uMudqFq5tGPCu3HpzVaUR5HgkqBuCmNLM4H5neEm9J');
-  const [repostsContractAddress, setRepostsContractAddress] = useState('B62qmLWzB7ocMhfrQcsoiBWh5ZHPDrbniozhdq2XQKBcXvmhTeBfuQk');
+  const [postsContractAddress, setPostsContractAddress] = useState('B62qqr2Z4VJi2nicjJvSxpioBQAXzubGf4dbyYtVxyF3oznL4vtLkqx');
+  const [reactionsContractAddress, setReactionsContractAddress] = useState('B62qjcz67A7rFv3kuwVH3myP1Qk32UGtLseNwD8u4bxFDaihGUc91g9');
+  const [commentsContractAddress, setCommentsContractAddress] =  useState('B62qqj3K4jnuKytc5Y5weKd5gmAm5HfuynZDtXggDKg3ueGMYzFvatv');
+  const [repostsContractAddress, setRepostsContractAddress] = useState('B62qqHc3g87ME9N9E58Q9aMZcyB58YYkjq3G7MkEZZrsvNciAxz7ARv');
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
