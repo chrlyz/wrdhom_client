@@ -5,6 +5,8 @@ import ReactionButton from './reaction-button';
 import CommentButton from './comment-button';
 import RepostButton from './repost-button';
 import DeleteCommentButton from './delete-comment-button';
+import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function GetComments({
   commentTarget,
@@ -227,18 +229,23 @@ export default function GetComments({
                         <p>{commentTarget.content}</p>
                     </div>
                     <div className="flex flex-row">
-                        {commentTarget.top3Emojis.map((emoji: string) => emoji)}
-                        <p className="text-xs mx-1 mt-2">{commentTarget.processedReactions.length > 0 ? commentTarget.processedReactions.length : null}</p>
-                        <div className="flex-grow"></div>
-                        {walletConnected && <ReactionButton
-                          targetKey={commentTarget.postKey}
-                        />}
-                        {walletConnected && <CommentButton
-                          targetKey={commentTarget.postKey}
-                        />}
-                        {walletConnected && <RepostButton
-                          targetKey={commentTarget.postKey}
-                        />}
+                      {commentTarget.top3Emojis.map((emoji: string) => emoji)}
+                      <p className="text-xs ml-1 mt-2">{commentTarget.numberOfReactions > 0 ? commentTarget.numberOfReactions : null}</p>
+                      {commentTarget.numberOfNonDeletedComments > 0 ?
+                      <FontAwesomeIcon className="ml-3 mt-1" icon={faComments} /> : null}
+                      <p className="text-xs ml-1 mt-2">{commentTarget.numberOfNonDeletedComments > 0 ? commentTarget.numberOfNonDeletedComments : null}</p>
+                      {commentTarget.numberOfReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
+                      <p className="text-xs ml-1 mt-2">{commentTarget.numberOfReposts > 0 ? commentTarget.numberOfReposts : null}</p>
+                      <div className="flex-grow"></div>
+                      {walletConnected && <ReactionButton
+                        targetKey={commentTarget.postKey}
+                      />}
+                      {walletConnected && <CommentButton
+                        targetKey={commentTarget.postKey}
+                      />}
+                      {walletConnected && <RepostButton
+                        targetKey={commentTarget.postKey}
+                      />}
                     </div>
              </div>
             </div>
