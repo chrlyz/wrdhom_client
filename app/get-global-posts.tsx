@@ -661,7 +661,7 @@ export default function GetGlobalPosts({
                     {
                       account[0] === post.repostState.reposterAddress ?
                         <DeleteRepostButton
-                          repostTarget={post.postState}
+                          repostTargetKey={post.postKey}
                           repostState={post.repostState}
                           repostKey={post.repostKey}  
                         />

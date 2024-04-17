@@ -36,6 +36,10 @@ const nextConfig = {
             destination: "http://localhost:3001/reposts",
           },
           {
+            source: "/reposts/delete",
+            destination: "http://localhost:3001/reposts/delete",
+          },
+          {
             source: '/graphql',
             destination: 'https://proxy.berkeley.minaexplorer.com/graphql',
           }

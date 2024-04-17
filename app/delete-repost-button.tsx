@@ -2,11 +2,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 export default function DeleteRepostButton({
-    repostTarget,
+    repostTargetKey,
     repostState,
     repostKey
 }: {
-    repostTarget: any,
+    repostTargetKey: string,
     repostState: JSON,
     repostKey: string
 }) {
@@ -19,7 +19,7 @@ export default function DeleteRepostButton({
             .signFields({ message: [repostStateHash.toString(), fieldToFlagRepostsAsDeleted.toString()] });
 
         const signedRepostDeletion = {
-            targetKey: repostTarget.postKey,
+            targetKey: repostTargetKey,
             repostKey: repostKey,
             signedData: signed
         }
