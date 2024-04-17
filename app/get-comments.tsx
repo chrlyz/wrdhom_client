@@ -255,31 +255,32 @@ export default function GetComments({
                 return (
                     <div key={comment.commentKey} className="p-2 border-b-2 shadow-lg">
                         <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
-                        <span 
-                            className="mr-2 cursor-pointer hover:underline"
-                            onMouseEnter={() => setSelectedProfileAddress(comment.commentState.commenterAddress)}
-                            onClick={() => setProfileAddress(selectedProfileAddress)}
-                            >
-                            <p className="mr-8">{comment.shortCommenterAddressEnd}</p>
-                            </span>
-                            <p className="mr-4">{'Comment:' + comment.commentState.targetCommentsCounter}</p>
-                            <div className="flex-grow"></div>
-                            <p className="mr-1">{'Block:' + comment.commentState.commentBlockHeight}</p>
+                          <span 
+                              className="mr-2 cursor-pointer hover:underline"
+                              onMouseEnter={() => setSelectedProfileAddress(comment.commentState.commenterAddress)}
+                              onClick={() => setProfileAddress(selectedProfileAddress)}
+                              >
+                              <p className="mr-8">{comment.shortCommenterAddressEnd}</p>
+                          </span>
+                          <p className="mr-4">{'Comment:' + comment.commentState.targetCommentsCounter}</p>
+                          <div className="flex-grow"></div>
+                          <p className="mr-1">{'Block:' + comment.commentState.commentBlockHeight}</p>
                         </div>
                         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
                             <p>{comment.content}</p>
                         </div>
                         <div className="flex flex-row">
                         <div className="flex-grow"></div>
-                          {account[0] === comment.commentState.commenterAddress ?
-                            <DeleteCommentButton
-                              commentTarget={commentTarget}
-                              commentState={comment.commentState}
-                              commentKey={comment.commentKey}  
-                            />
-                          : null
-                  }
-                </div>
+                          {
+                            account[0] === comment.commentState.commenterAddress ?
+                              <DeleteCommentButton
+                                commentTarget={commentTarget}
+                                commentState={comment.commentState}
+                                commentKey={comment.commentKey}  
+                              />
+                            : null
+                          }
+                        </div>
                     </div>
                 );
             })}
