@@ -430,124 +430,128 @@ export default function GetProfilePosts({
       // reposts[2].processedReactions.splice(1, 1);
 
       for (let i = 0; i < reposts.length; i++) {
+
         const repostWitness = MerkleMapWitness.fromJSON(reposts[i].repostWitness);
-        const postWitness = MerkleMapWitness.fromJSON(reposts[i].postWitness);
-        const numberOfReactionsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfReactionsWitness);
-        const numberOfCommentsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfCommentsWitness);
-        const numberOfRepostsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfRepostsWitness);
         const repostState = RepostState.fromJSON(reposts[i].repostState);
-        const postState = PostState.fromJSON(reposts[i].postState);
         let calculatedRepostsRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
-        let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
-        let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKey(
-          Field(reposts[i].numberOfReactions))[0].toString();
-        let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
-          Field(reposts[i].numberOfComments))[0].toString();
-        let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
-          Field(reposts[i].numberOfReposts))[0].toString();
-        const processedReactions: ProcessedReactions[] = [];
 
         // Introduce different root to cause a root mismatch
         /*if (i === 0) {
           calculatedRepostsRoot = 'badRoot'
         }*/
 
-        // Introduce different block-length to cause block mismatch
-        /*if (i === 0) {
-          reposts[i].repostState.repostBlockHeight = 10000000000;
-        }*/
-
-        // Introduce different content to cause content mismatch
-        /*if (i === 0) {
-          reposts[i].content = 'wrong content';
-        }*/
-
-        // Audit that all reposts come from the profile we are visiting
-        if (profileAddress !== reposts[i].repostState.reposterAddress) {
-          throw new Error(`User Repost ${reposts[i].repostState.userRepostsCounter} comes from the wrong address: ${reposts[i].repostState.reposterAddress}. All posts should come from address: ${profileAddress}`);
-        }
-
-        // Audit that all reposts are between the block range in the user query
-        if (reposts[i].repostState.repostBlockHeight < fromBlockReposts ||  reposts[i].repostState.repostBlockHeight > toBlockReposts) {
-          throw new Error(`Block-length ${reposts[i].repostState.repostBlockHeight} for User Repost ${reposts[i].repostState.userRepostsCounter} isn't between the block range\
-          ${fromBlockReposts} to ${toBlockReposts}`);
-        }
-
-        // Audit that the on-chain state matches the off-chain state
-
-        if (fetchedRepostsRoot !== calculatedRepostsRoot) {
-          throw new Error(`User Repost ${reposts[i].repostState.userRepostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
-          manipulating results for your query.`);
-        }    
-
-        if (fetchedPostsRoot !== calculatedPostsRoot) {
-          throw new Error(`Post ${reposts[i].postState.allPostsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter} has different root than zkApp state.\
-          The server may be experiencing some issues or manipulating results for your query.`);
-        }
-
-        if (fetchedTargetsReactionsCountersRoot !== calculatedTargetsReactionsCountersRoot ) {
-          throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
-          from User Repost ${reposts[i].repostState.userRepostsCounter} but the contract accounts for a different amount. The server may be experiencing issues or\
-          manipulating responses.`);
-        }
-
-        if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
-          throw new Error(`Server stated that there are ${reposts[i].numberOfComments} comments for Post ${reposts[i].postState.allPostsCounter}\
-          from User Repost ${reposts[i].repostState.userRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
-          manipulating responses.`);
-        }
-
-        if (fetchedTargetsRepostsCountersRoot !== calculatedTargetsRepostsCountersRoot) {
-          throw new Error(`Server stated that there are ${reposts[i].numberOfReposts} reposts for Post ${reposts[i].postState.allPostsCounter}\
-          from User Repost ${reposts[i].repostState.userRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
-          manipulating responses.`);
-        }
-
-        // Audit that the content of the reposted posts matches the contentID signed by the post author
-        const cid = await getCID(reposts[i].content);
-        if (cid !== reposts[i].postContentID) {
-          throw new Error(`The content for Post ${reposts[i].postState.allPostsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter} doesn't match\
-          the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`);
-        }
-
-        // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
-        if(reposts[i].processedReactions.length !== reposts[i].numberOfReactions) {
-          throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
-          from User Repost ${reposts[i].repostState.userRepostsCounter} but it only provided ${reposts[i].processedReactions.length} reactions. The server\
-          may be experiencing some issues or manipulating the content it shows.`)
-        }
-
-        for (let r = 0; r < reposts[i].processedReactions.length; r++) {
-          const reactionStateJSON = reposts[i].processedReactions[r].reactionState;
-          const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].processedReactions[r].reactionWitness);
-          const reactionState = ReactionState.fromJSON(reactionStateJSON);
-          let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
-
-          // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
-          if (fetchedReactionsRoot !== calculatedReactionRoot) {
-            throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
-            The server may be experiencing some issues or manipulating results for the reactions to Post ${reposts[i].postState.allPostsCounter}.`);
+        if (Number(reposts[i].repostState.deletionBlockHeight) === 0) {
+          const postWitness = MerkleMapWitness.fromJSON(reposts[i].postWitness);
+          const numberOfReactionsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfReactionsWitness);
+          const numberOfCommentsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfCommentsWitness);
+          const numberOfRepostsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfRepostsWitness);
+          const postState = PostState.fromJSON(reposts[i].postState);
+          let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
+          let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKey(
+            Field(reposts[i].numberOfReactions))[0].toString();
+          let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
+            Field(reposts[i].numberOfComments))[0].toString();
+          let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
+            Field(reposts[i].numberOfReposts))[0].toString();
+          const processedReactions: ProcessedReactions[] = [];
+  
+          // Introduce different block-length to cause block mismatch
+          /*if (i === 0) {
+            reposts[i].repostState.repostBlockHeight = 10000000000;
+          }*/
+  
+          // Introduce different content to cause content mismatch
+          /*if (i === 0) {
+            reposts[i].content = 'wrong content';
+          }*/
+  
+          // Audit that all reposts come from the profile we are visiting
+          if (profileAddress !== reposts[i].repostState.reposterAddress) {
+            throw new Error(`User Repost ${reposts[i].repostState.userRepostsCounter} comes from the wrong address: ${reposts[i].repostState.reposterAddress}. All posts should come from address: ${profileAddress}`);
           }
-        }
-
-        // Audit that the number of comments the server retrieves, matches the number of comments accounted on the zkApp state
-        if(reposts[i].processedComments.length !== reposts[i].numberOfComments) {
-          throw new Error(`Server stated that there are ${reposts[i].numberOfComments} comments for repost ${reposts[i].repostState.allRepostsCounter},\
-          but it only provided ${reposts[i].processedComments.length} comments. The server may be experiencing some issues or manipulating
-          the content it shows.`)
-        }
-
-        for (let c = 0; c < reposts[i].processedComments.length; c++) {
-          const commentStateJSON = reposts[i].processedComments[c].commentState;
-          const commentWitness = MerkleMapWitness.fromJSON(reposts[i].processedComments[c].commentWitness);
-          const commentState = CommentState.fromJSON(commentStateJSON);
-          let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
-
-          // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
-          if (fetchedCommentsRoot !== calculatedCommentRoot) {
-            throw new Error(`Comment ${commentStateJSON.allCommentsCounter} has different root than zkApp state.\
-            The server may be experiencing some issues or manipulating results for the comments to Post ${reposts[i].postState.allPostsCounter}
-            from Repost ${reposts[i].repostState.allRepostsCounter}`);
+  
+          // Audit that all reposts are between the block range in the user query
+          if (reposts[i].repostState.repostBlockHeight < fromBlockReposts ||  reposts[i].repostState.repostBlockHeight > toBlockReposts) {
+            throw new Error(`Block-length ${reposts[i].repostState.repostBlockHeight} for User Repost ${reposts[i].repostState.userRepostsCounter} isn't between the block range\
+            ${fromBlockReposts} to ${toBlockReposts}`);
+          }
+  
+          // Audit that the on-chain state matches the off-chain state
+  
+          if (fetchedRepostsRoot !== calculatedRepostsRoot) {
+            throw new Error(`User Repost ${reposts[i].repostState.userRepostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
+            manipulating results for your query.`);
+          }    
+  
+          if (fetchedPostsRoot !== calculatedPostsRoot) {
+            throw new Error(`Post ${reposts[i].postState.allPostsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter} has different root than zkApp state.\
+            The server may be experiencing some issues or manipulating results for your query.`);
+          }
+  
+          if (fetchedTargetsReactionsCountersRoot !== calculatedTargetsReactionsCountersRoot ) {
+            throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
+            from User Repost ${reposts[i].repostState.userRepostsCounter} but the contract accounts for a different amount. The server may be experiencing issues or\
+            manipulating responses.`);
+          }
+  
+          if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
+            throw new Error(`Server stated that there are ${reposts[i].numberOfComments} comments for Post ${reposts[i].postState.allPostsCounter}\
+            from User Repost ${reposts[i].repostState.userRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
+            manipulating responses.`);
+          }
+  
+          if (fetchedTargetsRepostsCountersRoot !== calculatedTargetsRepostsCountersRoot) {
+            throw new Error(`Server stated that there are ${reposts[i].numberOfReposts} reposts for Post ${reposts[i].postState.allPostsCounter}\
+            from User Repost ${reposts[i].repostState.userRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
+            manipulating responses.`);
+          }
+  
+          // Audit that the content of the reposted posts matches the contentID signed by the post author
+          const cid = await getCID(reposts[i].content);
+          if (cid !== reposts[i].postContentID) {
+            throw new Error(`The content for Post ${reposts[i].postState.allPostsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter} doesn't match\
+            the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`);
+          }
+  
+          // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
+          if(reposts[i].processedReactions.length !== reposts[i].numberOfReactions) {
+            throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
+            from User Repost ${reposts[i].repostState.userRepostsCounter} but it only provided ${reposts[i].processedReactions.length} reactions. The server\
+            may be experiencing some issues or manipulating the content it shows.`)
+          }
+  
+          for (let r = 0; r < reposts[i].processedReactions.length; r++) {
+            const reactionStateJSON = reposts[i].processedReactions[r].reactionState;
+            const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].processedReactions[r].reactionWitness);
+            const reactionState = ReactionState.fromJSON(reactionStateJSON);
+            let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
+  
+            // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
+            if (fetchedReactionsRoot !== calculatedReactionRoot) {
+              throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
+              The server may be experiencing some issues or manipulating results for the reactions to Post ${reposts[i].postState.allPostsCounter}.`);
+            }
+          }
+  
+          // Audit that the number of comments the server retrieves, matches the number of comments accounted on the zkApp state
+          if(reposts[i].processedComments.length !== reposts[i].numberOfComments) {
+            throw new Error(`Server stated that there are ${reposts[i].numberOfComments} comments for repost ${reposts[i].repostState.allRepostsCounter},\
+            but it only provided ${reposts[i].processedComments.length} comments. The server may be experiencing some issues or manipulating
+            the content it shows.`)
+          }
+  
+          for (let c = 0; c < reposts[i].processedComments.length; c++) {
+            const commentStateJSON = reposts[i].processedComments[c].commentState;
+            const commentWitness = MerkleMapWitness.fromJSON(reposts[i].processedComments[c].commentWitness);
+            const commentState = CommentState.fromJSON(commentStateJSON);
+            let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
+  
+            // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
+            if (fetchedCommentsRoot !== calculatedCommentRoot) {
+              throw new Error(`Comment ${commentStateJSON.allCommentsCounter} has different root than zkApp state.\
+              The server may be experiencing some issues or manipulating results for the comments to Post ${reposts[i].postState.allPostsCounter}
+              from Repost ${reposts[i].repostState.allRepostsCounter}`);
+            }
           }
         }
       };
@@ -612,8 +616,10 @@ export default function GetProfilePosts({
 
   const mergeAndSortContent = () => {
     const merged = [...posts, ...reposts];
-    const filtered = merged.filter(element => Number(element.postState.deletionBlockHeight) === 0);
-    const sorted = filtered.sort((a,b) => {
+    const filteredByDeletedPosts = merged.filter(element => Number(element.postState.deletionBlockHeight) === 0);
+    const filteredByDeletedReposts = filteredByDeletedPosts.filter(element => element.repostState === undefined ?
+                                                              true : Number(element.repostState.deletionBlockHeight) === 0);
+    const sorted = filteredByDeletedReposts.sort((a,b) => {
         const blockHeightA =  a.repostState === undefined ? a.postState.postBlockHeight : a.repostState.repostBlockHeight;
         const blockHeightB =  b.repostState === undefined ? b.postState.postBlockHeight : b.repostState.repostBlockHeight;
         return blockHeightB - blockHeightA;
@@ -679,7 +685,7 @@ export default function GetProfilePosts({
                     {
                       account[0] === post.repostState.reposterAddress ?
                         <DeleteRepostButton
-                          repostTarget={post.postState}
+                        repostTargetKey={post.postKey}
                           repostState={post.repostState}
                           repostKey={post.repostKey}  
                         />
