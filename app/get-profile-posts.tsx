@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import RepostButton from './repost-button';
 import { ProcessedReactions, ProcessedPosts, ProcessedReposts, ProcessedComments } from './get-global-posts';
 import DeletePostButton from './delete-post-button';
+import DeleteRepostButton from './delete-repost-button';
 
 export default function GetProfilePosts({
   getProfile,
@@ -663,15 +664,29 @@ export default function GetProfilePosts({
       {!loading && Array.isArray(mergedContent) && mergedContent.map((post) => {
         return (
             <div key={post.repostKey === undefined ? post.postKey : post.repostKey} className="p-2 border-b-2 shadow-lg">
-                {post.repostState === undefined ? null :
-                  <div
-                    className="text-xs text-stone-400"
-                    onMouseEnter={() => setSelectedProfileAddress(post.repostState.reposterAddress)}
-                    onClick={() => setProfileAddress(selectedProfileAddress)}
-                  >
-                  <span className="cursor-pointer hover:underline">{post.shortReposterAddressEnd}</span> 
+                {
+                  post.repostState === undefined ? null :
+                  <div className="flex flex-row">
+                    <div
+                      className="text-xs text-stone-400 mt-1"
+                      onMouseEnter={() => setSelectedProfileAddress(post.repostState.reposterAddress)}
+                      onClick={() => setProfileAddress(selectedProfileAddress)}
+                    >
+                    <span className="cursor-pointer hover:underline">{post.shortReposterAddressEnd}</span> 
                     {` reposted at block ${post.repostState.repostBlockHeight} (User Repost:${post.repostState.userRepostsCounter})`}
-                </div>}
+                    </div>
+                    <div className="flex-grow"></div>
+                    {
+                      account[0] === post.repostState.reposterAddress ?
+                        <DeleteRepostButton
+                          repostTarget={post.postState}
+                          repostState={post.repostState}
+                          repostKey={post.repostKey}  
+                        />
+                      : null
+                    }
+                  </div>
+                }
                 <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
                   <span 
                     className="mr-2 cursor-pointer hover:underline"
