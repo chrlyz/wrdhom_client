@@ -6,7 +6,7 @@ import CommentButton from './comment-button';
 import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import RepostButton from './repost-button';
-import { ProcessedReactions, ProcessedPosts, ProcessedReposts, ProcessedComments } from './get-global-posts';
+import { EmbeddedReactions, ProcessedPosts, ProcessedReposts, EmbeddedComments, EmbeddedReposts } from './get-global-posts';
 import DeletePostButton from './delete-post-button';
 import DeleteRepostButton from './delete-repost-button';
 
@@ -89,19 +89,19 @@ export default function GetProfilePosts({
       for (let i = 0; i < data.postsResponse.length; i++) {
         const postStateJSON = JSON.parse(data.postsResponse[i].postState);
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
-        const processedReactions: ProcessedReactions[] = [];
+        const embeddedReactions: EmbeddedReactions[] = [];
 
         for (let r = 0; r < data.postsResponse[i].embeddedReactions.length; r++) {
           const reactionStateJSON = JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionState);
 
-          processedReactions.push({
+          embeddedReactions.push({
             reactionState: reactionStateJSON,
             reactionWitness: JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionWitness),
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint)
           });
         }
 
-        const emojis = processedReactions.map(reaction => reaction.reactionEmoji);
+        const emojis = embeddedReactions.map(reaction => reaction.reactionEmoji);
         const frequencyMap = new Map<string, number>();
         emojis.forEach(emoji => {
           const count = frequencyMap.get(emoji) || 0;
@@ -110,18 +110,31 @@ export default function GetProfilePosts({
         const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
         const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
 
-        const processedComments: ProcessedComments[] = [];
+        const embeddedComments: EmbeddedComments[] = [];
         let numberOfDeletedComments = 0;
         for (let c = 0; c < data.postsResponse[i].embeddedComments.length; c++) {
           const commentStateJSON = JSON.parse(data.postsResponse[i].embeddedComments[c].commentState);
 
-          processedComments.push({
+          embeddedComments.push({
             commentState: commentStateJSON,
             commentWitness: JSON.parse(data.postsResponse[i].embeddedComments[c].commentWitness)
           });
           numberOfDeletedComments += Number(commentStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
         }
         const numberOfNonDeletedComments = Number(data.postsResponse[i].numberOfComments) - numberOfDeletedComments;
+
+        const embeddedReposts: EmbeddedReposts[] = [];
+        let numberOfDeletedReposts = 0;
+        for (let rp = 0; rp < data.postsResponse[i].embeddedReposts.length; rp++) {
+          const repostStateJSON = JSON.parse(data.postsResponse[i].embeddedReposts[rp].repostState);
+
+          embeddedReposts.push({
+            repostState: repostStateJSON,
+            repostWitness: JSON.parse(data.postsResponse[i].embeddedReposts[rp].repostWitness)
+          });
+          numberOfDeletedReposts += Number(repostStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
+        }
+        const numberOfNonDeletedReposts = Number(data.postsResponse[i].numberOfReposts) - numberOfDeletedReposts;
 
         processedPosts.push({
           postState: postStateJSON,
@@ -130,21 +143,24 @@ export default function GetProfilePosts({
           postContentID: data.postsResponse[i].postContentID,
           content: data.postsResponse[i].content,
           shortPosterAddressEnd: shortPosterAddressEnd,
-          processedReactions: processedReactions,
+          embeddedReactions: embeddedReactions,
           top3Emojis: top3Emojis,
           numberOfReactions: data.postsResponse[i].numberOfReactions,
           numberOfReactionsWitness: JSON.parse(data.postsResponse[i].numberOfReactionsWitness),
-          processedComments: processedComments,
+          embeddedComments: embeddedComments,
           numberOfComments: data.postsResponse[i].numberOfComments,
           numberOfCommentsWitness: JSON.parse(data.postsResponse[i].numberOfCommentsWitness),
           numberOfNonDeletedComments: numberOfNonDeletedComments,
+          embeddedReposts: embeddedReposts,
           numberOfReposts: data.postsResponse[i].numberOfReposts,
-          numberOfRepostsWitness: JSON.parse(data.postsResponse[i].numberOfRepostsWitness)
+          numberOfRepostsWitness: JSON.parse(data.postsResponse[i].numberOfRepostsWitness),
+          numberOfNonDeletedReposts: numberOfNonDeletedReposts
       });
       };
 
       setPosts(processedPosts);
     } catch (e: any) {
+        console.log(e);
         setLoading(false);
         setErrorMessage(e.message);
     }
@@ -181,7 +197,7 @@ export default function GetProfilePosts({
       const fetchedTargetsRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[2].toString();
 
       // Remove reaction to cause a gap error
-      // posts[1].processedReactions.splice(1,1);
+      // posts[1].embeddedReactions.splice(1,1);
 
       for (let i = 0; i < posts.length; i++) {
 
@@ -209,7 +225,7 @@ export default function GetProfilePosts({
             Field(posts[i].numberOfComments))[0].toString();
           let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
             Field(posts[i].numberOfReposts))[0].toString();
-          const processedReactions: ProcessedReactions[] = [];
+          const embeddedReactions: EmbeddedReactions[] = [];
   
           // Introduce different block-length to cause block mismatch
           /*if (i === 0) {
@@ -257,15 +273,15 @@ export default function GetProfilePosts({
           }
   
           // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
-          if(posts[i].processedReactions.length !== posts[i].numberOfReactions) {
+          if(posts[i].embeddedReactions.length !== posts[i].numberOfReactions) {
             throw new Error(`Server stated that there are ${posts[i].numberOfReactions} reactions for User Post ${posts[i].postState.userPostsCounter},\
-            but it only provided ${posts[i].processedReactions.length} reactions. The server may be experiencing some issues or manipulating
+            but it only provided ${posts[i].embeddedReactions.length} reactions. The server may be experiencing some issues or manipulating
             the content it shows.`)
           }
   
-          for (let r = 0; r < posts[i].processedReactions.length; r++) {
-            const reactionStateJSON = posts[i].processedReactions[r].reactionState;
-            const reactionWitness = MerkleMapWitness.fromJSON(posts[i].processedReactions[r].reactionWitness);
+          for (let r = 0; r < posts[i].embeddedReactions.length; r++) {
+            const reactionStateJSON = posts[i].embeddedReactions[r].reactionState;
+            const reactionWitness = MerkleMapWitness.fromJSON(posts[i].embeddedReactions[r].reactionWitness);
             const reactionState = ReactionState.fromJSON(reactionStateJSON);
             let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
   
@@ -277,15 +293,15 @@ export default function GetProfilePosts({
           }
 
           // Audit that the number of comments the server retrieves, matches the number of comments accounted on the zkApp state
-          if(posts[i].processedComments.length !== posts[i].numberOfComments) {
+          if(posts[i].embeddedComments.length !== posts[i].numberOfComments) {
             throw new Error(`Server stated that there are ${posts[i].numberOfComments} comments for post ${posts[i].postState.allPostsCounter},\
-            but it only provided ${posts[i].processedComments.length} comments. The server may be experiencing some issues or manipulating
+            but it only provided ${posts[i].embeddedComments.length} comments. The server may be experiencing some issues or manipulating
             the content it shows.`)
           }
 
-          for (let c = 0; c < posts[i].processedComments.length; c++) {
-            const commentStateJSON = posts[i].processedComments[c].commentState;
-            const commentWitness = MerkleMapWitness.fromJSON(posts[i].processedComments[c].commentWitness);
+          for (let c = 0; c < posts[i].embeddedComments.length; c++) {
+            const commentStateJSON = posts[i].embeddedComments[c].commentState;
+            const commentWitness = MerkleMapWitness.fromJSON(posts[i].embeddedComments[c].commentWitness);
             const commentState = CommentState.fromJSON(commentStateJSON);
             let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
 
@@ -299,6 +315,7 @@ export default function GetProfilePosts({
       };
       
     } catch (e: any) {
+        console.log(e);
         setLoading(false);
         setErrorMessage(e.message);
     }
@@ -330,19 +347,19 @@ export default function GetProfilePosts({
         const postStateJSON = JSON.parse(data.repostsResponse[i].postState);
         const shortReposterAddressEnd = repostStateJSON.reposterAddress.slice(-12);
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
-        const processedReactions: ProcessedReactions[] = [];
+        const embeddedReactions: EmbeddedReactions[] = [];
 
         for (let r = 0; r < data.repostsResponse[i].embeddedReactions.length; r++) {
           const reactionStateJSON = JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionState);
 
-          processedReactions.push({
+          embeddedReactions.push({
             reactionState: reactionStateJSON,
             reactionWitness: JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionWitness),
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
           });
         }
 
-        const emojis = processedReactions.map(reaction => reaction.reactionEmoji);
+        const emojis = embeddedReactions.map(reaction => reaction.reactionEmoji);
         const frequencyMap = new Map<string, number>();
         emojis.forEach(emoji => {
           const count = frequencyMap.get(emoji) || 0;
@@ -351,18 +368,31 @@ export default function GetProfilePosts({
         const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
         const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
 
-        const processedComments: ProcessedComments[] = [];
+        const embeddedComments: EmbeddedComments[] = [];
         let numberOfDeletedComments = 0;
         for (let c = 0; c < data.repostsResponse[i].embeddedComments.length; c++) {
           const commentStateJSON = JSON.parse(data.repostsResponse[i].embeddedComments[c].commentState);
 
-          processedComments.push({
+          embeddedComments.push({
             commentState: commentStateJSON,
             commentWitness: JSON.parse(data.repostsResponse[i].embeddedComments[c].commentWitness)
           });
           numberOfDeletedComments += Number(commentStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
         }
         const numberOfNonDeletedComments = Number(data.repostsResponse[i].numberOfComments) - numberOfDeletedComments;
+
+        const embeddedReposts: EmbeddedReposts[] = [];
+        let numberOfDeletedReposts = 0;
+        for (let rp = 0; rp < data.repostsResponse[i].embeddedReposts.length; rp++) {
+          const repostStateJSON = JSON.parse(data.repostsResponse[i].embeddedReposts[rp].repostState);
+
+          embeddedReposts.push({
+            repostState: repostStateJSON,
+            repostWitness: JSON.parse(data.repostsResponse[i].embeddedReposts[rp].repostWitness)
+          });
+          numberOfDeletedReposts += Number(repostStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
+        }
+        const numberOfNonDeletedReposts = Number(data.repostsResponse[i].numberOfReposts) - numberOfDeletedReposts;
 
         processedReposts.push({
           repostState: repostStateJSON,
@@ -375,21 +405,24 @@ export default function GetProfilePosts({
           postContentID: data.repostsResponse[i].postContentID,
           content: data.repostsResponse[i].content,
           shortPosterAddressEnd: shortPosterAddressEnd,
-          processedReactions: processedReactions,
+          embeddedReactions: embeddedReactions,
           top3Emojis: top3Emojis,
           numberOfReactions: data.repostsResponse[i].numberOfReactions,
           numberOfReactionsWitness: JSON.parse(data.repostsResponse[i].numberOfReactionsWitness),
-          processedComments: processedComments,
+          embeddedComments: embeddedComments,
           numberOfComments: data.repostsResponse[i].numberOfComments,
           numberOfCommentsWitness: JSON.parse(data.repostsResponse[i].numberOfCommentsWitness),
           numberOfNonDeletedComments: numberOfNonDeletedComments,
+          embeddedReposts: embeddedReposts,
           numberOfReposts: data.repostsResponse[i].numberOfReposts,
           numberOfRepostsWitness: JSON.parse(data.repostsResponse[i].numberOfRepostsWitness),
+          numberOfNonDeletedReposts: numberOfNonDeletedReposts
       });
       };
 
       setReposts(processedReposts);
     } catch (e: any) {
+        console.log(e);
         setLoading(false);
         setErrorMessage(e.message);
     }
@@ -427,7 +460,7 @@ export default function GetProfilePosts({
       const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
 
       // Remove reaction to cause a gap error
-      // reposts[2].processedReactions.splice(1, 1);
+      // reposts[2].embeddedReactions.splice(1, 1);
 
       for (let i = 0; i < reposts.length; i++) {
 
@@ -453,7 +486,7 @@ export default function GetProfilePosts({
             Field(reposts[i].numberOfComments))[0].toString();
           let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
             Field(reposts[i].numberOfReposts))[0].toString();
-          const processedReactions: ProcessedReactions[] = [];
+          const embeddedReactions: EmbeddedReactions[] = [];
   
           // Introduce different block-length to cause block mismatch
           /*if (i === 0) {
@@ -514,15 +547,15 @@ export default function GetProfilePosts({
           }
   
           // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
-          if(reposts[i].processedReactions.length !== reposts[i].numberOfReactions) {
+          if(reposts[i].embeddedReactions.length !== reposts[i].numberOfReactions) {
             throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
-            from User Repost ${reposts[i].repostState.userRepostsCounter} but it only provided ${reposts[i].processedReactions.length} reactions. The server\
+            from User Repost ${reposts[i].repostState.userRepostsCounter} but it only provided ${reposts[i].embeddedReactions.length} reactions. The server\
             may be experiencing some issues or manipulating the content it shows.`)
           }
   
-          for (let r = 0; r < reposts[i].processedReactions.length; r++) {
-            const reactionStateJSON = reposts[i].processedReactions[r].reactionState;
-            const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].processedReactions[r].reactionWitness);
+          for (let r = 0; r < reposts[i].embeddedReactions.length; r++) {
+            const reactionStateJSON = reposts[i].embeddedReactions[r].reactionState;
+            const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].embeddedReactions[r].reactionWitness);
             const reactionState = ReactionState.fromJSON(reactionStateJSON);
             let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
   
@@ -534,15 +567,15 @@ export default function GetProfilePosts({
           }
   
           // Audit that the number of comments the server retrieves, matches the number of comments accounted on the zkApp state
-          if(reposts[i].processedComments.length !== reposts[i].numberOfComments) {
+          if(reposts[i].embeddedComments.length !== reposts[i].numberOfComments) {
             throw new Error(`Server stated that there are ${reposts[i].numberOfComments} comments for repost ${reposts[i].repostState.allRepostsCounter},\
-            but it only provided ${reposts[i].processedComments.length} comments. The server may be experiencing some issues or manipulating
+            but it only provided ${reposts[i].embeddedComments.length} comments. The server may be experiencing some issues or manipulating
             the content it shows.`)
           }
   
-          for (let c = 0; c < reposts[i].processedComments.length; c++) {
-            const commentStateJSON = reposts[i].processedComments[c].commentState;
-            const commentWitness = MerkleMapWitness.fromJSON(reposts[i].processedComments[c].commentWitness);
+          for (let c = 0; c < reposts[i].embeddedComments.length; c++) {
+            const commentStateJSON = reposts[i].embeddedComments[c].commentState;
+            const commentWitness = MerkleMapWitness.fromJSON(reposts[i].embeddedComments[c].commentWitness);
             const commentState = CommentState.fromJSON(commentStateJSON);
             let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
   
@@ -556,6 +589,7 @@ export default function GetProfilePosts({
         }
       };
     } catch (e: any) {
+        console.log(e);
         setLoading(false);
         setErrorMessage(e.message);
     }
@@ -569,16 +603,17 @@ export default function GetProfilePosts({
           The server may be experiencing some issues or censoring posts.`);
         }
 
-        for (let r = 0; r < Number(posts[i].processedReactions.length)-1; r++) {
-          if (Number(posts[i].processedReactions[r].reactionState.targetReactionsCounter)
-          !== Number(posts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
-            throw new Error(`Gap between Reactions ${posts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
-            ${posts[i].processedReactions[r+1].reactionState.targetReactionsCounter}, from User Post ${posts[i].postState.userPostsCounter}\
+        for (let r = 0; r < Number(posts[i].embeddedReactions.length)-1; r++) {
+          if (Number(posts[i].embeddedReactions[r].reactionState.targetReactionsCounter)
+          !== Number(posts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
+            throw new Error(`Gap between Reactions ${posts[i].embeddedReactions[r].reactionState.targetReactionsCounter} and\
+            ${posts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter}, from User Post ${posts[i].postState.userPostsCounter}\
             The server may be experiencing some issues or censoring reactions.`);
           }
         }
       }
     } catch (e: any) {
+        console.log(e);
         setLoading(false);
         setErrorMessage(e.message);
     }
@@ -592,16 +627,17 @@ export default function GetProfilePosts({
           The server may be experiencing some issues or censoring reposts.`);
         }
 
-        for (let r = 0; r < Number(reposts[i].processedReactions.length)-1; r++) {
-          if (Number(reposts[i].processedReactions[r].reactionState.targetReactionsCounter)
-          !== Number(reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter)+1) {
-            throw new Error(`Gap between Reactions ${reposts[i].processedReactions[r].reactionState.targetReactionsCounter} and\
-            ${reposts[i].processedReactions[r+1].reactionState.targetReactionsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter}\
+        for (let r = 0; r < Number(reposts[i].embeddedReactions.length)-1; r++) {
+          if (Number(reposts[i].embeddedReactions[r].reactionState.targetReactionsCounter)
+          !== Number(reposts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
+            throw new Error(`Gap between Reactions ${reposts[i].embeddedReactions[r].reactionState.targetReactionsCounter} and\
+            ${reposts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter}\
             The server may be experiencing some issues or censoring reactions.`);
           }
         }
       }
     } catch (e: any) {
+        console.log(e);
         setErrorMessage(e.message);
     }
   }
@@ -712,7 +748,7 @@ export default function GetProfilePosts({
                 </div>
                 <div className="flex flex-row">
                   {post.top3Emojis.map((emoji: string) => emoji)}
-                  <p className="text-xs ml-1 mt-2">{post.processedReactions.length > 0 ? post.processedReactions.length : null}</p>
+                  <p className="text-xs ml-1 mt-2">{post.embeddedReactions.length > 0 ? post.embeddedReactions.length : null}</p>
                   {post.numberOfNonDeletedComments > 0 ? <button
                   className="hover:text-lg ml-3"
                   onClick={() => setCommentTarget(post)}
@@ -720,8 +756,8 @@ export default function GetProfilePosts({
                     <FontAwesomeIcon icon={faComments} />
                   </button> : null}
                   <p className="text-xs ml-1 mt-2">{post.numberOfNonDeletedComments > 0 ? post.numberOfNonDeletedComments : null}</p>
-                  {post.numberOfReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
-                  <p className="text-xs ml-1 mt-2">{post.numberOfReposts > 0 ? post.numberOfReposts : null}</p>
+                  {post.numberOfNonDeletedReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
+                  <p className="text-xs ml-1 mt-2">{post.numberOfNonDeletedReposts > 0 ? post.numberOfNonDeletedReposts : null}</p>
                   <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
                     targetKey={post.postKey}

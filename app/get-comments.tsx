@@ -89,6 +89,7 @@ export default function GetComments({
         setComments(processedData);
 
       } catch (e: any) {
+          console.log(e);
           setLoading(false);
           setErrorMessage(e.message);
       }
@@ -102,9 +103,7 @@ export default function GetComments({
           publicKey: commentsContractAddress
         }, '/graphql');
         const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
-        console.log('fetchedTargetsCommentsCountersRoot: ' + fetchedTargetsCommentsCountersRoot);
         const fetchedCommentsRoot = commentsContractData.account?.zkapp?.appState[3].toString();
-        console.log('fetchedCommentsRoot: ' + fetchedCommentsRoot);
   
         // Remove comment to cause a gap error
         // comments.splice(1, 1);
@@ -113,7 +112,6 @@ export default function GetComments({
           const commentWitness = MerkleMapWitness.fromJSON(comments[i].commentWitness);
           const commentState = CommentState.fromJSON(comments[i].commentState);
           let calculatedCommentsRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
-          console.log('calculatedCommentsRoot: ' + calculatedCommentsRoot);
 
           // Introduce different root to cause a root mismatch
           /*if (i === 1) {
@@ -153,6 +151,7 @@ export default function GetComments({
         };
 
       } catch (e: any) {
+          console.log(e);
           setLoading(false);
           setErrorMessage(e.message);
       }
@@ -168,6 +167,7 @@ export default function GetComments({
         }
         setLoading(false);
       } catch (e: any) {
+          console.log(e);
           setLoading(false);
           setErrorMessage(e.message);
       }
@@ -234,8 +234,8 @@ export default function GetComments({
                       {commentTarget.numberOfNonDeletedComments > 0 ?
                       <FontAwesomeIcon className="ml-3 mt-1" icon={faComments} /> : null}
                       <p className="text-xs ml-1 mt-2">{commentTarget.numberOfNonDeletedComments > 0 ? commentTarget.numberOfNonDeletedComments : null}</p>
-                      {commentTarget.numberOfReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
-                      <p className="text-xs ml-1 mt-2">{commentTarget.numberOfReposts > 0 ? commentTarget.numberOfReposts : null}</p>
+                      {commentTarget.numberOfNonDeletedReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
+                      <p className="text-xs ml-1 mt-2">{commentTarget.numberOfNonDeletedReposts > 0 ? commentTarget.numberOfNonDeletedReposts : null}</p>
                       <div className="flex-grow"></div>
                       {walletConnected && <ReactionButton
                         targetKey={commentTarget.postKey}
