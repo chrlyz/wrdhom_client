@@ -172,7 +172,7 @@ export default function GetProfilePosts({
       // posts.splice(1, 1);
 
       const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
-      const { PostState, ReactionState, CommentState } = await import('wrdhom');
+      const { PostState, ReactionState, CommentState, RepostState } = await import('wrdhom');
 
       const postsContractData = await fetchAccount({
         publicKey: postsContractAddress
@@ -195,6 +195,7 @@ export default function GetProfilePosts({
         publicKey: repostsContractAddress
       }, '/graphql');
       const fetchedTargetsRepostsCountersRoot = repostsContractData.account?.zkapp?.appState[2].toString();
+      const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
 
       // Remove reaction to cause a gap error
       // posts[1].embeddedReactions.splice(1,1);
@@ -309,6 +310,26 @@ export default function GetProfilePosts({
             if (fetchedCommentsRoot !== calculatedCommentRoot) {
               throw new Error(`Comment ${commentStateJSON.allCommentsCounter} has different root than zkApp state.\
               The server may be experiencing some issues or manipulating results for the comments to Post ${posts[i].postState.allPostsCounter}.`);
+            }
+          }
+
+          // Audit that the number of reposts the server retrieves, matches the number of reposts accounted on the zkApp state
+          if(posts[i].embeddedReposts.length !== posts[i].numberOfReposts) {
+            throw new Error(`Server stated that there are ${posts[i].numberOfReposts} reposts for post ${posts[i].postState.allPostsCounter},\
+            but it only provided ${posts[i].embeddedReposts.length} reposts. The server may be experiencing some issues or manipulating
+            the content it shows.`)
+          }
+  
+          for (let rp = 0; rp < posts[i].embeddedReposts.length; rp++) {
+            const repostStateJSON = posts[i].embeddedReposts[rp].repostState;
+            const repostWitness = MerkleMapWitness.fromJSON(posts[i].embeddedReposts[rp].repostWitness);
+            const repostState = RepostState.fromJSON(repostStateJSON);
+            let calculatedRepostRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
+  
+            // Audit that all roots calculated from the state of each repost and their witnesses, match zkApp state
+            if (fetchedRepostsRoot !== calculatedRepostRoot) {
+              throw new Error(`Repost ${repostStateJSON.allRepostsCounter} has different root than zkApp state.\
+              The server may be experiencing some issues or manipulating results for the reposts to Post ${posts[i].postState.allPostsCounter}.`);
             }
           }
         }
@@ -583,6 +604,27 @@ export default function GetProfilePosts({
             if (fetchedCommentsRoot !== calculatedCommentRoot) {
               throw new Error(`Comment ${commentStateJSON.allCommentsCounter} has different root than zkApp state.\
               The server may be experiencing some issues or manipulating results for the comments to Post ${reposts[i].postState.allPostsCounter}
+              from Repost ${reposts[i].repostState.allRepostsCounter}`);
+            }
+          }
+
+          // Audit that the number of reposts the server retrieves, matches the number of reposts accounted on the zkApp state
+          if(reposts[i].embeddedReposts.length !== reposts[i].numberOfReposts) {
+            throw new Error(`Server stated that there are ${reposts[i].numberOfReposts} reposts for repost ${reposts[i].repostState.allRepostsCounter},\
+            but it only provided ${reposts[i].embeddedReposts.length} reposts. The server may be experiencing some issues or manipulating
+            the content it shows.`)
+          }
+
+          for (let rp = 0; rp < reposts[i].embeddedReposts.length; rp++) {
+            const repostStateJSON = reposts[i].embeddedReposts[rp].repostState;
+            const repostWitness = MerkleMapWitness.fromJSON(reposts[i].embeddedReposts[rp].repostWitness);
+            const repostState = RepostState.fromJSON(repostStateJSON);
+            let calculatedRepostRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
+
+            // Audit that all roots calculated from the state of each repost and their witnesses, match zkApp state
+            if (fetchedRepostsRoot !== calculatedRepostRoot) {
+              throw new Error(`Repost ${repostStateJSON.allRepostsCounter} has different root than zkApp state.\
+              The server may be experiencing some issues or manipulating results for the reposts to Post ${reposts[i].postState.allPostsCounter}
               from Repost ${reposts[i].repostState.allRepostsCounter}`);
             }
           }
