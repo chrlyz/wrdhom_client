@@ -622,7 +622,7 @@ export default function GetGlobalPosts({
     }
   };
 
-  const auditNoMissingPosts = () => {
+  const auditNoSkippingContentInPosts = () => {
     try {
       for (let i = 0; i < posts.length-1; i++) {
         if (Number(posts[i].postState.allPostsCounter) !== Number(posts[i+1].postState.allPostsCounter)+1) {
@@ -635,7 +635,7 @@ export default function GetGlobalPosts({
           !== Number(posts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
             throw new Error(`Gap between Reactions ${posts[i].embeddedReactions[r].reactionState.targetReactionsCounter} and\
             ${posts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter}, from Post ${posts[i].postState.allPostsCounter}\
-            The server may be experiencing some issues or censoring reactions.`);
+            The server may be experiencing some issues or censoring embedded reactions.`);
           }
         }
 
@@ -644,7 +644,16 @@ export default function GetGlobalPosts({
           !== Number(posts[i].embeddedComments[c+1].commentState.targetCommentsCounter)+1) {
             throw new Error(`Gap between Comments ${posts[i].embeddedComments[c].commentState.targetCommentsCounter} and\
             ${posts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from Post ${posts[i].postState.allPostsCounter}\
-            The server may be experiencing some issues or censoring comments.`);
+            The server may be experiencing some issues or censoring embedded comments.`);
+          }
+        }
+
+        for (let rp = 0; rp < Number(posts[i].embeddedReposts.length)-1; rp++) {
+          if (Number(posts[i].embeddedReposts[rp].repostState.targetRepostsCounter)
+          !== Number(posts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter)+1) {
+            throw new Error(`Gap between Reposts ${posts[i].embeddedReposts[rp].repostState.targetRepostsCounter} and\
+            ${posts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from Post ${posts[i].postState.allRepostsCounter}\
+            The server may be experiencing some issues or censoring embedded reposts.`);
           }
         }
       }
@@ -655,7 +664,7 @@ export default function GetGlobalPosts({
     }
   }
 
-  const auditNoMissingReposts = () => {
+  const auditNoSkippingContentInReposts = () => {
     try {
       for (let i = 0; i < reposts.length-1; i++) {
         if (Number(reposts[i].repostState.allRepostsCounter) !== Number(reposts[i+1].repostState.allRepostsCounter)+1) {
@@ -668,7 +677,25 @@ export default function GetGlobalPosts({
           !== Number(reposts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
             throw new Error(`Gap between Reactions ${reposts[i].embeddedReactions[r].reactionState.targetReactionsCounter} and\
             ${reposts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
-            The server may be experiencing some issues or censoring reactions.`);
+            The server may be experiencing some issues or censoring embedded reactions.`);
+          }
+        }
+
+        for (let c = 0; c < Number(reposts[i].embeddedComments.length)-1; c++) {
+          if (Number(reposts[i].embeddedComments[c].commentState.targetCommentsCounter)
+          !== Number(reposts[i].embeddedComments[c+1].commentState.targetCommentsCounter)+1) {
+            throw new Error(`Gap between Comments ${reposts[i].embeddedComments[c].commentState.targetCommentsCounter} and\
+            ${reposts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from Repost ${reposts[i].repostState.allRepostsCounter}\
+            The server may be experiencing some issues or censoring embedded comments.`);
+          }
+        }
+
+        for (let rp = 0; rp < Number(reposts[i].embeddedReposts.length)-1; rp++) {
+          if (Number(reposts[i].embeddedReposts[rp].repostState.targetRepostsCounter)
+          !== Number(reposts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter)+1) {
+            throw new Error(`Gap between Reposts ${reposts[i].embeddedReposts[rp].repostState.targetRepostsCounter} and\
+            ${reposts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from Repost ${reposts[i].repostState.allRepostsCounter}\
+            The server may be experiencing some issues or censoring embedded reposts.`);
           }
         }
       }
@@ -717,8 +744,8 @@ export default function GetGlobalPosts({
   }, [triggerAudit1]);
 
   useEffect(() => {
-    auditNoMissingPosts();
-    auditNoMissingReposts();
+    auditNoSkippingContentInPosts();
+    auditNoSkippingContentInReposts();
     mergeAndSortContent();
   }, [triggerAudit2]);
 

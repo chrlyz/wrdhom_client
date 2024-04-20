@@ -454,6 +454,10 @@ export default function GetProfilePosts({
       // Remove repost to cause a gap error
       // reposts.splice(1, 1);
 
+      if (reposts.length === 0) {
+        return;
+      }
+
       const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
       const { PostState, ReactionState, RepostState, CommentState } = await import('wrdhom');
 
@@ -494,6 +498,11 @@ export default function GetProfilePosts({
           calculatedRepostsRoot = 'badRoot'
         }*/
 
+        if (fetchedRepostsRoot !== calculatedRepostsRoot) {
+          throw new Error(`User Repost ${reposts[i].repostState.userRepostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
+          manipulating results for your query.`);
+        }    
+
         if (Number(reposts[i].repostState.deletionBlockHeight) === 0) {
           const postWitness = MerkleMapWitness.fromJSON(reposts[i].postWitness);
           const numberOfReactionsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfReactionsWitness);
@@ -531,11 +540,6 @@ export default function GetProfilePosts({
           }
   
           // Audit that the on-chain state matches the off-chain state
-  
-          if (fetchedRepostsRoot !== calculatedRepostsRoot) {
-            throw new Error(`User Repost ${reposts[i].repostState.userRepostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
-            manipulating results for your query.`);
-          }    
   
           if (fetchedPostsRoot !== calculatedPostsRoot) {
             throw new Error(`Post ${reposts[i].postState.allPostsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter} has different root than zkApp state.\
@@ -637,7 +641,7 @@ export default function GetProfilePosts({
     }
   };
 
-  const auditNoMissingPosts = () => {
+  const auditNoSkippingContentInPosts = () => {
     try {
       for (let i = 0; i < posts.length-1; i++) {
         if (Number(posts[i].postState.userPostsCounter) !== Number(posts[i+1].postState.userPostsCounter)+1) {
@@ -650,7 +654,25 @@ export default function GetProfilePosts({
           !== Number(posts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
             throw new Error(`Gap between Reactions ${posts[i].embeddedReactions[r].reactionState.targetReactionsCounter} and\
             ${posts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter}, from User Post ${posts[i].postState.userPostsCounter}\
-            The server may be experiencing some issues or censoring reactions.`);
+            The server may be experiencing some issues or censoring embedded reactions.`);
+          }
+        }
+
+        for (let c = 0; c < Number(posts[i].embeddedComments.length)-1; c++) {
+          if (Number(posts[i].embeddedComments[c].commentState.targetCommentsCounter)
+          !== Number(posts[i].embeddedComments[c+1].commentState.targetCommentsCounter)+1) {
+            throw new Error(`Gap between Comments ${posts[i].embeddedComments[c].commentState.targetCommentsCounter} and\
+            ${posts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from User Post ${posts[i].postState.userPostsCounter}\
+            The server may be experiencing some issues or censoring embedded comments.`);
+          }
+        }
+
+        for (let rp = 0; rp < Number(posts[i].embeddedReposts.length)-1; rp++) {
+          if (Number(posts[i].embeddedReposts[rp].repostState.targetRepostsCounter)
+          !== Number(posts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter)+1) {
+            throw new Error(`Gap between Reposts ${posts[i].embeddedReposts[rp].repostState.targetRepostsCounter} and\
+            ${posts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from User Post ${posts[i].postState.userPostsCounter}\
+            The server may be experiencing some issues or censoring embedded reposts.`);
           }
         }
       }
@@ -661,7 +683,7 @@ export default function GetProfilePosts({
     }
   }
 
-  const auditNoMissingReposts = () => {
+  const auditNoSkippingContentInReposts = () => {
     try {
       for (let i = 0; i < reposts.length-1; i++) {
         if (Number(reposts[i].repostState.userRepostsCounter) !== Number(reposts[i+1].repostState.userRepostsCounter)+1) {
@@ -674,7 +696,25 @@ export default function GetProfilePosts({
           !== Number(reposts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
             throw new Error(`Gap between Reactions ${reposts[i].embeddedReactions[r].reactionState.targetReactionsCounter} and\
             ${reposts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter}\
-            The server may be experiencing some issues or censoring reactions.`);
+            The server may be experiencing some issues or censoring embedded reactions.`);
+          }
+        }
+
+        for (let c = 0; c < Number(posts[i].embeddedComments.length)-1; c++) {
+          if (Number(reposts[i].embeddedComments[c].commentState.targetCommentsCounter)
+          !== Number(reposts[i].embeddedComments[c+1].commentState.targetCommentsCounter)+1) {
+            throw new Error(`Gap between Comments ${reposts[i].embeddedComments[c].commentState.targetCommentsCounter} and\
+            ${reposts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from User Repost ${reposts[i].repostState.userPostsCounter}\
+            The server may be experiencing some issues or censoring embedded comments.`);
+          }
+        }
+
+        for (let rp = 0; rp < Number(reposts[i].embeddedReposts.length)-1; rp++) {
+          if (Number(reposts[i].embeddedReposts[rp].repostState.targetRepostsCounter)
+          !== Number(reposts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter)+1) {
+            throw new Error(`Gap between Reposts ${reposts[i].embeddedReposts[rp].repostState.targetRepostsCounter} and\
+            ${reposts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from User Repost ${reposts[i].repostState.userPostsCounter}\
+            The server may be experiencing some issues or censoring embedded reposts.`);
           }
         }
       }
@@ -730,8 +770,8 @@ export default function GetProfilePosts({
   }, [triggerAudit1]);
 
   useEffect(() => {
-    auditNoMissingPosts();
-    auditNoMissingReposts();
+    auditNoSkippingContentInPosts();
+    auditNoSkippingContentInReposts();
     mergeAndSortContent();
   }, [triggerAudit2]);
 
