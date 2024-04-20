@@ -20,7 +20,42 @@ export default function RepostButton({
         body: JSON.stringify(signedData),
       });
 
-      console.log(await res.text());
+      const resJSON = await res.json();
+
+      if (await resJSON.option === 'Restore?') {
+        const restore = confirm('Repost already exists but was deleted. Do you want to restore it?');
+        if (restore) {
+            const { RepostState, fieldToFlagRepostsAsRestored } = await import('wrdhom');
+            const repostKey = resJSON.repostKey;
+            const response = await fetch(`/reposts`+
+            `?repostKey=${repostKey.toString()}`,
+            {
+              headers: {'Cache-Control': 'no-cache'}
+            }
+          );
+          const data: any = await response.json();
+          const repostStateJSON = JSON.parse(data.repostState);
+          const repostState = RepostState.fromJSON(repostStateJSON);
+          const s = await (window as any).mina
+                        .signFields({ message: [
+                            repostState.hash().toString(),
+                            fieldToFlagRepostsAsRestored.toString()
+                        ] });
+          const signedRepostRestoration = {
+            targetKey: targetKey,
+            repostKey: repostKey.toString(),
+            signedData: s
+          }
+
+          const restorationRes = await fetch('/reposts/restore', {
+            method: `POST`,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(signedRepostRestoration),
+          });
+
+          console.log(await restorationRes.text());
+        }
+      }
     };
   
     return (
