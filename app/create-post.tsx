@@ -52,7 +52,11 @@ export default function CreatePost({
                 });
                 const resJSON = await res.json();
 
-                if (await resJSON.option === 'Restore?') {
+                if (await resJSON.message === 'Post already exists') {
+                    alert(resJSON.message);
+                  }
+
+                if (await resJSON.message === 'Restore?') {
                     const restore = confirm('Post already exists but was deleted. Do you want to restore it?');
                     if (restore) {
                         const { PostState, fieldToFlagPostsAsRestored } = await import('wrdhom');
@@ -81,6 +85,8 @@ export default function CreatePost({
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(signedPostRestoration),
                       });
+
+                      console.log(await restorationRes.text());
                     }
                 }
                 setPost('');

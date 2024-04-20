@@ -35,8 +35,6 @@ export default function CommentButton({
             signedData: s
         }
 
-
-
         const res = await fetch('/comments', {
             method: `POST`,
             headers: { 'Content-Type': 'application/json' },
@@ -44,7 +42,11 @@ export default function CommentButton({
         });
         const resJSON = await res.json();
 
-        if (await resJSON.option === 'Restore?') {
+        if (await resJSON.message === 'Comment already exists') {
+            alert(resJSON.message);
+          }
+
+        if (await resJSON.message === 'Restore?') {
             const restore = confirm('Comment already exists but was deleted. Do you want to restore it?');
             if (restore) {
                 const { CommentState, fieldToFlagCommentsAsRestored } = await import('wrdhom');
@@ -74,6 +76,8 @@ export default function CommentButton({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(signedCommentRestoration),
               });
+
+              console.log(await restorationRes.text());
             }
         }
 

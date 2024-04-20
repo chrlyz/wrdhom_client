@@ -22,7 +22,11 @@ export default function RepostButton({
 
       const resJSON = await res.json();
 
-      if (await resJSON.option === 'Restore?') {
+      if (await resJSON.message === 'Repost already exists') {
+        alert(resJSON.message);
+      }
+
+      if (await resJSON.message === 'Restore?') {
         const restore = confirm('Repost already exists but was deleted. Do you want to restore it?');
         if (restore) {
             const { RepostState, fieldToFlagRepostsAsRestored } = await import('wrdhom');
