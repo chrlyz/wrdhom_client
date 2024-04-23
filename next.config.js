@@ -46,7 +46,11 @@ const nextConfig = {
           {
             source: '/graphql',
             destination: 'https://proxy.berkeley.minaexplorer.com/graphql',
-          }
+          },
+          {
+            source: "/reactions/delete",
+            destination: "http://localhost:3001/reactions/delete",
+          },
         ];
     },
     async headers() {

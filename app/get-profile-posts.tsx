@@ -843,6 +843,7 @@ export default function GetProfilePosts({
                   <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
                     targetKey={post.postKey}
+                    embeddedReactions={post.embeddedReactions}
                   />}
                   {walletConnected && <CommentButton
                     targetKey={post.postKey}
