@@ -51,6 +51,10 @@ const nextConfig = {
             source: "/reactions/delete",
             destination: "http://localhost:3001/reactions/delete",
           },
+          {
+            source: "/reactions/restore",
+            destination: "http://localhost:3001/reactions/restore",
+          },
         ];
     },
     async headers() {

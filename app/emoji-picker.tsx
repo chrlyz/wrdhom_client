@@ -3,11 +3,13 @@ import { EmbeddedReactions } from "./get-global-posts";
 export default function EmojiPicker({
     createReaction,
     deleteReaction,
-    embeddedReactions
+    embeddedReactions,
+    account
 }: {
     createReaction: (emoji: string) => void,
     deleteReaction: (reactionState: any) => void,
-    embeddedReactions: EmbeddedReactions[]
+    embeddedReactions: EmbeddedReactions[],
+    account: string
 }) {
     const emojis = ['👍', '👎', '😂', '🤔', '😢', '😠', '😎', '🔥', '👀',
     '🩶', '💔', '🙏', '🤝', '🤌', '🙌', '🤭', '😳', '😭', '🤯', '😡',
@@ -15,7 +17,7 @@ export default function EmojiPicker({
     return (
         <div>
         {emojis.map((emoji) => {
-            const isCurrentUserReaction = embeddedReactions.some(reaction => reaction.reactionEmoji === emoji) ? true : false;
+            const isCurrentUserReaction = embeddedReactions.some(reaction => reaction.reactionEmoji === emoji && account === reaction.reactionState.reactorAddress) ? true : false;
             const highlight = isCurrentUserReaction ? 'bg-black' : '';
             let reactionState: any = null;
             embeddedReactions.forEach( reaction => {
