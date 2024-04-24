@@ -239,6 +239,7 @@ export default function GetComments({
                       <div className="flex-grow"></div>
                       {walletConnected && <ReactionButton
                         targetKey={commentTarget.postKey}
+                        embeddedReactions={commentTarget.embeddedReactions}
                       />}
                       {walletConnected && <CommentButton
                         targetKey={commentTarget.postKey}
