@@ -4,10 +4,12 @@ import { EmbeddedReactions } from "./get-global-posts";
 
 export default function ReactionButton({
   targetKey,
-  embeddedReactions
+  embeddedReactions,
+  account
 }: {
   targetKey: string,
-  embeddedReactions: EmbeddedReactions[]
+  embeddedReactions: EmbeddedReactions[],
+  account: string
 }) {
     const [showPicker, setShowPicker] = useState(false);
   
@@ -23,7 +25,43 @@ export default function ReactionButton({
         body: JSON.stringify(signedData),
       });
 
-      console.log(await res.text());
+      const resJSON = await res.json();
+
+      if (await resJSON.message === 'Restore?') {
+        const restore = confirm('Reaction already exists but was deleted. Do you want to restore it?');
+        if (restore) {
+            const { ReactionState, fieldToFlagReactionsAsRestored } = await import('wrdhom');
+            const reactionKey = resJSON.reactionKey;
+            const response = await fetch(`/reactions`+
+            `?reactionKey=${reactionKey.toString()}`,
+            {
+              headers: {'Cache-Control': 'no-cache'}
+            }
+          );
+          const data: any = await response.json();
+          const reactionStateJSON = JSON.parse(data.reactionState);
+          const reactionState = ReactionState.fromJSON(reactionStateJSON);
+          const s = await (window as any).mina
+                        .signFields({ message: [
+                            reactionState.hash().toString(),
+                            fieldToFlagReactionsAsRestored.toString()
+                        ] });
+          const signedReactionRestoration = {
+            targetKey: targetKey,
+            reactionKey: reactionKey.toString(),
+            signedData: s
+          }
+
+          const restorationRes = await fetch('/reactions/restore', {
+            method: `POST`,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(signedReactionRestoration),
+          });
+
+          console.log(await restorationRes.text());
+        }
+    }
+
       setShowPicker(false);
     };
 
@@ -64,6 +102,7 @@ export default function ReactionButton({
           createReaction={createReaction}
           deleteReaction={deleteReaction}
           embeddedReactions={embeddedReactions}
+          account={account}
         />}
       </div>
     );

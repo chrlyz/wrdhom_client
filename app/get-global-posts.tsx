@@ -96,10 +96,10 @@ export default function GetGlobalPosts({
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint)
           });
 
-          if (reactionStateJSON.deletionBlockHeight === 0) {
+          if (Number(reactionStateJSON.deletionBlockHeight) === 0) {
             filteredEmbeddedReactions.push({
               reactionState: reactionStateJSON,
-              reactionWitness: JSON.parse(data.repostsResponse[i].allEmbeddedReactions[r].reactionWitness),
+              reactionWitness: JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionWitness),
               reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
             });
           }
@@ -377,7 +377,7 @@ export default function GetGlobalPosts({
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
           });
 
-          if (reactionStateJSON.deletionBlockHeight === 0) {
+          if (Number(reactionStateJSON.deletionBlockHeight) === 0) {
             filteredEmbeddedReactions.push({
               reactionState: reactionStateJSON,
               reactionWitness: JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionWitness),
@@ -830,6 +830,7 @@ export default function GetGlobalPosts({
                   {walletConnected && <ReactionButton
                     targetKey={post.postKey}
                     embeddedReactions={post.filteredEmbeddedReactions}
+                    account={account[0]}
                   />}
                   {walletConnected && <CommentButton
                     targetKey={post.postKey}
@@ -858,7 +859,7 @@ export default function GetGlobalPosts({
 };
 
 export type EmbeddedReactions = {
-  reactionState: JSON,
+  reactionState: any,
   reactionWitness: JSON,
   reactionEmoji: string
 };
