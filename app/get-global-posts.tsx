@@ -84,18 +84,27 @@ export default function GetGlobalPosts({
       for (let i = 0; i < data.postsResponse.length; i++) {
         const postStateJSON = JSON.parse(data.postsResponse[i].postState);
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
+        const allEmbeddedReactions: EmbeddedReactions[] = [];
+        const filteredEmbeddedReactions: EmbeddedReactions[] = [];
 
-        const embeddedReactions: EmbeddedReactions[] = [];
         for (let r = 0; r < data.postsResponse[i].embeddedReactions.length; r++) {
           const reactionStateJSON = JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionState);
 
-          embeddedReactions.push({
+          allEmbeddedReactions.push({
             reactionState: reactionStateJSON,
             reactionWitness: JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionWitness),
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint)
           });
+
+          if (reactionStateJSON.deletionBlockHeight === 0) {
+            filteredEmbeddedReactions.push({
+              reactionState: reactionStateJSON,
+              reactionWitness: JSON.parse(data.repostsResponse[i].allEmbeddedReactions[r].reactionWitness),
+              reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
+            });
+          }
         }
-        const emojis = embeddedReactions.map(reaction => reaction.reactionEmoji);
+        const emojis = filteredEmbeddedReactions.map(reaction => reaction.reactionEmoji);
         const frequencyMap = new Map<string, number>();
         emojis.forEach(emoji => {
           const count = frequencyMap.get(emoji) || 0;
@@ -137,7 +146,8 @@ export default function GetGlobalPosts({
             postContentID: data.postsResponse[i].postContentID,
             content: data.postsResponse[i].content,
             shortPosterAddressEnd: shortPosterAddressEnd,
-            embeddedReactions: embeddedReactions,
+            allEmbeddedReactions: allEmbeddedReactions,
+            filteredEmbeddedReactions: filteredEmbeddedReactions,
             top3Emojis: top3Emojis,
             numberOfReactions: data.postsResponse[i].numberOfReactions,
             numberOfReactionsWitness: JSON.parse(data.postsResponse[i].numberOfReactionsWitness),
@@ -193,7 +203,7 @@ export default function GetGlobalPosts({
       const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
 
       // Remove reaction to cause a gap error
-      // posts[4].embeddedReactions.splice(1, 1);
+      // posts[4].allEmbeddedReactions.splice(1, 1);
 
       for (let i = 0; i < posts.length; i++) {
 
@@ -263,15 +273,15 @@ export default function GetGlobalPosts({
           }
   
           // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
-          if(posts[i].embeddedReactions.length !== posts[i].numberOfReactions) {
+          if(posts[i].allEmbeddedReactions.length !== posts[i].numberOfReactions) {
             throw new Error(`Server stated that there are ${posts[i].numberOfReactions} reactions for post ${posts[i].postState.allPostsCounter},\
-            but it only provided ${posts[i].embeddedReactions.length} reactions. The server may be experiencing some issues or manipulating
+            but it only provided ${posts[i].allEmbeddedReactions.length} reactions. The server may be experiencing some issues or manipulating
             the content it shows.`)
           }
   
-          for (let r = 0; r < posts[i].embeddedReactions.length; r++) {
-            const reactionStateJSON = posts[i].embeddedReactions[r].reactionState;
-            const reactionWitness = MerkleMapWitness.fromJSON(posts[i].embeddedReactions[r].reactionWitness);
+          for (let r = 0; r < posts[i].allEmbeddedReactions.length; r++) {
+            const reactionStateJSON = posts[i].allEmbeddedReactions[r].reactionState;
+            const reactionWitness = MerkleMapWitness.fromJSON(posts[i].allEmbeddedReactions[r].reactionWitness);
             const reactionState = ReactionState.fromJSON(reactionStateJSON);
             let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
   
@@ -355,19 +365,28 @@ export default function GetGlobalPosts({
         const postStateJSON = JSON.parse(data.repostsResponse[i].postState);
         const shortReposterAddressEnd = repostStateJSON.reposterAddress.slice(-12);
         const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
-        const embeddedReactions: EmbeddedReactions[] = [];
+        const allEmbeddedReactions: EmbeddedReactions[] = [];
+        const filteredEmbeddedReactions: EmbeddedReactions[] = [];
 
         for (let r = 0; r < data.repostsResponse[i].embeddedReactions.length; r++) {
           const reactionStateJSON = JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionState);
 
-          embeddedReactions.push({
+          allEmbeddedReactions.push({
             reactionState: reactionStateJSON,
             reactionWitness: JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionWitness),
             reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
           });
+
+          if (reactionStateJSON.deletionBlockHeight === 0) {
+            filteredEmbeddedReactions.push({
+              reactionState: reactionStateJSON,
+              reactionWitness: JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionWitness),
+              reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
+            });
+          }
         }
 
-        const emojis = embeddedReactions.map(reaction => reaction.reactionEmoji);
+        const emojis = filteredEmbeddedReactions.map(reaction => reaction.reactionEmoji);
         const frequencyMap = new Map<string, number>();
         emojis.forEach(emoji => {
           const count = frequencyMap.get(emoji) || 0;
@@ -413,7 +432,8 @@ export default function GetGlobalPosts({
             postContentID: data.repostsResponse[i].postContentID,
             content: data.repostsResponse[i].content,
             shortPosterAddressEnd: shortPosterAddressEnd,
-            embeddedReactions: embeddedReactions,
+            allEmbeddedReactions: allEmbeddedReactions,
+            filteredEmbeddedReactions: filteredEmbeddedReactions,
             top3Emojis: top3Emojis,
             numberOfReactions: data.repostsResponse[i].numberOfReactions,
             numberOfReactionsWitness: JSON.parse(data.repostsResponse[i].numberOfReactionsWitness),
@@ -471,7 +491,7 @@ export default function GetGlobalPosts({
       const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
 
       // Remove reaction to cause a gap error
-      // reposts[2].embeddedReactions.splice(1, 1);
+      // reposts[2].allEmbeddedReactions.splice(1, 1);
 
       for (let i = 0; i < reposts.length; i++) {
 
@@ -502,7 +522,6 @@ export default function GetGlobalPosts({
             Field(reposts[i].numberOfComments))[0].toString();
           let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
             Field(reposts[i].numberOfReposts))[0].toString();
-          const embeddedReactions: EmbeddedReactions[] = [];
   
           // Introduce different block-length to cause block mismatch
           /*if (i === 0) {
@@ -553,15 +572,15 @@ export default function GetGlobalPosts({
           }
   
           // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
-          if(reposts[i].embeddedReactions.length !== reposts[i].numberOfReactions) {
+          if(reposts[i].allEmbeddedReactions.length !== reposts[i].numberOfReactions) {
             throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
-            from Repost ${reposts[i].repostState.allRepostsCounter} but it only provided ${reposts[i].embeddedReactions.length} reactions. The server\
+            from Repost ${reposts[i].repostState.allRepostsCounter} but it only provided ${reposts[i].allEmbeddedReactions.length} reactions. The server\
             may be experiencing some issues or manipulating the content it shows.`)
           }
   
-          for (let r = 0; r < reposts[i].embeddedReactions.length; r++) {
-            const reactionStateJSON = reposts[i].embeddedReactions[r].reactionState;
-            const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].embeddedReactions[r].reactionWitness);
+          for (let r = 0; r < reposts[i].allEmbeddedReactions.length; r++) {
+            const reactionStateJSON = reposts[i].allEmbeddedReactions[r].reactionState;
+            const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].allEmbeddedReactions[r].reactionWitness);
             const reactionState = ReactionState.fromJSON(reactionStateJSON);
             let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
   
@@ -630,11 +649,11 @@ export default function GetGlobalPosts({
           The server may be experiencing some issues or censoring posts.`);
         }
 
-        for (let r = 0; r < Number(posts[i].embeddedReactions.length)-1; r++) {
-          if (Number(posts[i].embeddedReactions[r].reactionState.targetReactionsCounter)
-          !== Number(posts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
-            throw new Error(`Gap between Reactions ${posts[i].embeddedReactions[r].reactionState.targetReactionsCounter} and\
-            ${posts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter}, from Post ${posts[i].postState.allPostsCounter}\
+        for (let r = 0; r < Number(posts[i].allEmbeddedReactions.length)-1; r++) {
+          if (Number(posts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter)
+          !== Number(posts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
+            throw new Error(`Gap between Reactions ${posts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter} and\
+            ${posts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter}, from Post ${posts[i].postState.allPostsCounter}\
             The server may be experiencing some issues or censoring embedded reactions.`);
           }
         }
@@ -672,11 +691,11 @@ export default function GetGlobalPosts({
           The server may be experiencing some issues or censoring reposts.`);
         }
 
-        for (let r = 0; r < Number(reposts[i].embeddedReactions.length)-1; r++) {
-          if (Number(reposts[i].embeddedReactions[r].reactionState.targetReactionsCounter)
-          !== Number(reposts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
-            throw new Error(`Gap between Reactions ${reposts[i].embeddedReactions[r].reactionState.targetReactionsCounter} and\
-            ${reposts[i].embeddedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
+        for (let r = 0; r < Number(reposts[i].allEmbeddedReactions.length)-1; r++) {
+          if (Number(reposts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter)
+          !== Number(reposts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
+            throw new Error(`Gap between Reactions ${reposts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter} and\
+            ${reposts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
             The server may be experiencing some issues or censoring embedded reactions.`);
           }
         }
@@ -797,7 +816,7 @@ export default function GetGlobalPosts({
                 </div>
                 <div className="flex flex-row">
                   {post.top3Emojis.map((emoji: string) => emoji)}
-                  <p className="text-xs ml-1 mt-2">{post.numberOfReactions > 0 ? post.numberOfReactions : null}</p>
+                  <p className="text-xs ml-1 mt-2">{post.filteredEmbeddedReactions.length > 0 ? post.filteredEmbeddedReactions.length : null}</p>
                   {post.numberOfNonDeletedComments > 0 ? <button
                   className="hover:text-lg ml-3"
                   onClick={() => setCommentTarget(post)}
@@ -810,7 +829,7 @@ export default function GetGlobalPosts({
                   <div className="flex-grow"></div>
                   {walletConnected && <ReactionButton
                     targetKey={post.postKey}
-                    embeddedReactions={post.embeddedReactions}
+                    embeddedReactions={post.filteredEmbeddedReactions}
                   />}
                   {walletConnected && <CommentButton
                     targetKey={post.postKey}
@@ -861,7 +880,8 @@ export type ProcessedPosts = {
   postContentID: string,
   content: string,
   shortPosterAddressEnd: string,
-  embeddedReactions: EmbeddedReactions[],
+  allEmbeddedReactions: EmbeddedReactions[],
+  filteredEmbeddedReactions: EmbeddedReactions[],
   top3Emojis: string[],
   numberOfReactions: number,
   numberOfReactionsWitness: JSON,
@@ -886,7 +906,8 @@ export type ProcessedReposts = {
   postContentID: string,
   content: string,
   shortPosterAddressEnd: string,
-  embeddedReactions: EmbeddedReactions[],
+  allEmbeddedReactions: EmbeddedReactions[],
+  filteredEmbeddedReactions: EmbeddedReactions[],
   top3Emojis: string[],
   numberOfReactions: number,
   numberOfReactionsWitness: JSON,
