@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { getCID } from './utils/cid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment } from '@fortawesome/free-solid-svg-icons';
+import { CommentState } from 'wrdhom';
 
 export default function CommentButton({
     targetKey
@@ -59,7 +60,7 @@ export default function CommentButton({
               );
               const data: any = await response.json();
               const commentStateJSON = JSON.parse(data.commentState);
-              const commentState = CommentState.fromJSON(commentStateJSON);
+              const commentState = CommentState.fromJSON(commentStateJSON) as CommentState;
               const s = await (window as any).mina
                             .signFields({ message: [
                                 commentState.hash().toString(),

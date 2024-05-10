@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getCID } from './utils/cid';
+import { PostState } from 'wrdhom';
 
 export default function CreatePost({
     account
@@ -69,7 +70,7 @@ export default function CreatePost({
                       );
                       const data: any = await response.json();
                       const postStateJSON = JSON.parse(data.postState);
-                      const postState = PostState.fromJSON(postStateJSON);
+                      const postState = PostState.fromJSON(postStateJSON) as PostState;
                       const s = await (window as any).mina
                                     .signFields({ message: [
                                         postState.hash().toString(),

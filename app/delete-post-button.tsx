@@ -1,17 +1,19 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { PostState } from 'wrdhom';
 
 export default function DeletePostButton({
     postState,
     postKey
 }: {
-    postState: JSON,
+    postState: any,
     postKey: string
 }) {
 
     const handleClick = async () => {
         const { PostState, fieldToFlagPostsAsDeleted } = await import('wrdhom');
-        const postStateHash = PostState.fromJSON(postState).hash();
+        const postStateTyped = PostState.fromJSON(postState) as PostState;
+        const postStateHash = postStateTyped.hash();
 
         const s = await (window as any).mina
             .signFields({ message: [postStateHash.toString(), fieldToFlagPostsAsDeleted.toString()] });

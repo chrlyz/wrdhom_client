@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { CommentState } from 'wrdhom';
 
 export default function DeleteCommentButton({
     commentTarget,
@@ -7,13 +8,14 @@ export default function DeleteCommentButton({
     commentKey
 }: {
     commentTarget: any,
-    commentState: JSON,
+    commentState: any,
     commentKey: string
 }) {
 
     const handleClick = async () => {
         const { CommentState, fieldToFlagCommentsAsDeleted } = await import('wrdhom');
-        const commentStateHash = CommentState.fromJSON(commentState).hash();
+        const commentStateTyped = CommentState.fromJSON(commentState) as CommentState;
+        const commentStateHash = commentStateTyped.hash();
 
         const signed = await (window as any).mina
             .signFields({ message: [commentStateHash.toString(), fieldToFlagCommentsAsDeleted.toString()] });

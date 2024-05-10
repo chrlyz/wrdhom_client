@@ -1,6 +1,7 @@
 import { useState } from "react";
 import EmojiPicker from "./emoji-picker";
 import { EmbeddedReactions } from "./get-global-posts";
+import { ReactionState } from "wrdhom";
 
 export default function ReactionButton({
   targetKey,
@@ -40,7 +41,7 @@ export default function ReactionButton({
           );
           const data: any = await response.json();
           const reactionStateJSON = JSON.parse(data.reactionState);
-          const reactionState = ReactionState.fromJSON(reactionStateJSON);
+          const reactionState = ReactionState.fromJSON(reactionStateJSON) as ReactionState;
           const s = await (window as any).mina
                         .signFields({ message: [
                             reactionState.hash().toString(),
@@ -67,7 +68,8 @@ export default function ReactionButton({
 
     const deleteReaction = async (reactionState: any | null) => {
       const {ReactionState, fieldToFlagReactionsAsDeleted} = await import('wrdhom');
-      const initialReactionStateHash = ReactionState.fromJSON(reactionState).hash();
+      const reactionStateTyped = ReactionState.fromJSON(reactionState) as ReactionState;
+      const initialReactionStateHash = reactionStateTyped.hash();
 
       const signedData = await (window as any).mina.signFields({ message: [
         initialReactionStateHash.toString(),
