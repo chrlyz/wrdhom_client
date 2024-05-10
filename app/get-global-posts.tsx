@@ -9,6 +9,7 @@ import RepostButton from './repost-button';
 import CreatePost from './create-post';
 import DeleteButton from './delete-post-button';
 import DeleteRepostButton from './delete-repost-button';
+import { CommentState, PostState, ReactionState, RepostState } from 'wrdhom';
 
 export default function GetGlobalPosts({
   getPosts,
@@ -207,7 +208,7 @@ export default function GetGlobalPosts({
 
       for (let i = 0; i < posts.length; i++) {
 
-        const postState = PostState.fromJSON(posts[i].postState);
+        const postState = PostState.fromJSON(posts[i].postState) as PostState;
         const postWitness = MerkleMapWitness.fromJSON(posts[i].postWitness);
         let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
 
@@ -282,7 +283,7 @@ export default function GetGlobalPosts({
           for (let r = 0; r < posts[i].allEmbeddedReactions.length; r++) {
             const reactionStateJSON = posts[i].allEmbeddedReactions[r].reactionState;
             const reactionWitness = MerkleMapWitness.fromJSON(posts[i].allEmbeddedReactions[r].reactionWitness);
-            const reactionState = ReactionState.fromJSON(reactionStateJSON);
+            const reactionState = ReactionState.fromJSON(reactionStateJSON) as ReactionState;
             let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
@@ -302,7 +303,7 @@ export default function GetGlobalPosts({
           for (let c = 0; c < posts[i].embeddedComments.length; c++) {
             const commentStateJSON = posts[i].embeddedComments[c].commentState;
             const commentWitness = MerkleMapWitness.fromJSON(posts[i].embeddedComments[c].commentWitness);
-            const commentState = CommentState.fromJSON(commentStateJSON);
+            const commentState = CommentState.fromJSON(commentStateJSON) as CommentState;
             let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
@@ -322,7 +323,7 @@ export default function GetGlobalPosts({
           for (let rp = 0; rp < posts[i].embeddedReposts.length; rp++) {
             const repostStateJSON = posts[i].embeddedReposts[rp].repostState;
             const repostWitness = MerkleMapWitness.fromJSON(posts[i].embeddedReposts[rp].repostWitness);
-            const repostState = RepostState.fromJSON(repostStateJSON);
+            const repostState = RepostState.fromJSON(repostStateJSON) as RepostState;
             let calculatedRepostRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each repost and their witnesses, match zkApp state
@@ -496,7 +497,7 @@ export default function GetGlobalPosts({
       for (let i = 0; i < reposts.length; i++) {
 
         const repostWitness = MerkleMapWitness.fromJSON(reposts[i].repostWitness);
-        const repostState = RepostState.fromJSON(reposts[i].repostState);
+        const repostState = RepostState.fromJSON(reposts[i].repostState)as RepostState;
         let calculatedRepostsRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
 
         // Introduce different root to cause a root mismatch
@@ -514,7 +515,7 @@ export default function GetGlobalPosts({
           const numberOfReactionsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfReactionsWitness);
           const numberOfCommentsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfCommentsWitness);
           const numberOfRepostsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfRepostsWitness);
-          const postState = PostState.fromJSON(reposts[i].postState);
+          const postState = PostState.fromJSON(reposts[i].postState) as PostState;
           let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
           let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKey(
             Field(reposts[i].numberOfReactions))[0].toString();
@@ -581,7 +582,7 @@ export default function GetGlobalPosts({
           for (let r = 0; r < reposts[i].allEmbeddedReactions.length; r++) {
             const reactionStateJSON = reposts[i].allEmbeddedReactions[r].reactionState;
             const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].allEmbeddedReactions[r].reactionWitness);
-            const reactionState = ReactionState.fromJSON(reactionStateJSON);
+            const reactionState = ReactionState.fromJSON(reactionStateJSON) as ReactionState;
             let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
@@ -601,7 +602,7 @@ export default function GetGlobalPosts({
           for (let c = 0; c < reposts[i].embeddedComments.length; c++) {
             const commentStateJSON = reposts[i].embeddedComments[c].commentState;
             const commentWitness = MerkleMapWitness.fromJSON(reposts[i].embeddedComments[c].commentWitness);
-            const commentState = CommentState.fromJSON(commentStateJSON);
+            const commentState = CommentState.fromJSON(commentStateJSON) as CommentState;
             let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
@@ -622,7 +623,7 @@ export default function GetGlobalPosts({
           for (let rp = 0; rp < reposts[i].embeddedReposts.length; rp++) {
             const repostStateJSON = reposts[i].embeddedReposts[rp].repostState;
             const repostWitness = MerkleMapWitness.fromJSON(reposts[i].embeddedReposts[rp].repostWitness);
-            const repostState = RepostState.fromJSON(repostStateJSON);
+            const repostState = RepostState.fromJSON(repostStateJSON) as RepostState;
             let calculatedRepostRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each repost and their witnesses, match zkApp state

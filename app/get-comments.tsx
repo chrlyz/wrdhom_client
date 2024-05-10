@@ -7,6 +7,7 @@ import RepostButton from './repost-button';
 import DeleteCommentButton from './delete-comment-button';
 import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { CommentState } from 'wrdhom';
 
 export default function GetComments({
   commentTarget,
@@ -110,7 +111,7 @@ export default function GetComments({
         
         for (let i = 0; i < comments.length; i++) {
           const commentWitness = MerkleMapWitness.fromJSON(comments[i].commentWitness);
-          const commentState = CommentState.fromJSON(comments[i].commentState);
+          const commentState = CommentState.fromJSON(comments[i].commentState) as CommentState;
           let calculatedCommentsRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
 
           // Introduce different root to cause a root mismatch
@@ -240,6 +241,7 @@ export default function GetComments({
                       {walletConnected && <ReactionButton
                         targetKey={commentTarget.postKey}
                         embeddedReactions={commentTarget.embeddedReactions}
+                        account={account[0]}
                       />}
                       {walletConnected && <CommentButton
                         targetKey={commentTarget.postKey}

@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { RepostState } from 'wrdhom';
 
 export default function DeleteRepostButton({
     repostTargetKey,
@@ -7,13 +8,14 @@ export default function DeleteRepostButton({
     repostKey
 }: {
     repostTargetKey: string,
-    repostState: JSON,
+    repostState: any,
     repostKey: string
 }) {
 
     const handleClick = async () => {
         const { RepostState, fieldToFlagRepostsAsDeleted } = await import('wrdhom');
-        const repostStateHash = RepostState.fromJSON(repostState).hash();
+        const repostStateTyped = RepostState.fromJSON(repostState) as RepostState;
+        const repostStateHash = repostStateTyped.hash();
 
         const signed = await (window as any).mina
             .signFields({ message: [repostStateHash.toString(), fieldToFlagRepostsAsDeleted.toString()] });

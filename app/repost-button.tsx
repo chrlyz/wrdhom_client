@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRetweet } from '@fortawesome/free-solid-svg-icons';
+import { RepostState } from 'wrdhom';
 
 export default function RepostButton({
     targetKey
@@ -39,7 +40,7 @@ export default function RepostButton({
           );
           const data: any = await response.json();
           const repostStateJSON = JSON.parse(data.repostState);
-          const repostState = RepostState.fromJSON(repostStateJSON);
+          const repostState = RepostState.fromJSON(repostStateJSON) as RepostState;
           const s = await (window as any).mina
                         .signFields({ message: [
                             repostState.hash().toString(),
