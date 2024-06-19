@@ -788,16 +788,6 @@ export default function GetGlobalPosts({
                     <span className="cursor-pointer hover:underline">{post.shortReposterAddressEnd}</span> 
                       {` reposted at block ${post.repostState.repostBlockHeight} (Repost:${post.repostState.allRepostsCounter})`}
                     </div>
-                    <div className="flex-grow"></div>
-                    {
-                      account[0] === post.repostState.reposterAddress ?
-                        <DeleteRepostButton
-                          repostTargetKey={post.postKey}
-                          repostState={post.repostState}
-                          repostKey={post.repostKey}  
-                        />
-                      : null
-                    }
                   </div>
                 }
                 <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
@@ -836,9 +826,15 @@ export default function GetGlobalPosts({
                   {walletConnected && <CommentButton
                     targetKey={post.postKey}
                   />}
-                  {walletConnected && <RepostButton
-                    targetKey={post.postKey}
-                  />}
+                  {post.repostKey === undefined ?
+                    walletConnected && <RepostButton targetKey={post.postKey}/>
+                    :
+                    account[0] === post.repostState.reposterAddress ? <DeleteRepostButton
+                      repostTargetKey={post.postKey}
+                      repostState={post.repostState}
+                      repostKey={post.repostKey}  
+                    /> : null
+                  }
                   {account[0] === post.postState.posterAddress ?
                     <DeleteButton
                       postState={post.postState}
