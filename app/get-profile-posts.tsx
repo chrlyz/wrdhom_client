@@ -818,16 +818,6 @@ export default function GetProfilePosts({
                     <span className="cursor-pointer hover:underline">{post.shortReposterAddressEnd}</span> 
                     {` reposted at block ${post.repostState.repostBlockHeight} (User Repost:${post.repostState.userRepostsCounter})`}
                     </div>
-                    <div className="flex-grow"></div>
-                    {
-                      account[0] === post.repostState.reposterAddress ?
-                        <DeleteRepostButton
-                        repostTargetKey={post.postKey}
-                          repostState={post.repostState}
-                          repostKey={post.repostKey}  
-                        />
-                      : null
-                    }
                   </div>
                 }
                 <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
@@ -868,9 +858,15 @@ export default function GetProfilePosts({
                   {walletConnected && <CommentButton
                     targetKey={post.postKey}
                   />}
-                  {walletConnected && <RepostButton
-                    targetKey={post.postKey}
-                  />}
+                  {post.repostKey === undefined ?
+                    walletConnected && <RepostButton targetKey={post.postKey}/>
+                    :
+                    account[0] === post.repostState.reposterAddress ? <DeleteRepostButton
+                      repostTargetKey={post.postKey}
+                      repostState={post.repostState}
+                      repostKey={post.repostKey}  
+                    /> : null
+                  }
                   {account[0] === post.postState.posterAddress ?
                     <DeletePostButton
                       postState={post.postState}

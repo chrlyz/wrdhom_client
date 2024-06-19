@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faRetweet } from '@fortawesome/free-solid-svg-icons';
 import { RepostState } from 'wrdhom';
 
 export default function DeleteRepostButton({
@@ -14,6 +14,7 @@ export default function DeleteRepostButton({
 
     const handleClick = async () => {
         const { RepostState, fieldToFlagRepostsAsDeleted } = await import('wrdhom');
+        console.log(repostState.posterAddress)
         const repostStateTyped = RepostState.fromJSON(repostState) as RepostState;
         const repostStateHash = repostStateTyped.hash();
 
@@ -35,7 +36,7 @@ export default function DeleteRepostButton({
         console.log(await res.text());
     }
 
-    return <button className="hover:text-lg mb-1" onClick={handleClick}>
-            <FontAwesomeIcon icon={faTrash}  />
+    return <button className="hover:text-lg ml-3 mr-3 mb-1" onClick={handleClick}>
+            <FontAwesomeIcon icon={faRetweet} color='#16a34a'  />
     </button>
 }
