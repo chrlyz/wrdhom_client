@@ -69,10 +69,11 @@ export default function GetProfilePosts({
       setErrorMessage(null);
       setWhenZeroContent(false);
       const response = await fetch(`/posts`+
-        `?posterAddress=${profileAddress}`+
+        `?profileAddress=${profileAddress}`+
         `&howMany=${howManyPosts}`+
         `&fromBlock=${fromBlock}`+
-        `&toBlock=${toBlock}`,
+        `&toBlock=${toBlock}`+
+        `&currentUser=${account[0]}`,
         {
           headers: {'Cache-Control': 'no-cache'}
         }
@@ -146,6 +147,13 @@ export default function GetProfilePosts({
         }
         const numberOfNonDeletedReposts = Number(data.postsResponse[i].numberOfReposts) - numberOfDeletedReposts;
 
+        let currentUserRepostStateJSON: JSON | undefined;
+        let currentUserRepostWitnessJSON: JSON | undefined;
+        if (data.postsResponse[i].currentUserRepostState !== undefined && data.postsResponse[i].currentUserRepostWitness !== undefined) {
+          currentUserRepostStateJSON = JSON.parse(data.postsResponse[i].currentUserRepostState);
+          currentUserRepostWitnessJSON = JSON.parse(data.postsResponse[i].currentUserRepostWitness);
+        }
+
         processedPosts.push({
           postState: postStateJSON,
           postWitness: JSON.parse(data.postsResponse[i].postWitness),
@@ -165,7 +173,10 @@ export default function GetProfilePosts({
           embeddedReposts: embeddedReposts,
           numberOfReposts: data.postsResponse[i].numberOfReposts,
           numberOfRepostsWitness: JSON.parse(data.postsResponse[i].numberOfRepostsWitness),
-          numberOfNonDeletedReposts: numberOfNonDeletedReposts
+          numberOfNonDeletedReposts: numberOfNonDeletedReposts,
+          currentUserRepostState: currentUserRepostStateJSON,
+          currentUserRepostKey: data.postsResponse[i].currentUserRepostKey,
+          currentUserRepostWitness: currentUserRepostWitnessJSON
       });
       };
 
@@ -858,14 +869,31 @@ export default function GetProfilePosts({
                   {walletConnected && <CommentButton
                     targetKey={post.postKey}
                   />}
-                  {post.repostKey === undefined ?
-                    walletConnected && <RepostButton targetKey={post.postKey}/>
+                  {post.repostKey === undefined && post.currentUserRepostState === undefined
+                    ?
+                      walletConnected && <RepostButton targetKey={post.postKey}/>
                     :
-                    account[0] === post.repostState.reposterAddress ? <DeleteRepostButton
-                      repostTargetKey={post.postKey}
-                      repostState={post.repostState}
-                      repostKey={post.repostKey}  
-                    /> : null
+                      post.repostState !== undefined &&
+                      post.repostState.reposterAddress !== undefined &&
+                      account[0] === post.repostState.reposterAddress
+                    ?
+                      <DeleteRepostButton
+                        repostTargetKey={post.postKey}
+                        repostState={post.repostState}
+                        repostKey={post.repostKey}
+                      />
+                    :
+                      post.currentUserRepostState !== undefined &&
+                      post.currentUserRepostState.reposterAddress !== undefined &&
+                      account[0] === post.currentUserRepostState.reposterAddress
+                    ?
+                      <DeleteRepostButton
+                        repostTargetKey={post.postKey}
+                        repostState={post.currentUserRepostState}
+                        repostKey={post.currentUserRepostKey}
+                      />
+                    :
+                      null
                   }
                   {account[0] === post.postState.posterAddress ?
                     <DeletePostButton
