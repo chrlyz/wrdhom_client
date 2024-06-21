@@ -869,10 +869,7 @@ export default function GetProfilePosts({
                   {walletConnected && <CommentButton
                     targetKey={post.postKey}
                   />}
-                  {post.repostKey === undefined && post.currentUserRepostState === undefined
-                    ?
-                      walletConnected && <RepostButton targetKey={post.postKey}/>
-                    :
+                  {
                       post.repostState !== undefined &&
                       post.repostState.reposterAddress !== undefined &&
                       account[0] === post.repostState.reposterAddress
@@ -893,7 +890,7 @@ export default function GetProfilePosts({
                         repostKey={post.currentUserRepostKey}
                       />
                     :
-                      null
+                    walletConnected && <RepostButton targetKey={post.postKey}/>
                   }
                   {account[0] === post.postState.posterAddress ?
                     <DeletePostButton
