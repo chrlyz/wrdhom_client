@@ -521,7 +521,7 @@ export default function GetGlobalPosts({
           manipulating results for your query.`);
         }
 
-        if (Number(reposts[i].repostState.deletionBlockHeight) === 0) {
+        if (Number(reposts[i].repostState.deletionBlockHeight) === 0 && Number(reposts[i].postState.deletionBlockHeight === 0)) {
           const postWitness = MerkleMapWitness.fromJSON(reposts[i].postWitness);
           const numberOfReactionsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfReactionsWitness);
           const numberOfCommentsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfCommentsWitness);
