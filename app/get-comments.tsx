@@ -112,7 +112,7 @@ export default function GetComments({
         for (let i = 0; i < comments.length; i++) {
           const commentWitness = MerkleMapWitness.fromJSON(comments[i].commentWitness);
           const commentState = CommentState.fromJSON(comments[i].commentState) as CommentState;
-          let calculatedCommentsRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
+          let calculatedCommentsRoot = commentWitness.computeRootAndKeyV2(commentState.hash())[0].toString();
 
           // Introduce different root to cause a root mismatch
           /*if (i === 1) {
