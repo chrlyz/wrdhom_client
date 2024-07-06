@@ -221,7 +221,7 @@ export default function GetGlobalPosts({
 
         const postState = PostState.fromJSON(posts[i].postState) as PostState;
         const postWitness = MerkleMapWitness.fromJSON(posts[i].postWitness);
-        let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
+        let calculatedPostsRoot = postWitness.computeRootAndKeyV2(postState.hash())[0].toString();
 
         // Introduce different root to cause a root mismatch
         /*if (i === 0) {
@@ -237,11 +237,11 @@ export default function GetGlobalPosts({
           const numberOfReactionsWitness = MerkleMapWitness.fromJSON(posts[i].numberOfReactionsWitness);
           const numberOfCommentsWitness = MerkleMapWitness.fromJSON(posts[i].numberOfCommentsWitness);
           const numberOfRepostsWitness = MerkleMapWitness.fromJSON(posts[i].numberOfRepostsWitness);
-          let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKey(
+          let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKeyV2(
             Field(posts[i].numberOfReactions))[0].toString();
-          let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
+          let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKeyV2(
             Field(posts[i].numberOfComments))[0].toString();
-          let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
+          let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKeyV2(
             Field(posts[i].numberOfReposts))[0].toString();
   
           // Introduce different block-length to cause block mismatch
@@ -295,7 +295,7 @@ export default function GetGlobalPosts({
             const reactionStateJSON = posts[i].allEmbeddedReactions[r].reactionState;
             const reactionWitness = MerkleMapWitness.fromJSON(posts[i].allEmbeddedReactions[r].reactionWitness);
             const reactionState = ReactionState.fromJSON(reactionStateJSON) as ReactionState;
-            let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
+            let calculatedReactionRoot = reactionWitness.computeRootAndKeyV2(reactionState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
             if (fetchedReactionsRoot !== calculatedReactionRoot) {
@@ -315,7 +315,7 @@ export default function GetGlobalPosts({
             const commentStateJSON = posts[i].embeddedComments[c].commentState;
             const commentWitness = MerkleMapWitness.fromJSON(posts[i].embeddedComments[c].commentWitness);
             const commentState = CommentState.fromJSON(commentStateJSON) as CommentState;
-            let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
+            let calculatedCommentRoot = commentWitness.computeRootAndKeyV2(commentState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
             if (fetchedCommentsRoot !== calculatedCommentRoot) {
@@ -335,7 +335,7 @@ export default function GetGlobalPosts({
             const repostStateJSON = posts[i].embeddedReposts[rp].repostState;
             const repostWitness = MerkleMapWitness.fromJSON(posts[i].embeddedReposts[rp].repostWitness);
             const repostState = RepostState.fromJSON(repostStateJSON) as RepostState;
-            let calculatedRepostRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
+            let calculatedRepostRoot = repostWitness.computeRootAndKeyV2(repostState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each repost and their witnesses, match zkApp state
             if (fetchedRepostsRoot !== calculatedRepostRoot) {
@@ -509,7 +509,7 @@ export default function GetGlobalPosts({
 
         const repostWitness = MerkleMapWitness.fromJSON(reposts[i].repostWitness);
         const repostState = RepostState.fromJSON(reposts[i].repostState)as RepostState;
-        let calculatedRepostsRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
+        let calculatedRepostsRoot = repostWitness.computeRootAndKeyV2(repostState.hash())[0].toString();
 
         // Introduce different root to cause a root mismatch
         /*if (i === 0) {
@@ -527,12 +527,12 @@ export default function GetGlobalPosts({
           const numberOfCommentsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfCommentsWitness);
           const numberOfRepostsWitness = MerkleMapWitness.fromJSON(reposts[i].numberOfRepostsWitness);
           const postState = PostState.fromJSON(reposts[i].postState) as PostState;
-          let calculatedPostsRoot = postWitness.computeRootAndKey(postState.hash())[0].toString();
-          let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKey(
+          let calculatedPostsRoot = postWitness.computeRootAndKeyV2(postState.hash())[0].toString();
+          let calculatedTargetsReactionsCountersRoot = numberOfReactionsWitness.computeRootAndKeyV2(
             Field(reposts[i].numberOfReactions))[0].toString();
-          let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKey(
+          let calculatedTargetsCommentsCountersRoot = numberOfCommentsWitness.computeRootAndKeyV2(
             Field(reposts[i].numberOfComments))[0].toString();
-          let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKey(
+          let calculatedTargetsRepostsCountersRoot = numberOfRepostsWitness.computeRootAndKeyV2(
             Field(reposts[i].numberOfReposts))[0].toString();
   
           // Introduce different block-length to cause block mismatch
@@ -594,7 +594,7 @@ export default function GetGlobalPosts({
             const reactionStateJSON = reposts[i].allEmbeddedReactions[r].reactionState;
             const reactionWitness = MerkleMapWitness.fromJSON(reposts[i].allEmbeddedReactions[r].reactionWitness);
             const reactionState = ReactionState.fromJSON(reactionStateJSON) as ReactionState;
-            let calculatedReactionRoot = reactionWitness.computeRootAndKey(reactionState.hash())[0].toString();
+            let calculatedReactionRoot = reactionWitness.computeRootAndKeyV2(reactionState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
             if (fetchedReactionsRoot !== calculatedReactionRoot) {
@@ -614,7 +614,7 @@ export default function GetGlobalPosts({
             const commentStateJSON = reposts[i].embeddedComments[c].commentState;
             const commentWitness = MerkleMapWitness.fromJSON(reposts[i].embeddedComments[c].commentWitness);
             const commentState = CommentState.fromJSON(commentStateJSON) as CommentState;
-            let calculatedCommentRoot = commentWitness.computeRootAndKey(commentState.hash())[0].toString();
+            let calculatedCommentRoot = commentWitness.computeRootAndKeyV2(commentState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
             if (fetchedCommentsRoot !== calculatedCommentRoot) {
@@ -635,7 +635,7 @@ export default function GetGlobalPosts({
             const repostStateJSON = reposts[i].embeddedReposts[rp].repostState;
             const repostWitness = MerkleMapWitness.fromJSON(reposts[i].embeddedReposts[rp].repostWitness);
             const repostState = RepostState.fromJSON(repostStateJSON) as RepostState;
-            let calculatedRepostRoot = repostWitness.computeRootAndKey(repostState.hash())[0].toString();
+            let calculatedRepostRoot = repostWitness.computeRootAndKeyV2(repostState.hash())[0].toString();
   
             // Audit that all roots calculated from the state of each repost and their witnesses, match zkApp state
             if (fetchedRepostsRoot !== calculatedRepostRoot) {
