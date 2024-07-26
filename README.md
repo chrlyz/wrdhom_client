@@ -8,9 +8,13 @@ This repository hosts the code for the client for the [WrdHom](https://github.co
 npm install
 ```
 
-### Set the addresses of your contracts
+### Prepare the environment
 
-Follow the instructions in the [wrdhom_contracts](https://github.com/chrlyz/wrdhom_contracts) repository to deploy your contracts and set the proper public addresses in the `/app/page.tsx` file in this repository.
+- Follow the instructions in the [wrdhom_contracts](https://github.com/chrlyz/wrdhom_contracts) repository to deploy your contracts.
+
+- Start `service`, `workers`, and `prover` as explained in the [wrdhom_server](https://github.com/chrlyz/wrdhom_server) repository.
+
+- Set the `NEXT_PUBLIC_POSTS_CONTRACT_ADDRESS`, `NEXT_PUBLIC_REACTIONS_CONTRACT_ADDRESS`, `NEXT_PUBLIC_COMMENTS_CONTRACT_ADDRESS`, and `NEXT_PUBLIC_REPOSTS_CONTRACT_ADDRESS` variables, to the respective public address of each contract (you can find them in the `keys` directory, generated in your `wrdhom_contracts` repository).
 
 ### Start client in development mode
 
