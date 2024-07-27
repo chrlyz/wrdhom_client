@@ -28,7 +28,7 @@ export default function DeleteRepostButton({
         }
 
         const res = await fetch('/reposts/delete', {
-            method: `POST`,
+            method: `PATCH`,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(signedRepostDeletion),
         });

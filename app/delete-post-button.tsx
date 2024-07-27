@@ -24,7 +24,7 @@ export default function DeletePostButton({
         }
 
         const res = await fetch('/posts/delete', {
-            method: `POST`,
+            method: `PATCH`,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(signedPostDeletion),
         });

@@ -54,7 +54,7 @@ export default function ReactionButton({
           }
 
           const restorationRes = await fetch('/reactions/restore', {
-            method: `POST`,
+            method: `PATCH`,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(signedReactionRestoration),
           });
@@ -82,7 +82,7 @@ export default function ReactionButton({
       }
 
       const res = await fetch('/reactions/delete', {
-        method: `POST`,
+        method: `PATCH`,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(signedReactionDeletion),
       });
