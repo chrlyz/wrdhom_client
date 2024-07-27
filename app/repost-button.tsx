@@ -53,7 +53,7 @@ export default function RepostButton({
           }
 
           const restorationRes = await fetch('/reposts/restore', {
-            method: `POST`,
+            method: `PATCH`,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(signedRepostRestoration),
           });

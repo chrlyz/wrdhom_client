@@ -82,7 +82,7 @@ export default function CreatePost({
                       }
 
                       const restorationRes = await fetch('/posts/restore', {
-                        method: `POST`,
+                        method: `PATCH`,
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(signedPostRestoration),
                       });

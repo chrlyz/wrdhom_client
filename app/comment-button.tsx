@@ -73,7 +73,7 @@ export default function CommentButton({
               }
 
               const restorationRes = await fetch('/comments/restore', {
-                method: `POST`,
+                method: `PATCH`,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(signedCommentRestoration),
               });
