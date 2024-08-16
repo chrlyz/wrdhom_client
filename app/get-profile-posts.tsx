@@ -56,18 +56,11 @@ export default function GetProfilePosts({
   const [mergedContent, setMergedContent] = useState([] as any);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [triggerAudit1, setTriggerAudit1] = useState(false);
-  const [triggerAudit2, setTriggerAudit2] = useState(false);
+  const [fetchCompleted, setFetchCompleted] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
-  const [firstLoad, setFirstLoad] = useState(true);
 
   const fetchPosts = async () => {
     try {
-      setPosts([]);
-      setReposts([]);
-      setLoading(true);
-      setErrorMessage(null);
-      setWhenZeroContent(false);
       const response = await fetch(`/posts`+
         `?profileAddress=${profileAddress}`+
         `&howMany=${howManyPosts}`+
@@ -773,37 +766,40 @@ export default function GetProfilePosts({
         return blockHeightB - blockHeightA;
     });
     setMergedContent(sorted);
-    if (sorted.length === 0 && firstLoad === false) {
-      setWhenZeroContent(true);
-    }
-    if (firstLoad === true) {
-      setFirstLoad(false);
-    } else {
-      setLoading(false);
-    }
   }
 
   useEffect(() => {
     (async () => {
-      await fetchPosts();
-      await fetchReposts();
-      setTriggerAudit1(!triggerAudit1);
+      setPosts([]);
+      setReposts([]);
+      setLoading(true);
+      setErrorMessage(null);
+      setWhenZeroContent(false);
+      howManyPosts > 0 ? await fetchPosts() : null;
+      howManyReposts > 0 ? await fetchReposts() : null;
+      setFetchCompleted(true);
     })();
   }, [getProfile, profileAddress]);
 
   useEffect(() => {
+    if (!fetchCompleted) return;
     (async () => {
-      await auditPosts();
-      await auditReposts();
-      setTriggerAudit2(!triggerAudit2);
-    })();
-  }, [triggerAudit1]);
-
-  useEffect(() => {
-    auditNoSkippingContentInPosts();
-    auditNoSkippingContentInReposts();
-    mergeAndSortContent();
-  }, [triggerAudit2]);
+      if (posts.length > 0) {
+        await auditPosts();    
+        auditNoSkippingContentInPosts();
+      }
+      if (reposts.length > 0) {
+        await auditReposts();
+        auditNoSkippingContentInReposts();
+      }
+      if (posts.length === 0 && reposts.length === 0) {
+        setWhenZeroContent(true);
+      }
+      mergeAndSortContent();
+      setFetchCompleted(false);
+      setLoading(false);
+  })();
+  }, [fetchCompleted]);
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
