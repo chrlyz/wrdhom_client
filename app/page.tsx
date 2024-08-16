@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import InstallWallet from '@/app/install-wallet';
 import ConnectWallet from './connect-wallet';
-import GetGlobalPosts from './get-global-posts';
+import GetGlobalFeed from './get-global-feed';
 import QuerySettings from './query-settings';
-import GetProfilePosts from './get-profile-posts';
-import GetComments from './get-comments';
+import GetProfileFeed from './get-profile-feed';
+import GetCommentsFeed from './get-comments-feed';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -14,27 +14,27 @@ export default function Home() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
-  const [getPosts, setGetGlobalPosts] = useState(false);
+  const [getGlobalFeed, setGetGlobalFeed] = useState(false);
   const [howManyPosts, setHowManyPosts] = useState(3);
   const [fromBlock, setFromBlock] = useState(0);
   const [toBlock, setToBlock] = useState(10_000_000);
-  const [getProfile, setGetProfile] = useState(false);
+  const [getProfileFeed, setGetProfileFeed] = useState(false);
   const [profileAddress, setProfileAddress] = useState('');
   const [hideGetGlobalPosts, setHideGetGlobalPosts] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [howManyComments, setHowManyComments] = useState(1);
   const [fromBlockComments, setFromBlockComments] = useState(0);
   const [toBlockComments, setToBlockComments] = useState(10_000_000);
-  const [getComments, setGetComments] = useState(false);
+  const [getCommentsFeed, setGetCommentsFeed] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentTarget, setCommentTarget] = useState(null as any);
   const [howManyReposts, setHowManyReposts] = useState(1);
   const [fromBlockReposts, setFromBlockReposts] = useState(0);
   const [toBlockReposts, setToBlockReposts] = useState(10_000_000);
-  const [postsContractAddress, setPostsContractAddress] = useState(process.env.NEXT_PUBLIC_POSTS_CONTRACT_ADDRESS as string);
-  const [reactionsContractAddress, setReactionsContractAddress] = useState(process.env.NEXT_PUBLIC_REACTIONS_CONTRACT_ADDRESS as string);
-  const [commentsContractAddress, setCommentsContractAddress] =  useState(process.env.NEXT_PUBLIC_COMMENTS_CONTRACT_ADDRESS as string);
-  const [repostsContractAddress, setRepostsContractAddress] = useState(process.env.NEXT_PUBLIC_REPOSTS_CONTRACT_ADDRESS as string);
+  const [postsContractAddress] = useState(process.env.NEXT_PUBLIC_POSTS_CONTRACT_ADDRESS as string);
+  const [reactionsContractAddress] = useState(process.env.NEXT_PUBLIC_REACTIONS_CONTRACT_ADDRESS as string);
+  const [commentsContractAddress] =  useState(process.env.NEXT_PUBLIC_COMMENTS_CONTRACT_ADDRESS as string);
+  const [repostsContractAddress] = useState(process.env.NEXT_PUBLIC_REPOSTS_CONTRACT_ADDRESS as string);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
@@ -102,7 +102,7 @@ export default function Home() {
           {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
         </div>
       </div>
-      <GetGlobalPosts getPosts={getPosts}
+      <GetGlobalFeed getGlobalFeed={getGlobalFeed}
         howManyPosts={howManyPosts}
         fromBlock={fromBlock}
         toBlock={toBlock}
@@ -119,8 +119,8 @@ export default function Home() {
         repostsContractAddress={repostsContractAddress}
         account={account}
       />
-      {showProfile && <GetProfilePosts
-        getProfile={getProfile}
+      {showProfile && <GetProfileFeed
+        getProfileFeed={getProfileFeed}
         profileAddress={profileAddress}
         setProfileAddress={setProfileAddress}
         howManyPosts={howManyPosts}
@@ -139,13 +139,13 @@ export default function Home() {
         repostsContractAddress={repostsContractAddress}
         account={account}
       />}
-      {showComments && <GetComments
+      {showComments && <GetCommentsFeed
         commentTarget={commentTarget}
         setProfileAddress={setProfileAddress}
         howManyComments={howManyComments}
         fromBlockComments={fromBlockComments}
         toBlockComments={toBlockComments}
-        getComments={getComments}
+        getCommentsFeed={getCommentsFeed}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
         setHideGetGlobalPosts={setHideGetGlobalPosts}
@@ -180,7 +180,7 @@ export default function Home() {
             <div className="p-4 w-full mb-32">
               <button 
                 className="w-full p-2 bg-black text-white"
-                onClick={() => setGetGlobalPosts(!getPosts)}>
+                onClick={() => setGetGlobalFeed(!getGlobalFeed)}>
                 Update Feed
               </button>
             </div>
@@ -189,8 +189,8 @@ export default function Home() {
           <div className="p-4 w-full mb-32">
             <button 
               className="w-full p-2 bg-black text-white"
-              onClick={() => setGetProfile(!getProfile)}>
-              Update Profile
+              onClick={() => setGetProfileFeed(!getProfileFeed)}>
+              Update Profile Feed
             </button>
           </div>
         )}
@@ -198,8 +198,8 @@ export default function Home() {
           <div className="p-4 w-full mb-32">
             <button 
               className="w-full p-2 bg-black text-white"
-              onClick={() => setGetComments(!getComments)}>
-              Update Comments
+              onClick={() => setGetCommentsFeed(!getCommentsFeed)}>
+              Update Comments Feed
             </button>
           </div>
         )}

@@ -9,13 +9,13 @@ import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CommentState } from 'wrdhom';
 
-export default function GetComments({
+export default function GetCommentsFeed({
   commentTarget,
   setProfileAddress,
   howManyComments,
   fromBlockComments,
   toBlockComments,
-  getComments,
+  getCommentsFeed,
   walletConnected,
   setCommentTarget,
   setHideGetGlobalPosts,
@@ -28,7 +28,7 @@ export default function GetComments({
   howManyComments: number,
   fromBlockComments: number,
   toBlockComments: number,
-  getComments: boolean,
+  getCommentsFeed: boolean,
   walletConnected: boolean,
   setCommentTarget: Dispatch<SetStateAction<any>>,
   setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
@@ -192,7 +192,7 @@ export default function GetComments({
         howManyComments > 0 ? await fetchComments() : null;
         setFetchCompleted(true);
       })();
-    }, [getComments, commentTarget]);
+    }, [getCommentsFeed, commentTarget]);
 
     useEffect(() => {
       if (!fetchCompleted) return;
