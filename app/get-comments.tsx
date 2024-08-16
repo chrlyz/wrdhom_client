@@ -40,13 +40,11 @@ export default function GetComments({
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState(null);
     const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
-    const [triggerAudit1, setTriggerAudit1] = useState(false);
-    const [triggerAudit2, setTriggerAudit2] = useState(false);
+    const [fetchCompleted, setFetchCompleted] = useState(false);
+    const [whenZeroContent, setWhenZeroContent] = useState(false);
 
     const fetchComments = async () => {
       try {
-        setLoading(true);
-        setErrorMessage(null);
         const response = await fetch(`/comments`+
             `?targetKey=${commentTarget.postKey}`+
             `&howMany=${howManyComments}`+
@@ -166,7 +164,6 @@ export default function GetComments({
             The server may be experiencing some issues or censoring comments.`);
           }
         }
-        setLoading(false);
       } catch (e: any) {
           console.log(e);
           setLoading(false);
@@ -188,26 +185,29 @@ export default function GetComments({
   
     useEffect(() => {
       (async () => {
-        if (howManyComments > 0) {
-          await fetchComments();
-        }
-        setTriggerAudit1(!triggerAudit1);
+        setComments([]);
+        setLoading(true);
+        setErrorMessage(null);
+        setWhenZeroContent(false);
+        howManyComments > 0 ? await fetchComments() : null;
+        setFetchCompleted(true);
       })();
     }, [getComments, commentTarget]);
 
     useEffect(() => {
+      if (!fetchCompleted) return;
       (async () => {
-        await auditComments();
-        setTriggerAudit2(!triggerAudit2);
+        if (comments.length > 0) {
+          await auditComments();
+          auditNoMissingContent();
+          filterDeleted();
+        } else {
+          setWhenZeroContent(true);
+        }
+        setFetchCompleted(false);
+        setLoading(false);
       })();
-    }, [triggerAudit1]);
-  
-    useEffect(() => {
-      if (comments.length > 0) {
-        auditNoMissingContent();
-        filterDeleted();
-      }
-    }, [triggerAudit2]);
+    }, [fetchCompleted]);
 
     return (
         <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
@@ -287,6 +287,11 @@ export default function GetComments({
                     </div>
                 );
             })}
+            {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
+              <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
+                <p >The query threw zero results</p>
+              </div>
+            </div>}
         </div>
     )
 }
