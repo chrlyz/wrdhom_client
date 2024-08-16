@@ -6,18 +6,20 @@ import CommentButton from './comment-button';
 import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import RepostButton from './repost-button';
-import CreatePost from './create-post';
-import DeleteButton from './delete-post-button';
+import { EmbeddedReactions, ProcessedPosts, ProcessedReposts, EmbeddedComments, EmbeddedReposts } from './get-global-feed';
+import DeletePostButton from './delete-post-button';
 import DeleteRepostButton from './delete-repost-button';
 import { CommentState, PostState, ReactionState, RepostState } from 'wrdhom';
 
-export default function GetGlobalPosts({
-  getPosts,
+export default function GetProfileFeed({
+  getProfileFeed,
+  profileAddress,
+  setProfileAddress,
   howManyPosts,
   fromBlock,
   toBlock,
-  setProfileAddress,
-  hideGetGlobalPosts,
+  setShowProfile,
+  setHideGetGlobalPosts,
   walletConnected,
   setCommentTarget,
   howManyReposts,
@@ -29,12 +31,14 @@ export default function GetGlobalPosts({
   repostsContractAddress,
   account
 }: {
-  getPosts: boolean,
+  getProfileFeed: boolean,
+  profileAddress: string,
+  setProfileAddress: Dispatch<SetStateAction<string>>,
   howManyPosts: number,
   fromBlock: number,
   toBlock: number,
-  setProfileAddress: Dispatch<SetStateAction<string>>,
-  hideGetGlobalPosts: string,
+  setShowProfile: Dispatch<SetStateAction<boolean>>,
+  setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
   walletConnected: boolean,
   setCommentTarget: Dispatch<SetStateAction<any>>,
   howManyReposts: number,
@@ -48,17 +52,18 @@ export default function GetGlobalPosts({
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [reposts, setReposts] = useState([] as any[]);
+  const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [mergedContent, setMergedContent] = useState([] as any);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [fetchCompleted, setFetchCompleted] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
 
   const fetchPosts = async () => {
     try {
       const response = await fetch(`/posts`+
-        `?howMany=${howManyPosts}`+
+        `?profileAddress=${profileAddress}`+
+        `&howMany=${howManyPosts}`+
         `&fromBlock=${fromBlock}`+
         `&toBlock=${toBlock}`+
         `&currentUser=${account[0]}`,
@@ -99,6 +104,7 @@ export default function GetGlobalPosts({
             });
           }
         }
+
         const emojis = filteredEmbeddedReactions.map(reaction => reaction.reactionEmoji);
         const frequencyMap = new Map<string, number>();
         emojis.forEach(emoji => {
@@ -142,33 +148,32 @@ export default function GetGlobalPosts({
         }
 
         processedPosts.push({
-            postState: postStateJSON,
-            postWitness: JSON.parse(data.postsResponse[i].postWitness),
-            postKey: data.postsResponse[i].postKey,
-            postContentID: data.postsResponse[i].postContentID,
-            content: data.postsResponse[i].content,
-            shortPosterAddressEnd: shortPosterAddressEnd,
-            allEmbeddedReactions: allEmbeddedReactions,
-            filteredEmbeddedReactions: filteredEmbeddedReactions,
-            top3Emojis: top3Emojis,
-            numberOfReactions: data.postsResponse[i].numberOfReactions,
-            numberOfReactionsWitness: JSON.parse(data.postsResponse[i].numberOfReactionsWitness),
-            embeddedComments: embeddedComments,
-            numberOfComments: data.postsResponse[i].numberOfComments,
-            numberOfCommentsWitness: JSON.parse(data.postsResponse[i].numberOfCommentsWitness),
-            numberOfNonDeletedComments: numberOfNonDeletedComments,
-            embeddedReposts: embeddedReposts,
-            numberOfReposts: data.postsResponse[i].numberOfReposts,
-            numberOfRepostsWitness: JSON.parse(data.postsResponse[i].numberOfRepostsWitness),
-            numberOfNonDeletedReposts: numberOfNonDeletedReposts,
-            currentUserRepostState: currentUserRepostStateJSON,
-            currentUserRepostKey: data.postsResponse[i].currentUserRepostKey,
-            currentUserRepostWitness: currentUserRepostWitnessJSON
-        });
+          postState: postStateJSON,
+          postWitness: JSON.parse(data.postsResponse[i].postWitness),
+          postKey: data.postsResponse[i].postKey,
+          postContentID: data.postsResponse[i].postContentID,
+          content: data.postsResponse[i].content,
+          shortPosterAddressEnd: shortPosterAddressEnd,
+          allEmbeddedReactions: allEmbeddedReactions,
+          filteredEmbeddedReactions: filteredEmbeddedReactions,
+          top3Emojis: top3Emojis,
+          numberOfReactions: data.postsResponse[i].numberOfReactions,
+          numberOfReactionsWitness: JSON.parse(data.postsResponse[i].numberOfReactionsWitness),
+          embeddedComments: embeddedComments,
+          numberOfComments: data.postsResponse[i].numberOfComments,
+          numberOfCommentsWitness: JSON.parse(data.postsResponse[i].numberOfCommentsWitness),
+          numberOfNonDeletedComments: numberOfNonDeletedComments,
+          embeddedReposts: embeddedReposts,
+          numberOfReposts: data.postsResponse[i].numberOfReposts,
+          numberOfRepostsWitness: JSON.parse(data.postsResponse[i].numberOfRepostsWitness),
+          numberOfNonDeletedReposts: numberOfNonDeletedReposts,
+          currentUserRepostState: currentUserRepostStateJSON,
+          currentUserRepostKey: data.postsResponse[i].currentUserRepostKey,
+          currentUserRepostWitness: currentUserRepostWitnessJSON
+      });
       };
 
       setPosts(processedPosts);
-
     } catch (e: any) {
         console.log(e);
         setLoading(false);
@@ -179,7 +184,7 @@ export default function GetGlobalPosts({
   const auditPosts = async () => {
     try {
       // Remove post to cause a gap error
-      //posts.splice(0, 2);
+      // posts.splice(1, 1);
 
       const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
       const { PostState, ReactionState, CommentState, RepostState } = await import('wrdhom');
@@ -208,7 +213,7 @@ export default function GetGlobalPosts({
       const fetchedRepostsRoot = repostsContractData.account?.zkapp?.appState[3].toString();
 
       // Remove reaction to cause a gap error
-      // posts[4].allEmbeddedReactions.splice(1, 1);
+      // posts[1].allEmbeddedReactions.splice(1,1);
 
       for (let i = 0; i < posts.length; i++) {
 
@@ -217,12 +222,12 @@ export default function GetGlobalPosts({
         let calculatedPostsRoot = postWitness.computeRootAndKeyV2(postState.hash())[0].toString();
 
         // Introduce different root to cause a root mismatch
-        /*if (i === 0) {
+        /*if (i === 1) {
           calculatedPostsRoot = 'badRoot'
         }*/
 
         if (fetchedPostsRoot !== calculatedPostsRoot) {
-          throw new Error(`Post ${posts[i].postState.allPostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
+          throw new Error(`User Post ${posts[i].postState.userPostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
           manipulating results for your query.`);
         }
 
@@ -243,43 +248,48 @@ export default function GetGlobalPosts({
           }*/
   
           // Introduce different content to cause content mismatch
-          /*if (i === 0) {
+          /*if (i === 1) {
             posts[i].content = 'wrong content';
           }*/
   
+          // Audit that all posts come from the profile we are visiting
+          if (profileAddress !== posts[i].postState.posterAddress) {
+            throw new Error(`User Post ${posts[i].postState.userPostsCounter} comes from a wrong address. All posts should come from address: ${profileAddress}`);
+          }
+  
           // Audit that all posts are between the block range in the user query
           if (posts[i].postState.postBlockHeight < fromBlock ||  posts[i].postState.postBlockHeight > toBlock) {
-            throw new Error(`Block-length ${posts[i].postState.postBlockHeight} for Post ${posts[i].postState.allPostsCounter} isn't between the block range\
+            throw new Error(`Block-length ${posts[i].postState.postBlockHeight} for User Post ${posts[i].postState.userPostsCounter} isn't between the block range\
             ${fromBlock} to ${toBlock}`);
           }
   
           // Audit that the on-chain state matches the off-chain state
   
           if (fetchedTargetsReactionsCountersRoot !== calculatedTargetsReactionsCountersRoot ) {
-            throw new Error(`Server stated that there are ${posts[i].numberOfReactions} reactions for post ${posts[i].postState.allPostsCounter},\
+            throw new Error(`Server stated that there are ${posts[i].numberOfReactions} reactions for User Post ${posts[i].postState.userPostsCounter},\
             but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
           }
   
           if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
-            throw new Error(`Server stated that there are ${posts[i].numberOfComments} comments for post ${posts[i].postState.allPostsCounter},\
+            throw new Error(`Server stated that there are ${posts[i].numberOfComments} comments for User Post ${posts[i].postState.userPostsCounter},\
             but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
           }
   
           if (fetchedTargetsRepostsCountersRoot !== calculatedTargetsRepostsCountersRoot) {
-            throw new Error(`Server stated that there are ${posts[i].numberOfReposts} reposts for post ${posts[i].postState.allPostsCounter},\
+            throw new Error(`Server stated that there are ${posts[i].numberOfReposts} reposts for User Post ${posts[i].postState.userPostsCounter},\
             but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
           }
   
           // Audit that the content of posts matches the contentID signed by the author
           const cid = await getCID(posts[i].content);
           if (cid !== posts[i].postContentID) {
-            throw new Error(`The content for Post ${posts[i].postState.allPostsCounter} doesn't match the expected contentID. The server may be experiencing\
+            throw new Error(`The content for User Post ${posts[i].postState.userPostsCounter} doesn't match the expected contentID. The server may be experiencing\
             some issues or manipulating the content it shows.`);
           }
   
           // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
           if(posts[i].allEmbeddedReactions.length !== posts[i].numberOfReactions) {
-            throw new Error(`Server stated that there are ${posts[i].numberOfReactions} reactions for post ${posts[i].postState.allPostsCounter},\
+            throw new Error(`Server stated that there are ${posts[i].numberOfReactions} reactions for User Post ${posts[i].postState.userPostsCounter},\
             but it only provided ${posts[i].allEmbeddedReactions.length} reactions. The server may be experiencing some issues or manipulating
             the content it shows.`)
           }
@@ -293,7 +303,7 @@ export default function GetGlobalPosts({
             // Audit that all roots calculated from the state of each reaction and their witnesses, match zkApp state
             if (fetchedReactionsRoot !== calculatedReactionRoot) {
               throw new Error(`Reaction ${reactionStateJSON.allReactionsCounter} has different root than zkApp state.\
-              The server may be experiencing some issues or manipulating results for the reactions to Post ${posts[i].postState.allPostsCounter}.`);
+              The server may be experiencing some issues or manipulating results for the reactions to User Post ${posts[i].postState.userPostsCounter}.`);
             }
           }
 
@@ -303,13 +313,13 @@ export default function GetGlobalPosts({
             but it only provided ${posts[i].embeddedComments.length} comments. The server may be experiencing some issues or manipulating
             the content it shows.`)
           }
-  
+
           for (let c = 0; c < posts[i].embeddedComments.length; c++) {
             const commentStateJSON = posts[i].embeddedComments[c].commentState;
             const commentWitness = MerkleMapWitness.fromJSON(posts[i].embeddedComments[c].commentWitness);
             const commentState = CommentState.fromJSON(commentStateJSON) as CommentState;
             let calculatedCommentRoot = commentWitness.computeRootAndKeyV2(commentState.hash())[0].toString();
-  
+
             // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
             if (fetchedCommentsRoot !== calculatedCommentRoot) {
               throw new Error(`Comment ${commentStateJSON.allCommentsCounter} has different root than zkApp state.\
@@ -338,6 +348,7 @@ export default function GetGlobalPosts({
           }
         }
       };
+      
     } catch (e: any) {
         console.log(e);
         setLoading(false);
@@ -348,7 +359,8 @@ export default function GetGlobalPosts({
   const fetchReposts = async () => {
     try {
       const response = await fetch(`/reposts`+
-        `?howMany=${howManyReposts}`+
+        `?reposterAddress=${profileAddress}`+
+        `&howMany=${howManyReposts}`+
         `&fromBlock=${fromBlockReposts}`+
         `&toBlock=${toBlockReposts}`,
         {
@@ -427,34 +439,33 @@ export default function GetGlobalPosts({
         const numberOfNonDeletedReposts = Number(data.repostsResponse[i].numberOfReposts) - numberOfDeletedReposts;
 
         processedReposts.push({
-            repostState: repostStateJSON,
-            repostWitness: JSON.parse(data.repostsResponse[i].repostWitness),
-            repostKey: data.repostsResponse[i].repostKey,
-            shortReposterAddressEnd: shortReposterAddressEnd,
-            postState: postStateJSON,
-            postWitness: JSON.parse(data.repostsResponse[i].postWitness),
-            postKey: data.repostsResponse[i].postKey,
-            postContentID: data.repostsResponse[i].postContentID,
-            content: data.repostsResponse[i].content,
-            shortPosterAddressEnd: shortPosterAddressEnd,
-            allEmbeddedReactions: allEmbeddedReactions,
-            filteredEmbeddedReactions: filteredEmbeddedReactions,
-            top3Emojis: top3Emojis,
-            numberOfReactions: data.repostsResponse[i].numberOfReactions,
-            numberOfReactionsWitness: JSON.parse(data.repostsResponse[i].numberOfReactionsWitness),
-            embeddedComments: embeddedComments,
-            numberOfComments: data.repostsResponse[i].numberOfComments,
-            numberOfCommentsWitness: JSON.parse(data.repostsResponse[i].numberOfCommentsWitness),
-            numberOfNonDeletedComments: numberOfNonDeletedComments,
-            embeddedReposts: embeddedReposts,
-            numberOfReposts: data.repostsResponse[i].numberOfReposts,
-            numberOfRepostsWitness: JSON.parse(data.repostsResponse[i].numberOfRepostsWitness),
-            numberOfNonDeletedReposts: numberOfNonDeletedReposts
-        });
+          repostState: repostStateJSON,
+          repostWitness: JSON.parse(data.repostsResponse[i].repostWitness),
+          repostKey: data.repostsResponse[i].repostKey,
+          shortReposterAddressEnd: shortReposterAddressEnd,
+          postState: postStateJSON,
+          postWitness: JSON.parse(data.repostsResponse[i].postWitness),
+          postKey: data.repostsResponse[i].postKey,
+          postContentID: data.repostsResponse[i].postContentID,
+          content: data.repostsResponse[i].content,
+          shortPosterAddressEnd: shortPosterAddressEnd,
+          allEmbeddedReactions: allEmbeddedReactions,
+          filteredEmbeddedReactions: filteredEmbeddedReactions,
+          top3Emojis: top3Emojis,
+          numberOfReactions: data.repostsResponse[i].numberOfReactions,
+          numberOfReactionsWitness: JSON.parse(data.repostsResponse[i].numberOfReactionsWitness),
+          embeddedComments: embeddedComments,
+          numberOfComments: data.repostsResponse[i].numberOfComments,
+          numberOfCommentsWitness: JSON.parse(data.repostsResponse[i].numberOfCommentsWitness),
+          numberOfNonDeletedComments: numberOfNonDeletedComments,
+          embeddedReposts: embeddedReposts,
+          numberOfReposts: data.repostsResponse[i].numberOfReposts,
+          numberOfRepostsWitness: JSON.parse(data.repostsResponse[i].numberOfRepostsWitness),
+          numberOfNonDeletedReposts: numberOfNonDeletedReposts
+      });
       };
 
       setReposts(processedReposts);
-
     } catch (e: any) {
         console.log(e);
         setLoading(false);
@@ -470,6 +481,7 @@ export default function GetGlobalPosts({
       if (reposts.length === 0) {
         return;
       }
+
       const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
       const { PostState, ReactionState, RepostState, CommentState } = await import('wrdhom');
 
@@ -477,6 +489,7 @@ export default function GetGlobalPosts({
         publicKey: postsContractAddress
       }, '/graphql');
       const fetchedPostsRoot = postsContractData.account?.zkapp?.appState[2].toString();
+
       const reactionsContractData = await fetchAccount({
         publicKey: reactionsContractAddress
       }, '/graphql');
@@ -501,7 +514,7 @@ export default function GetGlobalPosts({
       for (let i = 0; i < reposts.length; i++) {
 
         const repostWitness = MerkleMapWitness.fromJSON(reposts[i].repostWitness);
-        const repostState = RepostState.fromJSON(reposts[i].repostState)as RepostState;
+        const repostState = RepostState.fromJSON(reposts[i].repostState) as RepostState;
         let calculatedRepostsRoot = repostWitness.computeRootAndKeyV2(repostState.hash())[0].toString();
 
         // Introduce different root to cause a root mismatch
@@ -510,9 +523,9 @@ export default function GetGlobalPosts({
         }*/
 
         if (fetchedRepostsRoot !== calculatedRepostsRoot) {
-          throw new Error(`Repost ${reposts[i].repostState.allRepostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
+          throw new Error(`User Repost ${reposts[i].repostState.userRepostsCounter} has different root than zkApp state. The server may be experiencing some issues or\
           manipulating results for your query.`);
-        }
+        }    
 
         if (Number(reposts[i].repostState.deletionBlockHeight) === 0 && Number(reposts[i].postState.deletionBlockHeight === 0)) {
           const postWitness = MerkleMapWitness.fromJSON(reposts[i].postWitness);
@@ -538,48 +551,53 @@ export default function GetGlobalPosts({
             reposts[i].content = 'wrong content';
           }*/
   
+          // Audit that all reposts come from the profile we are visiting
+          if (profileAddress !== reposts[i].repostState.reposterAddress) {
+            throw new Error(`User Repost ${reposts[i].repostState.userRepostsCounter} comes from the wrong address: ${reposts[i].repostState.reposterAddress}. All posts should come from address: ${profileAddress}`);
+          }
+  
           // Audit that all reposts are between the block range in the user query
           if (reposts[i].repostState.repostBlockHeight < fromBlockReposts ||  reposts[i].repostState.repostBlockHeight > toBlockReposts) {
-            throw new Error(`Block-length ${reposts[i].repostState.repostBlockHeight} for Repost ${reposts[i].repostState.allRepostsCounter} isn't between the block range\
+            throw new Error(`Block-length ${reposts[i].repostState.repostBlockHeight} for User Repost ${reposts[i].repostState.userRepostsCounter} isn't between the block range\
             ${fromBlockReposts} to ${toBlockReposts}`);
           }
   
           // Audit that the on-chain state matches the off-chain state
   
           if (fetchedPostsRoot !== calculatedPostsRoot) {
-            throw new Error(`Post ${reposts[i].postState.allPostsCounter} from Repost ${reposts[i].repostState.allRepostsCounter} has different root than zkApp state.\
+            throw new Error(`Post ${reposts[i].postState.allPostsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter} has different root than zkApp state.\
             The server may be experiencing some issues or manipulating results for your query.`);
           }
   
           if (fetchedTargetsReactionsCountersRoot !== calculatedTargetsReactionsCountersRoot ) {
             throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
-            from Repost ${reposts[i].repostState.allRepostsCounter} but the contract accounts for a different amount. The server may be experiencing issues or\
+            from User Repost ${reposts[i].repostState.userRepostsCounter} but the contract accounts for a different amount. The server may be experiencing issues or\
             manipulating responses.`);
           }
   
           if (fetchedTargetsCommentsCountersRoot !== calculatedTargetsCommentsCountersRoot) {
             throw new Error(`Server stated that there are ${reposts[i].numberOfComments} comments for Post ${reposts[i].postState.allPostsCounter}\
-            from Repost ${reposts[i].repostState.allRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
+            from User Repost ${reposts[i].repostState.userRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
             manipulating responses.`);
           }
   
           if (fetchedTargetsRepostsCountersRoot !== calculatedTargetsRepostsCountersRoot) {
             throw new Error(`Server stated that there are ${reposts[i].numberOfReposts} reposts for Post ${reposts[i].postState.allPostsCounter}\
-            from Repost ${reposts[i].repostState.allRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
+            from User Repost ${reposts[i].repostState.userRepostsCounter}, but the contract accounts for a different amount. The server may be experiencing issues or\
             manipulating responses.`);
           }
   
           // Audit that the content of the reposted posts matches the contentID signed by the post author
           const cid = await getCID(reposts[i].content);
           if (cid !== reposts[i].postContentID) {
-            throw new Error(`The content for Post ${reposts[i].postState.allPostsCounter} from Repost ${reposts[i].repostState.allRepostsCounter} doesn't match\
+            throw new Error(`The content for Post ${reposts[i].postState.allPostsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter} doesn't match\
             the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`);
           }
   
           // Audit that the number of reactions the server retrieves, matches the number of reactions accounted on the zkApp state
           if(reposts[i].allEmbeddedReactions.length !== reposts[i].numberOfReactions) {
             throw new Error(`Server stated that there are ${reposts[i].numberOfReactions} reactions for Post ${reposts[i].postState.allPostsCounter}\
-            from Repost ${reposts[i].repostState.allRepostsCounter} but it only provided ${reposts[i].allEmbeddedReactions.length} reactions. The server\
+            from User Repost ${reposts[i].repostState.userRepostsCounter} but it only provided ${reposts[i].allEmbeddedReactions.length} reactions. The server\
             may be experiencing some issues or manipulating the content it shows.`)
           }
   
@@ -623,13 +641,13 @@ export default function GetGlobalPosts({
             but it only provided ${reposts[i].embeddedReposts.length} reposts. The server may be experiencing some issues or manipulating
             the content it shows.`)
           }
-  
+
           for (let rp = 0; rp < reposts[i].embeddedReposts.length; rp++) {
             const repostStateJSON = reposts[i].embeddedReposts[rp].repostState;
             const repostWitness = MerkleMapWitness.fromJSON(reposts[i].embeddedReposts[rp].repostWitness);
             const repostState = RepostState.fromJSON(repostStateJSON) as RepostState;
             let calculatedRepostRoot = repostWitness.computeRootAndKeyV2(repostState.hash())[0].toString();
-  
+
             // Audit that all roots calculated from the state of each repost and their witnesses, match zkApp state
             if (fetchedRepostsRoot !== calculatedRepostRoot) {
               throw new Error(`Repost ${repostStateJSON.allRepostsCounter} has different root than zkApp state.\
@@ -649,8 +667,8 @@ export default function GetGlobalPosts({
   const auditNoSkippingContentInPosts = () => {
     try {
       for (let i = 0; i < posts.length-1; i++) {
-        if (Number(posts[i].postState.allPostsCounter) !== Number(posts[i+1].postState.allPostsCounter)+1) {
-          throw new Error(`Gap between Posts ${posts[i].postState.allPostsCounter} and ${posts[i+1].postState.allPostsCounter}.\
+        if (Number(posts[i].postState.userPostsCounter) !== Number(posts[i+1].postState.userPostsCounter)+1) {
+          throw new Error(`Gap between User Posts ${posts[i].postState.userPostsCounter} and ${posts[i+1].postState.userPostsCounter}.\
           The server may be experiencing some issues or censoring posts.`);
         }
 
@@ -658,7 +676,7 @@ export default function GetGlobalPosts({
           if (Number(posts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter)
           !== Number(posts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
             throw new Error(`Gap between Reactions ${posts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter} and\
-            ${posts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter}, from Post ${posts[i].postState.allPostsCounter}\
+            ${posts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter}, from User Post ${posts[i].postState.userPostsCounter}\
             The server may be experiencing some issues or censoring embedded reactions.`);
           }
         }
@@ -667,7 +685,7 @@ export default function GetGlobalPosts({
           if (Number(posts[i].embeddedComments[c].commentState.targetCommentsCounter)
           !== Number(posts[i].embeddedComments[c+1].commentState.targetCommentsCounter)+1) {
             throw new Error(`Gap between Comments ${posts[i].embeddedComments[c].commentState.targetCommentsCounter} and\
-            ${posts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from Post ${posts[i].postState.allPostsCounter}\
+            ${posts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from User Post ${posts[i].postState.userPostsCounter}\
             The server may be experiencing some issues or censoring embedded comments.`);
           }
         }
@@ -676,7 +694,7 @@ export default function GetGlobalPosts({
           if (Number(posts[i].embeddedReposts[rp].repostState.targetRepostsCounter)
           !== Number(posts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter)+1) {
             throw new Error(`Gap between Reposts ${posts[i].embeddedReposts[rp].repostState.targetRepostsCounter} and\
-            ${posts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from Post ${posts[i].postState.allRepostsCounter}\
+            ${posts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from User Post ${posts[i].postState.userPostsCounter}\
             The server may be experiencing some issues or censoring embedded reposts.`);
           }
         }
@@ -691,8 +709,8 @@ export default function GetGlobalPosts({
   const auditNoSkippingContentInReposts = () => {
     try {
       for (let i = 0; i < reposts.length-1; i++) {
-        if (Number(reposts[i].repostState.allRepostsCounter) !== Number(reposts[i+1].repostState.allRepostsCounter)+1) {
-          throw new Error(`Gap between Reposts ${reposts[i].repostState.allRepostsCounter} and ${reposts[i+1].repostState.allRepostsCounter}.\
+        if (Number(reposts[i].repostState.userRepostsCounter) !== Number(reposts[i+1].repostState.userRepostsCounter)+1) {
+          throw new Error(`Gap between User Reposts ${reposts[i].repostState.userRepostsCounter} and ${reposts[i+1].repostState.userRepostsCounter}.\
           The server may be experiencing some issues or censoring reposts.`);
         }
 
@@ -700,16 +718,16 @@ export default function GetGlobalPosts({
           if (Number(reposts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter)
           !== Number(reposts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
             throw new Error(`Gap between Reactions ${reposts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter} and\
-            ${reposts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
+            ${reposts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter} from User Repost ${reposts[i].repostState.userRepostsCounter}\
             The server may be experiencing some issues or censoring embedded reactions.`);
           }
         }
 
-        for (let c = 0; c < Number(reposts[i].embeddedComments.length)-1; c++) {
+        for (let c = 0; c < Number(posts[i].embeddedComments.length)-1; c++) {
           if (Number(reposts[i].embeddedComments[c].commentState.targetCommentsCounter)
           !== Number(reposts[i].embeddedComments[c+1].commentState.targetCommentsCounter)+1) {
             throw new Error(`Gap between Comments ${reposts[i].embeddedComments[c].commentState.targetCommentsCounter} and\
-            ${reposts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from Repost ${reposts[i].repostState.allRepostsCounter}\
+            ${reposts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from User Repost ${reposts[i].repostState.userPostsCounter}\
             The server may be experiencing some issues or censoring embedded comments.`);
           }
         }
@@ -718,16 +736,23 @@ export default function GetGlobalPosts({
           if (Number(reposts[i].embeddedReposts[rp].repostState.targetRepostsCounter)
           !== Number(reposts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter)+1) {
             throw new Error(`Gap between Reposts ${reposts[i].embeddedReposts[rp].repostState.targetRepostsCounter} and\
-            ${reposts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from Repost ${reposts[i].repostState.allRepostsCounter}\
+            ${reposts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from User Repost ${reposts[i].repostState.userPostsCounter}\
             The server may be experiencing some issues or censoring embedded reposts.`);
           }
         }
       }
     } catch (e: any) {
         console.log(e);
-        setLoading(false);
         setErrorMessage(e.message);
     }
+  }
+
+
+  const goBack = () => {
+    setShowProfile(false);
+    setProfileAddress('');
+    setCommentTarget(null);
+    setHideGetGlobalPosts('');
   }
 
   const mergeAndSortContent = () => {
@@ -754,7 +779,7 @@ export default function GetGlobalPosts({
       howManyReposts > 0 ? await fetchReposts() : null;
       setFetchCompleted(true);
     })();
-  }, [getPosts]);
+  }, [getProfileFeed, profileAddress]);
 
   useEffect(() => {
     if (!fetchCompleted) return;
@@ -777,8 +802,13 @@ export default function GetGlobalPosts({
   }, [fetchCompleted]);
 
   return (
-    <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh] ${hideGetGlobalPosts}`}>
-      {loading ? null : walletConnected && <CreatePost account={account} />}
+    <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
+      <div className="p-2 border-b-2 shadow-lg">
+        <button className="hover:underline m-2" onClick={goBack}>{'<- Go back to feed'}</button>
+        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap">
+            <p >{`Posts from user:\n\n${profileAddress}`}</p>
+        </div>
+      </div>
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
       {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
       {!loading && Array.isArray(mergedContent) && mergedContent.map((post) => {
@@ -793,7 +823,7 @@ export default function GetGlobalPosts({
                       onClick={() => setProfileAddress(selectedProfileAddress)}
                     >
                     <span className="cursor-pointer hover:underline">{post.shortReposterAddressEnd}</span> 
-                      {` reposted at block ${post.repostState.repostBlockHeight} (Repost:${post.repostState.allRepostsCounter})`}
+                    {` reposted at block ${post.repostState.repostBlockHeight} (User Repost:${post.repostState.userRepostsCounter})`}
                     </div>
                   </div>
                 }
@@ -805,9 +835,11 @@ export default function GetGlobalPosts({
                     >
                       <p className="mr-8">{post.shortPosterAddressEnd}</p>
                     </span>
-                  <p className="mr-4">{'Post:' + post.postState.allPostsCounter}</p>
-                  <div className="flex-grow"></div>
-                  <p className="mr-1">{'Block:' + post.postState.postBlockHeight}</p>
+                    <p className="mr-4">{post.repostState === undefined ? 'User Post:' + post.postState.userPostsCounter
+                      : 'Post:' + post.postState.allPostsCounter}
+                    </p>
+                    <div className="flex-grow"></div>
+                    <p className="mr-1">{'Block:' + post.postState.postBlockHeight}</p>
                 </div>
                 <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
                     <p>{post.content}</p>
@@ -857,7 +889,7 @@ export default function GetGlobalPosts({
                     walletConnected && <RepostButton targetKey={post.postKey}/>
                   }
                   {account[0] === post.postState.posterAddress ?
-                    <DeleteButton
+                    <DeletePostButton
                       postState={post.postState}
                       postKey={post.postKey}  
                       />
@@ -874,71 +906,4 @@ export default function GetGlobalPosts({
       </div>}
     </div>
   );
-};
-
-export type EmbeddedReactions = {
-  reactionState: any,
-  reactionWitness: JSON,
-  reactionEmoji: string
-};
-
-export type EmbeddedComments = {
-  commentState: JSON,
-  commentWitness: JSON
-}
-
-export type EmbeddedReposts = {
-  repostState: JSON,
-  repostWitness: JSON
-}
-
-export type ProcessedPosts = {
-  postState: JSON,
-  postWitness: JSON,
-  postKey: string,
-  postContentID: string,
-  content: string,
-  shortPosterAddressEnd: string,
-  allEmbeddedReactions: EmbeddedReactions[],
-  filteredEmbeddedReactions: EmbeddedReactions[],
-  top3Emojis: string[],
-  numberOfReactions: number,
-  numberOfReactionsWitness: JSON,
-  embeddedComments: EmbeddedComments[],
-  numberOfComments: number,
-  numberOfCommentsWitness: JSON,
-  numberOfNonDeletedComments: Number,
-  embeddedReposts: EmbeddedReposts[],
-  numberOfReposts: number,
-  numberOfRepostsWitness: JSON,
-  numberOfNonDeletedReposts: Number,
-  currentUserRepostState: JSON | undefined,
-  currentUserRepostKey: string | undefined,
-  currentUserRepostWitness: JSON | undefined,
-};
-
-export type ProcessedReposts = {
-  repostState: JSON,
-  repostWitness: JSON,
-  repostKey: string,
-  shortReposterAddressEnd: string,
-  postState: JSON,
-  postWitness: JSON,
-  postKey: string,
-  postContentID: string,
-  content: string,
-  shortPosterAddressEnd: string,
-  allEmbeddedReactions: EmbeddedReactions[],
-  filteredEmbeddedReactions: EmbeddedReactions[],
-  top3Emojis: string[],
-  numberOfReactions: number,
-  numberOfReactionsWitness: JSON,
-  embeddedComments: EmbeddedComments[],
-  numberOfComments: number,
-  numberOfCommentsWitness: JSON,
-  numberOfNonDeletedComments: Number,
-  embeddedReposts: EmbeddedReposts[],
-  numberOfReposts: number,
-  numberOfRepostsWitness: JSON,
-  numberOfNonDeletedReposts: Number
 };
