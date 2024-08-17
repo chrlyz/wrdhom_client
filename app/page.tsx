@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import InstallWallet from '@/app/install-wallet';
-import ConnectWallet from './connect-wallet';
-import GetGlobalFeed from './get-global-feed';
-import QuerySettings from './query-settings';
-import GetProfileFeed from './get-profile-feed';
-import GetCommentsFeed from './get-comments-feed';
+import InstallWallet from './components/login/install-wallet';
+import ConnectWallet from './components/login/connect-wallet';
+import GetGlobalFeed from './components/feeds/get-global-feed';
+import QuerySettings from './components/settings/query-settings';
+import GetProfileFeed from './components/feeds/get-profile-feed';
+import GetCommentsFeed from './components/feeds/get-comments-feed';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);

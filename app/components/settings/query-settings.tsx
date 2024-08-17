@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
-import PostsQuerySettings from "./posts-query-settings";
-import CommentsQuerySettings from "./comments-query-settings";
-import RepostsQuerySettings from "./reposts-query-settings";
+import PostsQuerySettings from "../posts/posts-query-settings";
+import CommentsQuerySettings from "../comments/comments-query-settings";
+import RepostsQuerySettings from "../reposts/reposts-query-settings";
 
 export default function QuerySettings({
     howManyPosts,

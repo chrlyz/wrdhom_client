@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
-import { getCID } from './utils/cid';
-import ReactionButton from './reaction-button';
-import CommentButton from './comment-button';
+import { getCID } from '../../utils/cid';
+import ReactionButton from '../reactions/reaction-button';
+import CommentButton from '../comments/comment-button';
 import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import RepostButton from './repost-button';
+import RepostButton from '../reposts/repost-button';
 import { EmbeddedReactions, ProcessedPosts, ProcessedReposts, EmbeddedComments, EmbeddedReposts } from './get-global-feed';
-import DeletePostButton from './delete-post-button';
-import DeleteRepostButton from './delete-repost-button';
+import DeletePostButton from '../posts/delete-post-button';
+import DeleteRepostButton from '../reposts/delete-repost-button';
 import { CommentState, PostState, ReactionState, RepostState } from 'wrdhom';
 
 export default function GetProfileFeed({
