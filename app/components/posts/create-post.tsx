@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getCID } from './utils/cid';
+import { getCID } from '../../utils/cid';
 import { PostState } from 'wrdhom';
 
 export default function CreatePost({

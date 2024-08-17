@@ -1,6 +1,6 @@
 import { useState } from "react";
 import EmojiPicker from "./emoji-picker";
-import { EmbeddedReactions } from "./get-global-posts";
+import { EmbeddedReactions } from "../feeds/get-global-feed";
 import { ReactionState } from "wrdhom";
 
 export default function ReactionButton({

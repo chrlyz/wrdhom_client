@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { getCID } from './utils/cid';
+import { getCID } from '../../utils/cid';
 import { Dispatch, SetStateAction } from "react";
-import ReactionButton from './reaction-button';
-import CommentButton from './comment-button';
-import RepostButton from './repost-button';
-import DeleteCommentButton from './delete-comment-button';
+import ReactionButton from '../reactions/reaction-button';
+import CommentButton from '../comments/comment-button';
+import RepostButton from '../reposts/repost-button';
+import DeleteCommentButton from '../comments/delete-comment-button';
 import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CommentState } from 'wrdhom';
