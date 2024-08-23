@@ -6,10 +6,16 @@ import CommentButton from '../comments/comment-button';
 import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import RepostButton from '../reposts/repost-button';
-import { EmbeddedReactions, ProcessedPosts, ProcessedReposts, EmbeddedComments, EmbeddedReposts } from './get-global-feed';
 import DeletePostButton from '../posts/delete-post-button';
 import DeleteRepostButton from '../reposts/delete-repost-button';
 import { CommentState, PostState, ReactionState, RepostState } from 'wrdhom';
+import {
+  EmbeddedReactions,
+  ProcessedPosts,
+  ProcessedReposts,
+  EmbeddedComments,
+  EmbeddedReposts
+} from '../../types';
 
 export default function GetProfileFeed({
   getProfileFeed,

@@ -8,6 +8,8 @@ import DeleteCommentButton from '../comments/delete-comment-button';
 import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CommentState } from 'wrdhom';
+import DeleteRepostButton from '../reposts/delete-repost-button';
+import DeleteButton from '../posts/delete-post-button';
 
 export default function GetCommentsFeed({
   commentTarget,
@@ -246,9 +248,36 @@ export default function GetCommentsFeed({
                       {walletConnected && <CommentButton
                         targetKey={commentTarget.postKey}
                       />}
-                      {walletConnected && <RepostButton
-                        targetKey={commentTarget.postKey}
-                      />}
+                      {
+                        commentTarget.repostState !== undefined &&
+                        commentTarget.repostState.reposterAddress !== undefined &&
+                        account[0] === commentTarget.repostState.reposterAddress
+                        ?
+                          <DeleteRepostButton
+                            repostTargetKey={commentTarget.postKey}
+                            repostState={commentTarget.repostState}
+                            repostKey={commentTarget.repostKey}
+                          />
+                        :
+                          commentTarget.currentUserRepostState !== undefined &&
+                          commentTarget.currentUserRepostState.reposterAddress !== undefined &&
+                          account[0] === commentTarget.currentUserRepostState.reposterAddress
+                        ?
+                          <DeleteRepostButton
+                            repostTargetKey={commentTarget.postKey}
+                            repostState={commentTarget.currentUserRepostState}
+                            repostKey={commentTarget.currentUserRepostKey}
+                          />
+                        :
+                        walletConnected && <RepostButton targetKey={commentTarget.postKey}/>
+                      }
+                      {account[0] === commentTarget.postState.posterAddress ?
+                        <DeleteButton
+                          postState={commentTarget.postState}
+                          postKey={commentTarget.postKey}  
+                          />
+                          : null
+                      }
                     </div>
              </div>
             </div>
