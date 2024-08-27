@@ -1,14 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { getCID } from '../../utils/cid';
-import ReactionButton from '../reactions/reaction-button';
-import CommentButton from '../comments/comment-button';
-import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import RepostButton from '../reposts/repost-button';
+import ItemContentList from './content-item';
 import CreatePost from '../posts/create-post';
-import DeleteButton from '../posts/delete-post-button';
-import DeleteRepostButton from '../reposts/delete-repost-button';
 import { CommentState, PostState, ReactionState, RepostState } from 'wrdhom';
 import {
   EmbeddedReactions,
@@ -788,92 +782,16 @@ export default function GetGlobalFeed({
       {loading ? null : walletConnected && <CreatePost account={account} />}
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
       {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
-      {!loading && Array.isArray(mergedContent) && mergedContent.map((post) => {
-        return (
-            <div key={post.repostKey === undefined ? post.postKey : post.repostKey} className="p-2 border-b-2 shadow-lg">
-                {
-                  post.repostState === undefined ? null :
-                  <div className="flex flex-row">
-                    <div
-                      className="text-xs text-stone-400 mt-1"
-                      onMouseEnter={() => setSelectedProfileAddress(post.repostState.reposterAddress)}
-                      onClick={() => setProfileAddress(selectedProfileAddress)}
-                    >
-                    <span className="cursor-pointer hover:underline">{post.shortReposterAddressEnd}</span> 
-                      {` reposted at block ${post.repostState.repostBlockHeight} (Repost:${post.repostState.allRepostsCounter})`}
-                    </div>
-                  </div>
-                }
-                <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
-                  <span 
-                    className="mr-2 cursor-pointer hover:underline"
-                    onMouseEnter={() => setSelectedProfileAddress(post.postState.posterAddress)}
-                    onClick={() => setProfileAddress(selectedProfileAddress)}
-                    >
-                      <p className="mr-8">{post.shortPosterAddressEnd}</p>
-                    </span>
-                  <p className="mr-4">{'Post:' + post.postState.allPostsCounter}</p>
-                  <div className="flex-grow"></div>
-                  <p className="mr-1">{'Block:' + post.postState.postBlockHeight}</p>
-                </div>
-                <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
-                    <p>{post.content}</p>
-                </div>
-                <div className="flex flex-row">
-                  {post.top3Emojis.map((emoji: string) => emoji)}
-                  <p className="text-xs ml-1 mt-2">{post.filteredEmbeddedReactions.length > 0 ? post.filteredEmbeddedReactions.length : null}</p>
-                  {post.numberOfNonDeletedComments > 0 ? <button
-                  className="hover:text-lg ml-3"
-                  onClick={() => setCommentTarget(post)}
-                  >
-                    <FontAwesomeIcon icon={faComments} />
-                  </button> : null}
-                  <p className="text-xs ml-1 mt-2">{post.numberOfNonDeletedComments > 0 ? post.numberOfNonDeletedComments : null}</p>
-                  {post.numberOfNonDeletedReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
-                  <p className="text-xs ml-1 mt-2">{post.numberOfNonDeletedReposts > 0 ? post.numberOfNonDeletedReposts : null}</p>
-                  <div className="flex-grow"></div>
-                  {walletConnected && <ReactionButton
-                    targetKey={post.postKey}
-                    embeddedReactions={post.filteredEmbeddedReactions}
-                    account={account[0]}
-                  />}
-                  {walletConnected && <CommentButton
-                    targetKey={post.postKey}
-                  />}
-                  {
-                      post.repostState !== undefined &&
-                      post.repostState.reposterAddress !== undefined &&
-                      account[0] === post.repostState.reposterAddress
-                    ?
-                      <DeleteRepostButton
-                        repostTargetKey={post.postKey}
-                        repostState={post.repostState}
-                        repostKey={post.repostKey}
-                      />
-                    :
-                      post.currentUserRepostState !== undefined &&
-                      post.currentUserRepostState.reposterAddress !== undefined &&
-                      account[0] === post.currentUserRepostState.reposterAddress
-                    ?
-                      <DeleteRepostButton
-                        repostTargetKey={post.postKey}
-                        repostState={post.currentUserRepostState}
-                        repostKey={post.currentUserRepostKey}
-                      />
-                    :
-                    walletConnected && <RepostButton targetKey={post.postKey}/>
-                  }
-                  {account[0] === post.postState.posterAddress ?
-                    <DeleteButton
-                      postState={post.postState}
-                      postKey={post.postKey}  
-                      />
-                      : null
-                  }
-                </div>
-            </div>
-        );
-      })}
+      <ItemContentList
+        mergedContent={mergedContent}
+        loading={loading}
+        walletConnected={walletConnected}
+        account={account}
+        setSelectedProfileAddress={setSelectedProfileAddress}
+        selectedProfileAddress={selectedProfileAddress}
+        setProfileAddress={setProfileAddress}
+        setCommentTarget={setCommentTarget}
+      />
       {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
             <p >The query threw zero results</p>
