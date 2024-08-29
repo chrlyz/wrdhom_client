@@ -812,6 +812,7 @@ export default function GetProfileFeed({
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
       {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
       <ItemContentList
+        feedType='profile'
         mergedContent={mergedContent}
         loading={loading}
         walletConnected={walletConnected}

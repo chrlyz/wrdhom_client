@@ -4,13 +4,7 @@ import { getCID } from '../../utils/cid';
 import ItemContentList from './content-item';
 import CreatePost from '../posts/create-post';
 import { CommentState, PostState, ReactionState, RepostState } from 'wrdhom';
-import {
-  EmbeddedReactions,
-  ProcessedPosts,
-  ProcessedReposts,
-  EmbeddedComments,
-  EmbeddedReposts
-} from '../../types';
+import { ContentType, EmbeddedReactions } from '../../types';
 
 export default function GetGlobalFeed({
   getGlobalFeed,
@@ -56,125 +50,154 @@ export default function GetGlobalFeed({
   const [fetchCompleted, setFetchCompleted] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
 
-  const fetchPosts = async () => {
+  const fetchItems = async (type: ContentType) => {
     try {
-      const response = await fetch(`/posts`+
-        `?howMany=${howManyPosts}`+
-        `&fromBlock=${fromBlock}`+
-        `&toBlock=${toBlock}`+
-        `&currentUser=${account[0]}`,
-        {
-          headers: {'Cache-Control': 'no-cache'}
-        }
-      );
+      const endpoint = type === 'posts' ? '/posts' : '/reposts';
+      const queryParams = type === 'posts' 
+        ? `?howMany=${howManyPosts}&fromBlock=${fromBlock}&toBlock=${toBlock}&currentUser=${account[0]}`
+        : `?howMany=${howManyReposts}&fromBlock=${fromBlockReposts}&toBlock=${toBlockReposts}`;
+
+      const response = await fetch(`${endpoint}${queryParams}`, {
+        headers: {'Cache-Control': 'no-cache'}
+      });
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data: any = await response.json();
 
-      if (data.postsResponse.length === 0) {
+      const data: any = await response.json();
+      const itemsResponse = type === 'posts' ? data.postsResponse : data.repostsResponse;
+
+      if (itemsResponse.length === 0) {
         return;
       }
 
-      const processedPosts: ProcessedPosts[] = [];
-      for (let i = 0; i < data.postsResponse.length; i++) {
-        const postStateJSON = JSON.parse(data.postsResponse[i].postState);
-        const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
-        const allEmbeddedReactions: EmbeddedReactions[] = [];
-        const filteredEmbeddedReactions: EmbeddedReactions[] = [];
+      const processedItems = itemsResponse.map((item: any) => processItem(item, type));
 
-        for (let r = 0; r < data.postsResponse[i].embeddedReactions.length; r++) {
-          const reactionStateJSON = JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionState);
-
-          allEmbeddedReactions.push({
-            reactionState: reactionStateJSON,
-            reactionWitness: JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionWitness),
-            reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint)
-          });
-
-          if (Number(reactionStateJSON.deletionBlockHeight) === 0) {
-            filteredEmbeddedReactions.push({
-              reactionState: reactionStateJSON,
-              reactionWitness: JSON.parse(data.postsResponse[i].embeddedReactions[r].reactionWitness),
-              reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
-            });
-          }
-        }
-        const emojis = filteredEmbeddedReactions.map(reaction => reaction.reactionEmoji);
-        const frequencyMap = new Map<string, number>();
-        emojis.forEach(emoji => {
-          const count = frequencyMap.get(emoji) || 0;
-          frequencyMap.set(emoji, count + 1);
-        });
-        const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
-        const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
-
-        const embeddedComments: EmbeddedComments[] = [];
-        let numberOfDeletedComments = 0;
-        for (let c = 0; c < data.postsResponse[i].embeddedComments.length; c++) {
-          const commentStateJSON = JSON.parse(data.postsResponse[i].embeddedComments[c].commentState);
-
-          embeddedComments.push({
-            commentState: commentStateJSON,
-            commentWitness: JSON.parse(data.postsResponse[i].embeddedComments[c].commentWitness)
-          });
-          numberOfDeletedComments += Number(commentStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
-        }
-        const numberOfNonDeletedComments = Number(data.postsResponse[i].numberOfComments) - numberOfDeletedComments;
-
-        const embeddedReposts: EmbeddedReposts[] = [];
-        let numberOfDeletedReposts = 0;
-        for (let rp = 0; rp < data.postsResponse[i].embeddedReposts.length; rp++) {
-          const repostStateJSON = JSON.parse(data.postsResponse[i].embeddedReposts[rp].repostState);
-
-          embeddedReposts.push({
-            repostState: repostStateJSON,
-            repostWitness: JSON.parse(data.postsResponse[i].embeddedReposts[rp].repostWitness)
-          });
-          numberOfDeletedReposts += Number(repostStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
-        }
-        const numberOfNonDeletedReposts = Number(data.postsResponse[i].numberOfReposts) - numberOfDeletedReposts;
-
-        let currentUserRepostStateJSON: JSON | undefined;
-        let currentUserRepostWitnessJSON: JSON | undefined;
-        if (data.postsResponse[i].currentUserRepostState !== undefined && data.postsResponse[i].currentUserRepostWitness !== undefined) {
-          currentUserRepostStateJSON = JSON.parse(data.postsResponse[i].currentUserRepostState);
-          currentUserRepostWitnessJSON = JSON.parse(data.postsResponse[i].currentUserRepostWitness);
-        }
-
-        processedPosts.push({
-            postState: postStateJSON,
-            postWitness: JSON.parse(data.postsResponse[i].postWitness),
-            postKey: data.postsResponse[i].postKey,
-            postContentID: data.postsResponse[i].postContentID,
-            content: data.postsResponse[i].content,
-            shortPosterAddressEnd: shortPosterAddressEnd,
-            allEmbeddedReactions: allEmbeddedReactions,
-            filteredEmbeddedReactions: filteredEmbeddedReactions,
-            top3Emojis: top3Emojis,
-            numberOfReactions: data.postsResponse[i].numberOfReactions,
-            numberOfReactionsWitness: JSON.parse(data.postsResponse[i].numberOfReactionsWitness),
-            embeddedComments: embeddedComments,
-            numberOfComments: data.postsResponse[i].numberOfComments,
-            numberOfCommentsWitness: JSON.parse(data.postsResponse[i].numberOfCommentsWitness),
-            numberOfNonDeletedComments: numberOfNonDeletedComments,
-            embeddedReposts: embeddedReposts,
-            numberOfReposts: data.postsResponse[i].numberOfReposts,
-            numberOfRepostsWitness: JSON.parse(data.postsResponse[i].numberOfRepostsWitness),
-            numberOfNonDeletedReposts: numberOfNonDeletedReposts,
-            currentUserRepostState: currentUserRepostStateJSON,
-            currentUserRepostKey: data.postsResponse[i].currentUserRepostKey,
-            currentUserRepostWitness: currentUserRepostWitnessJSON
-        });
-      };
-
-      setPosts(processedPosts);
+      if (type === 'posts') {
+        setPosts(processedItems);
+      } else {
+        setReposts(processedItems);
+      }
 
     } catch (e: any) {
-        console.log(e);
-        setLoading(false);
-        setErrorMessage(e.message);
+      console.log(e);
+      setLoading(false);
+      setErrorMessage(e.message);
     }
+  };
+
+  const processItem = (item: any, type: ContentType) => {
+    const postStateJSON = JSON.parse(type === 'posts' ? item.postState : item.postState);
+    const repostStateJSON = type === 'reposts' ? JSON.parse(item.repostState) : undefined;
+
+    const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
+    const shortReposterAddressEnd = repostStateJSON?.reposterAddress.slice(-12);
+
+    const { allEmbeddedReactions, filteredEmbeddedReactions } = processReactions(item.embeddedReactions);
+    const top3Emojis = getTop3Emojis(filteredEmbeddedReactions);
+
+    const { embeddedComments, numberOfNonDeletedComments } = processComments(item.embeddedComments, item.numberOfComments);
+    const { embeddedReposts, numberOfNonDeletedReposts } = processReposts(item.embeddedReposts, item.numberOfReposts);
+
+    const baseProcessedItem = {
+      postState: postStateJSON,
+      postWitness: JSON.parse(item.postWitness),
+      postKey: item.postKey,
+      postContentID: item.postContentID,
+      content: item.content,
+      shortPosterAddressEnd,
+      allEmbeddedReactions,
+      filteredEmbeddedReactions,
+      top3Emojis,
+      numberOfReactions: item.numberOfReactions,
+      numberOfReactionsWitness: JSON.parse(item.numberOfReactionsWitness),
+      embeddedComments,
+      numberOfComments: item.numberOfComments,
+      numberOfCommentsWitness: JSON.parse(item.numberOfCommentsWitness),
+      numberOfNonDeletedComments,
+      embeddedReposts,
+      numberOfReposts: item.numberOfReposts,
+      numberOfRepostsWitness: JSON.parse(item.numberOfRepostsWitness),
+      numberOfNonDeletedReposts,
+    };
+
+    if (type === 'posts') {
+      return {
+        ...baseProcessedItem,
+        currentUserRepostState: item.currentUserRepostState ? JSON.parse(item.currentUserRepostState) : undefined,
+        currentUserRepostKey: item.currentUserRepostKey,
+        currentUserRepostWitness: item.currentUserRepostWitness ? JSON.parse(item.currentUserRepostWitness) : undefined,
+      };
+    } else {
+      return {
+        ...baseProcessedItem,
+        repostState: repostStateJSON,
+        repostWitness: JSON.parse(item.repostWitness),
+        repostKey: item.repostKey,
+        shortReposterAddressEnd,
+      };
+    }
+  };
+
+  const processReactions = (embeddedReactions: any[]) => {
+    const allEmbeddedReactions: EmbeddedReactions[] = [];
+    const filteredEmbeddedReactions: EmbeddedReactions[] = [];
+
+    embeddedReactions.forEach(reaction => {
+      const reactionStateJSON = JSON.parse(reaction.reactionState);
+      const processedReaction = {
+        reactionState: reactionStateJSON,
+        reactionWitness: JSON.parse(reaction.reactionWitness),
+        reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
+      };
+
+      allEmbeddedReactions.push(processedReaction);
+      if (Number(reactionStateJSON.deletionBlockHeight) === 0) {
+        filteredEmbeddedReactions.push(processedReaction);
+      }
+    });
+
+    return { allEmbeddedReactions, filteredEmbeddedReactions };
+  };
+
+  const getTop3Emojis = (filteredEmbeddedReactions: EmbeddedReactions[]) => {
+    const emojis = filteredEmbeddedReactions.map(reaction => reaction.reactionEmoji);
+    const frequencyMap = new Map<string, number>();
+    emojis.forEach(emoji => {
+      const count = frequencyMap.get(emoji) || 0;
+      frequencyMap.set(emoji, count + 1);
+    });
+    const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
+    return sortedEmojis.slice(0, 3).map(item => item[0]);
+  };
+
+  const processComments = (embeddedComments: any[], totalComments: number) => {
+    let numberOfDeletedComments = 0;
+    const processedComments = embeddedComments.map(comment => {
+      const commentStateJSON = JSON.parse(comment.commentState);
+      numberOfDeletedComments += Number(commentStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
+      return {
+        commentState: commentStateJSON,
+        commentWitness: JSON.parse(comment.commentWitness)
+      };
+    });
+    const numberOfNonDeletedComments = Number(totalComments) - numberOfDeletedComments;
+    return { embeddedComments: processedComments, numberOfNonDeletedComments };
+  };
+
+  const processReposts = (embeddedReposts: any[], totalReposts: number) => {
+    let numberOfDeletedReposts = 0;
+    const processedReposts = embeddedReposts.map(repost => {
+      const repostStateJSON = JSON.parse(repost.repostState);
+      numberOfDeletedReposts += Number(repostStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
+      return {
+        repostState: repostStateJSON,
+        repostWitness: JSON.parse(repost.repostWitness)
+      };
+    });
+    const numberOfNonDeletedReposts = Number(totalReposts) - numberOfDeletedReposts;
+    return { embeddedReposts: processedReposts, numberOfNonDeletedReposts };
   };
 
   const auditPosts = async () => {
@@ -346,122 +369,7 @@ export default function GetGlobalFeed({
     }
   };
 
-  const fetchReposts = async () => {
-    try {
-      const response = await fetch(`/reposts`+
-        `?howMany=${howManyReposts}`+
-        `&fromBlock=${fromBlockReposts}`+
-        `&toBlock=${toBlockReposts}`,
-        {
-          headers: {'Cache-Control': 'no-cache'}
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data: any = await response.json();
-
-      if (data.repostsResponse.length === 0) {
-        return;
-      }
-
-      const processedReposts: ProcessedReposts[] = [];
-      for (let i = 0; i < data.repostsResponse.length; i++) {
-        const repostStateJSON = JSON.parse(data.repostsResponse[i].repostState);
-        const postStateJSON = JSON.parse(data.repostsResponse[i].postState);
-        const shortReposterAddressEnd = repostStateJSON.reposterAddress.slice(-12);
-        const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
-        const allEmbeddedReactions: EmbeddedReactions[] = [];
-        const filteredEmbeddedReactions: EmbeddedReactions[] = [];
-
-        for (let r = 0; r < data.repostsResponse[i].embeddedReactions.length; r++) {
-          const reactionStateJSON = JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionState);
-
-          allEmbeddedReactions.push({
-            reactionState: reactionStateJSON,
-            reactionWitness: JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionWitness),
-            reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
-          });
-
-          if (Number(reactionStateJSON.deletionBlockHeight) === 0) {
-            filteredEmbeddedReactions.push({
-              reactionState: reactionStateJSON,
-              reactionWitness: JSON.parse(data.repostsResponse[i].embeddedReactions[r].reactionWitness),
-              reactionEmoji: String.fromCodePoint(reactionStateJSON.reactionCodePoint),
-            });
-          }
-        }
-
-        const emojis = filteredEmbeddedReactions.map(reaction => reaction.reactionEmoji);
-        const frequencyMap = new Map<string, number>();
-        emojis.forEach(emoji => {
-          const count = frequencyMap.get(emoji) || 0;
-          frequencyMap.set(emoji, count + 1);
-        });
-        const sortedEmojis = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
-        const top3Emojis = sortedEmojis.slice(0, 3).map(item => item[0]);
-
-        const embeddedComments: EmbeddedComments[] = [];
-        let numberOfDeletedComments = 0;
-        for (let c = 0; c < data.repostsResponse[i].embeddedComments.length; c++) {
-          const commentStateJSON = JSON.parse(data.repostsResponse[i].embeddedComments[c].commentState);
-
-          embeddedComments.push({
-            commentState: commentStateJSON,
-            commentWitness: JSON.parse(data.repostsResponse[i].embeddedComments[c].commentWitness)
-          });
-          numberOfDeletedComments += Number(commentStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
-        }
-        const numberOfNonDeletedComments = Number(data.repostsResponse[i].numberOfComments) - numberOfDeletedComments;
-
-        const embeddedReposts: EmbeddedReposts[] = [];
-        let numberOfDeletedReposts = 0;
-        for (let rp = 0; rp < data.repostsResponse[i].embeddedReposts.length; rp++) {
-          const repostStateJSON = JSON.parse(data.repostsResponse[i].embeddedReposts[rp].repostState);
-
-          embeddedReposts.push({
-            repostState: repostStateJSON,
-            repostWitness: JSON.parse(data.repostsResponse[i].embeddedReposts[rp].repostWitness)
-          });
-          numberOfDeletedReposts += Number(repostStateJSON.deletionBlockHeight) === 0 ? 0 : 1;
-        }
-        const numberOfNonDeletedReposts = Number(data.repostsResponse[i].numberOfReposts) - numberOfDeletedReposts;
-
-        processedReposts.push({
-            repostState: repostStateJSON,
-            repostWitness: JSON.parse(data.repostsResponse[i].repostWitness),
-            repostKey: data.repostsResponse[i].repostKey,
-            shortReposterAddressEnd: shortReposterAddressEnd,
-            postState: postStateJSON,
-            postWitness: JSON.parse(data.repostsResponse[i].postWitness),
-            postKey: data.repostsResponse[i].postKey,
-            postContentID: data.repostsResponse[i].postContentID,
-            content: data.repostsResponse[i].content,
-            shortPosterAddressEnd: shortPosterAddressEnd,
-            allEmbeddedReactions: allEmbeddedReactions,
-            filteredEmbeddedReactions: filteredEmbeddedReactions,
-            top3Emojis: top3Emojis,
-            numberOfReactions: data.repostsResponse[i].numberOfReactions,
-            numberOfReactionsWitness: JSON.parse(data.repostsResponse[i].numberOfReactionsWitness),
-            embeddedComments: embeddedComments,
-            numberOfComments: data.repostsResponse[i].numberOfComments,
-            numberOfCommentsWitness: JSON.parse(data.repostsResponse[i].numberOfCommentsWitness),
-            numberOfNonDeletedComments: numberOfNonDeletedComments,
-            embeddedReposts: embeddedReposts,
-            numberOfReposts: data.repostsResponse[i].numberOfReposts,
-            numberOfRepostsWitness: JSON.parse(data.repostsResponse[i].numberOfRepostsWitness),
-            numberOfNonDeletedReposts: numberOfNonDeletedReposts
-        });
-      };
-
-      setReposts(processedReposts);
-
-    } catch (e: any) {
-        console.log(e);
-        setLoading(false);
-        setErrorMessage(e.message);
-    }
-  };
+  
 
   const auditReposts = async () => {
     try {
@@ -751,8 +659,8 @@ export default function GetGlobalFeed({
       setLoading(true);
       setErrorMessage(null);
       setWhenZeroContent(false);
-      howManyPosts > 0 ? await fetchPosts() : null;
-      howManyReposts > 0 ? await fetchReposts() : null;
+      howManyPosts > 0 ? await fetchItems('posts') : null;
+      howManyReposts > 0 ? await fetchItems('reposts') : null;
       setFetchCompleted(true);
     })();
   }, [getGlobalFeed]);
@@ -783,6 +691,7 @@ export default function GetGlobalFeed({
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
       {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
       <ItemContentList
+        feedType='global'
         mergedContent={mergedContent}
         loading={loading}
         walletConnected={walletConnected}
