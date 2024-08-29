@@ -1,3 +1,6 @@
+export type ContentType = 'posts' | 'reposts';
+export type FeedType = 'global' | 'profile';
+
 export type EmbeddedReactions = {
     reactionState: any,
     reactionWitness: JSON,

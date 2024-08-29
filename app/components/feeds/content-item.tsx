@@ -7,9 +7,10 @@ import CommentButton from '../comments/comment-button';
 import DeletePostButton from '../posts/delete-post-button';
 import DeleteRepostButton from '../reposts/delete-repost-button';
 import RepostButton from '../reposts/repost-button';
-
+import { FeedType } from '@/app/types';
 
 const ContentItem = ({
+    feedType,
     item,
     walletConnected,
     account,
@@ -18,6 +19,7 @@ const ContentItem = ({
     setProfileAddress,
     setCommentTarget
 }: {
+    feedType: FeedType,
     item: any,
     walletConnected: boolean,
     account: string[],
@@ -40,7 +42,11 @@ const ContentItem = ({
           onClick={() => setProfileAddress(selectedProfileAddress)}
         >
           <span className="cursor-pointer hover:underline">{item.shortReposterAddressEnd}</span>
-          {` reposted at block ${item.repostState.repostBlockHeight} (${isRepost ? 'Repost' : 'User Repost'}:${item.repostState.repostBlockHeight})`}
+          {` reposted at block ${item.repostState.repostBlockHeight} `}
+          {
+            feedType === 'global' ? `(Repost: ${item.repostState.allRepostsCounter})`
+            : `(User Repost: ${item.repostState.userRepostsCounter})` 
+          }
         </div>
       </div>
     );
@@ -56,7 +62,10 @@ const ContentItem = ({
         <p className="mr-8">{item.shortPosterAddressEnd}</p>
       </span>
       <p className="mr-4">
-        {isRepost ? 'Post:' + item.postState.allPostsCounter : 'User Post:' + item.postState.userPostsCounter}
+        {
+          feedType === 'global' ? 'Post:' + item.postState.allPostsCounter
+          : 'User Post:' + item.postState.userPostsCounter
+        }
       </p>
       <div className="flex-grow"></div>
       <p className="mr-1">{'Block:' + item.postState.postBlockHeight}</p>
@@ -71,7 +80,7 @@ const ContentItem = ({
 
   const renderPostFooter = () => (
     <div className="flex flex-row">
-      {item.top3Emojis.map((emoji: string) => <span>{emoji}</span>)}
+      {item.top3Emojis.map((emoji: string) => <span key={emoji}>{emoji}</span>)}
       <p className="text-xs ml-1 mt-2">{item.filteredEmbeddedReactions.length > 0 ? item.filteredEmbeddedReactions.length : null}</p>
       {renderCommentButton()}
       {renderRepostIcon()}
@@ -156,6 +165,7 @@ const ContentItem = ({
 };
 
 const ItemContentList = ({
+    feedType,
     mergedContent,
     loading,
     walletConnected,
@@ -165,6 +175,7 @@ const ItemContentList = ({
     setProfileAddress,
     setCommentTarget
 }: {
+    feedType: FeedType,
     mergedContent: any[],
     loading: boolean,
     walletConnected: boolean,
@@ -178,6 +189,7 @@ const ItemContentList = ({
 
   return mergedContent.map((item) => (
     <ContentItem
+      feedType={feedType}
       key={item.repostKey === undefined ? item.postKey : item.repostKey}
       item={item}
       walletConnected={walletConnected}
