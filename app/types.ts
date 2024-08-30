@@ -1,4 +1,4 @@
-export type ContentType = 'posts' | 'reposts';
+export type ContentType = 'Posts' | 'Reposts' | 'Reactions' | 'Comments';
 export type FeedType = 'global' | 'profile';
 
 export type EmbeddedReactions = {

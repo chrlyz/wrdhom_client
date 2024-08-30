@@ -45,7 +45,7 @@ const nextConfig = {
           },
           {
             source: '/graphql',
-            destination: 'https://proxy.devnet.minaexplorer.com/graphql',
+            destination: 'https://api.minascan.io/node/devnet/v1/graphql',
           },
           {
             source: "/reactions/delete",
