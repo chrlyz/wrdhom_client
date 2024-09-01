@@ -18,6 +18,7 @@ export const auditPosts = async (
     }
 ) => {
     try {
+      if (feedPostsContext.posts.length === 0) return;
       await auditItems(
         feedPostsContext.posts,
         'Posts',
@@ -100,10 +101,14 @@ export const auditPosts = async (
     const fetchedTargetsRepostsCountersRoot = repostsAppState![2].toString();
     const fetchedRepostsRoot = repostsAppState![3].toString();
   
-    for (const item of items) {
-      const itemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(item[`${lowercaseSingularCT}State`]);
+    for (let i = 0; i < items.length; i++) {
+      const itemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i][`${lowercaseSingularCT}State`]);
       const allItemsCounter = itemState[`all${contentType}Counter`];
-      const blockHeight = itemState[`${lowercaseSingularCT}BlockHeight`];
+      if (i+1 < items.length) {
+        const nextItemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i+1][`${lowercaseSingularCT}State`]);
+        checkGap(allItemsCounter, nextItemState[`all${contentType}Counter`], contentType);
+      }
+      const blockHeight = Number(itemState[`${lowercaseSingularCT}BlockHeight`]);
 
       // Audit block range
       if (blockHeight < fromBlock || blockHeight > toBlock) {
@@ -111,27 +116,27 @@ export const auditPosts = async (
           +`isn't between the block range ${fromBlock} to ${toBlock}`);
       }
 
-      const itemWitness = MerkleMapWitness.fromJSON(item[`${lowercaseSingularCT}Witness`]);
+      const itemWitness = MerkleMapWitness.fromJSON(items[i][`${lowercaseSingularCT}Witness`]);
       const calculatedRoot = itemWitness.computeRootAndKeyV2(itemState.hash())[0].toString();
   
       // Audit against items onchain root
       if ((contentType === 'Posts' ? fetchedPostsRoot : fetchedRepostsRoot) !== calculatedRoot) {
-        throw new Error(`${singularCT} ${item[`${lowercaseCT}State`][`all${contentType}Counter`]} has different root than zkApp state. `
+        throw new Error(`${singularCT} ${items[i][`${lowercaseCT}State`][`all${contentType}Counter`]} has different root than zkApp state. `
           +`The server may be experiencing some issues or manipulating results for your query.`);
       }
   
       if (Number(itemState.deletionBlockHeight) === 0) {
         // Audit content
-        const cid = await getCID(item.content);
-        if (cid !== item.postContentID) {
+        const cid = await getCID(items[i].content);
+        if (cid !== items[i].postContentID) {
           throw new Error(`The content for ${singularCT} ${allItemsCounter} doesn't match the expected contentID. `
             +`The server may be experiencing some issues or manipulating the content it shows.`);
         }
   
         // Audit embedded items
-        await auditEmbeddedItems(item, 'Reactions', fetchedReactionsRoot, fetchedTargetsReactionsCountersRoot);
-        await auditEmbeddedItems(item, 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot);
-        await auditEmbeddedItems(item, 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot);
+        await auditEmbeddedItems(items[i], 'Reactions', fetchedReactionsRoot, fetchedTargetsReactionsCountersRoot);
+        await auditEmbeddedItems(items[i], 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot);
+        await auditEmbeddedItems(items[i], 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot);
       }
     };
   }
@@ -151,8 +156,8 @@ export const auditPosts = async (
     const statedNumberOfEmbeddedItems = parentItem[`numberOf${contentType}`];
   
     if (embeddedItems.length !== statedNumberOfEmbeddedItems) {
-      throw new Error(`The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} for `
-        +`${parentItem.contentType} ${parentItem.id}, but it only provided ${embeddedItems.length} ${contentType}s. `
+      throw new Error(`The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} `
+        +`from Post ${parentItem.allPostsCounter}, but it only provided ${embeddedItems.length} ${contentType}s. `
         +`The server may be experiencing some issues or manipulating the content it shows.`);
     }
 
@@ -166,18 +171,28 @@ export const auditPosts = async (
       +` but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
     }
   
-    embeddedItems.forEach((item: any) => {
-      const stateJSON = item[`${lowercaseSingularCT}State`];
-      const witness = MerkleMapWitness.fromJSON(item[`${lowercaseSingularCT}Witness`]);
+    for (let i = 0; i < embeddedItems.length - 1; i++) {
+      const stateJSON = embeddedItems[i][`${lowercaseSingularCT}State`];
+      const witness = MerkleMapWitness.fromJSON(embeddedItems[i][`${lowercaseSingularCT}Witness`]);
       const state: any = (contentType === 'Reactions' ? ReactionState : contentType === 'Comments' ? CommentState : RepostState).fromJSON(stateJSON);
       const calculatedRoot = witness.computeRootAndKeyV2(state.hash())[0].toString();
   
       if (fetchedItemsRoot !== calculatedRoot) {
-        throw new Error(`${singularCT} ${stateJSON[`all${contentType}sCounter`]} has different root than zkApp state. `
-          +`The server may be experiencing some issues or manipulating results for the ${lowercaseSingularCT}s `
-          +`to ${parentItem.contentType} ${parentItem.id}.`);
+        throw new Error(`${singularCT} ${stateJSON[`all${contentType}sCounter`]} from Post ${parentItem.allPostsCounter} `
+          +`has different root than zkApp state. `
+          +`The server may be experiencing some issues or manipulating results for the ${lowercaseSingularCT}s`);
       }
-    });
+
+      checkGap(
+        embeddedItems[i][`target${contentType}Counter`],
+        embeddedItems[i+1][`target${contentType}Counter`],
+        contentType,
+        {
+          parentCounter: parentItem[`allPostsCounter`] ?? parentItem[`allRepostsCounter`],
+          parentCounterType: `allPostsCounter` in parentItem ? 'Posts' : 'Reposts'
+        }
+      );
+    };
   }
 
   async function fetchContractData(contractAddress: string) {
@@ -185,3 +200,19 @@ export const auditPosts = async (
     const contractData = await fetchAccount({ publicKey: contractAddress }, '/graphql');
     return contractData.account?.zkapp?.appState;
   }
+
+  const checkGap = (
+    current: string,
+    next: number,
+    contentType: ContentType,
+    parentInfo?: {
+      parentCounter: number,
+      parentCounterType: ContentType
+    }
+  ) => {
+    if (Number(current) !== Number(next) + 1) {
+      throw new Error(`Gap between ${contentType} ${current} and ${next}${parentInfo?.parentCounter ? `, `
+        +`from ${parentInfo?.parentCounterType.slice(0, -1)} ${parentInfo?.parentCounter}` : ''}. `
+        +`The server may be experiencing some issues or censoring ${contentType}.`);
+    }
+  };
