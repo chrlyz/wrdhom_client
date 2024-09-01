@@ -49,90 +49,6 @@ export default function GetGlobalFeed({
   const [fetchCompleted, setFetchCompleted] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
 
-  const auditNoSkippingContentInPosts = () => {
-    try {
-      for (let i = 0; i < posts.length-1; i++) {
-        if (Number(posts[i].postState.allPostsCounter) !== Number(posts[i+1].postState.allPostsCounter)+1) {
-          throw new Error(`Gap between Posts ${posts[i].postState.allPostsCounter} and ${posts[i+1].postState.allPostsCounter}.\
-          The server may be experiencing some issues or censoring posts.`);
-        }
-
-        for (let r = 0; r < Number(posts[i].allEmbeddedReactions.length)-1; r++) {
-          if (Number(posts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter)
-          !== Number(posts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
-            throw new Error(`Gap between Reactions ${posts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter} and\
-            ${posts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter}, from Post ${posts[i].postState.allPostsCounter}\
-            The server may be experiencing some issues or censoring embedded reactions.`);
-          }
-        }
-
-        for (let c = 0; c < Number(posts[i].embeddedComments.length)-1; c++) {
-          if (Number(posts[i].embeddedComments[c].commentState.targetCommentsCounter)
-          !== Number(posts[i].embeddedComments[c+1].commentState.targetCommentsCounter)+1) {
-            throw new Error(`Gap between Comments ${posts[i].embeddedComments[c].commentState.targetCommentsCounter} and\
-            ${posts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from Post ${posts[i].postState.allPostsCounter}\
-            The server may be experiencing some issues or censoring embedded comments.`);
-          }
-        }
-
-        for (let rp = 0; rp < Number(posts[i].embeddedReposts.length)-1; rp++) {
-          if (Number(posts[i].embeddedReposts[rp].repostState.targetRepostsCounter)
-          !== Number(posts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter)+1) {
-            throw new Error(`Gap between Reposts ${posts[i].embeddedReposts[rp].repostState.targetRepostsCounter} and\
-            ${posts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from Post ${posts[i].postState.allRepostsCounter}\
-            The server may be experiencing some issues or censoring embedded reposts.`);
-          }
-        }
-      }
-    } catch (e: any) {
-        console.log(e);
-        setLoading(false);
-        setErrorMessage(e.message);
-    }
-  }
-
-  const auditNoSkippingContentInReposts = () => {
-    try {
-      for (let i = 0; i < reposts.length-1; i++) {
-        if (Number(reposts[i].repostState.allRepostsCounter) !== Number(reposts[i+1].repostState.allRepostsCounter)+1) {
-          throw new Error(`Gap between Reposts ${reposts[i].repostState.allRepostsCounter} and ${reposts[i+1].repostState.allRepostsCounter}.\
-          The server may be experiencing some issues or censoring reposts.`);
-        }
-
-        for (let r = 0; r < Number(reposts[i].allEmbeddedReactions.length)-1; r++) {
-          if (Number(reposts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter)
-          !== Number(reposts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter)+1) {
-            throw new Error(`Gap between Reactions ${reposts[i].allEmbeddedReactions[r].reactionState.targetReactionsCounter} and\
-            ${reposts[i].allEmbeddedReactions[r+1].reactionState.targetReactionsCounter} from Repost ${reposts[i].repostState.allRepostsCounter}\
-            The server may be experiencing some issues or censoring embedded reactions.`);
-          }
-        }
-
-        for (let c = 0; c < Number(reposts[i].embeddedComments.length)-1; c++) {
-          if (Number(reposts[i].embeddedComments[c].commentState.targetCommentsCounter)
-          !== Number(reposts[i].embeddedComments[c+1].commentState.targetCommentsCounter)+1) {
-            throw new Error(`Gap between Comments ${reposts[i].embeddedComments[c].commentState.targetCommentsCounter} and\
-            ${reposts[i].embeddedComments[c+1].commentState.targetCommentsCounter}, from Repost ${reposts[i].repostState.allRepostsCounter}\
-            The server may be experiencing some issues or censoring embedded comments.`);
-          }
-        }
-
-        for (let rp = 0; rp < Number(reposts[i].embeddedReposts.length)-1; rp++) {
-          if (Number(reposts[i].embeddedReposts[rp].repostState.targetRepostsCounter)
-          !== Number(reposts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter)+1) {
-            throw new Error(`Gap between Reposts ${reposts[i].embeddedReposts[rp].repostState.targetRepostsCounter} and\
-            ${reposts[i].embeddedReposts[rp+1].repostState.targetRepostsCounter}, from Repost ${reposts[i].repostState.allRepostsCounter}\
-            The server may be experiencing some issues or censoring embedded reposts.`);
-          }
-        }
-      }
-    } catch (e: any) {
-        console.log(e);
-        setLoading(false);
-        setErrorMessage(e.message);
-    }
-  }
-
   const mergeAndSortContent = () => {
     const merged = [...posts, ...reposts];
     const filteredByDeletedPosts = merged.filter(element => Number(element.postState.deletionBlockHeight) === 0);
@@ -194,7 +110,6 @@ export default function GetGlobalFeed({
           toBlock: toBlock,
         }
         await auditPosts(auditGeneralParams, auditPostsParams);
-        auditNoSkippingContentInPosts();
       }
 
       if (reposts.length > 0) {
@@ -204,7 +119,6 @@ export default function GetGlobalFeed({
           toBlockReposts: toBlockReposts
         }
         await auditReposts(auditGeneralParams, auditRepostsParams);
-        auditNoSkippingContentInReposts();
       }
 
       if (posts.length === 0 && reposts.length === 0) {
@@ -214,7 +128,7 @@ export default function GetGlobalFeed({
       mergeAndSortContent();
       setFetchCompleted(false);
       setLoading(false);
-  })();
+    })();
   }, [fetchCompleted]);
 
   return (

@@ -3,23 +3,23 @@ export type FeedType = 'global' | 'profile';
 
 export type EmbeddedReactions = {
     reactionState: any,
-    reactionWitness: JSON,
+    reactionWitness: any,
     reactionEmoji: string
   };
   
   export type EmbeddedComments = {
-    commentState: JSON,
-    commentWitness: JSON
+    commentState: any,
+    commentWitness: any
   }
   
   export type EmbeddedReposts = {
-    repostState: JSON,
-    repostWitness: JSON
+    repostState: any,
+    repostWitness: any
   }
   
   export type ProcessedPosts = {
-    postState: JSON,
-    postWitness: JSON,
+    postState: any,
+    postWitness: any,
     postKey: string,
     postContentID: string,
     content: string,
@@ -28,27 +28,27 @@ export type EmbeddedReactions = {
     filteredEmbeddedReactions: EmbeddedReactions[],
     top3Emojis: string[],
     numberOfReactions: number,
-    numberOfReactionsWitness: JSON,
+    numberOfReactionsWitness: any,
     embeddedComments: EmbeddedComments[],
     numberOfComments: number,
-    numberOfCommentsWitness: JSON,
+    numberOfCommentsWitness: any,
     numberOfNonDeletedComments: Number,
     embeddedReposts: EmbeddedReposts[],
     numberOfReposts: number,
-    numberOfRepostsWitness: JSON,
+    numberOfRepostsWitness: any,
     numberOfNonDeletedReposts: Number,
-    currentUserRepostState: JSON | undefined,
+    currentUserRepostState: any | undefined,
     currentUserRepostKey: string | undefined,
-    currentUserRepostWitness: JSON | undefined,
+    currentUserRepostWitness: any | undefined,
   };
   
   export type ProcessedReposts = {
-    repostState: JSON,
-    repostWitness: JSON,
+    repostState: any,
+    repostWitness: any,
     repostKey: string,
     shortReposterAddressEnd: string,
-    postState: JSON,
-    postWitness: JSON,
+    postState: any,
+    postWitness: any,
     postKey: string,
     postContentID: string,
     content: string,
@@ -57,13 +57,13 @@ export type EmbeddedReactions = {
     filteredEmbeddedReactions: EmbeddedReactions[],
     top3Emojis: string[],
     numberOfReactions: number,
-    numberOfReactionsWitness: JSON,
+    numberOfReactionsWitness: any,
     embeddedComments: EmbeddedComments[],
     numberOfComments: number,
-    numberOfCommentsWitness: JSON,
+    numberOfCommentsWitness: any,
     numberOfNonDeletedComments: Number,
     embeddedReposts: EmbeddedReposts[],
     numberOfReposts: number,
-    numberOfRepostsWitness: JSON,
+    numberOfRepostsWitness: any,
     numberOfNonDeletedReposts: Number
   };
