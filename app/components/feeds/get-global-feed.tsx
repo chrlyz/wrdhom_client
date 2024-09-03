@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import ItemContentList from './content-item';
 import CreatePost from '../posts/create-post';
-import { fetchItems } from './utils/global-fetch';
-import { auditPosts, auditReposts } from './utils/global-audit';
+import { fetchItems } from './utils/fetch';
+import { auditPosts, auditReposts } from './utils/audit';
+import { mergeAndSortContent } from './utils/structure';
 
 export default function GetGlobalFeed({
   getGlobalFeed,
@@ -49,19 +50,6 @@ export default function GetGlobalFeed({
   const [fetchCompleted, setFetchCompleted] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
 
-  const mergeAndSortContent = () => {
-    const merged = [...posts, ...reposts];
-    const filteredByDeletedPosts = merged.filter(element => Number(element.postState.deletionBlockHeight) === 0);
-    const filteredByDeletedReposts = filteredByDeletedPosts.filter(element => element.repostState === undefined ?
-                                                              true : Number(element.repostState.deletionBlockHeight) === 0);
-    const sorted = filteredByDeletedReposts.sort((a,b) => {
-        const blockHeightA =  a.repostState === undefined ? a.postState.postBlockHeight : a.repostState.repostBlockHeight;
-        const blockHeightB =  b.repostState === undefined ? b.postState.postBlockHeight : b.repostState.repostBlockHeight;
-        return blockHeightB - blockHeightA;
-    });
-    setMergedContent(sorted);
-  }
-
   useEffect(() => {
     (async () => {
       setPosts([]);
@@ -83,8 +71,8 @@ export default function GetGlobalFeed({
         setLoading: setLoading,
         setErrorMessage: setErrorMessage
       }
-      howManyPosts > 0 ? await fetchItems('Posts', fetchItemsParams) : null;
-      howManyReposts > 0 ? await fetchItems('Reposts', fetchItemsParams) : null;
+      howManyPosts > 0 ? await fetchItems('global', 'Posts', fetchItemsParams) : null;
+      howManyReposts > 0 ? await fetchItems('global', 'Reposts', fetchItemsParams) : null;
 
       setFetchCompleted(true);
     })();
@@ -109,7 +97,7 @@ export default function GetGlobalFeed({
           fromBlock: fromBlock,
           toBlock: toBlock,
         }
-        await auditPosts(auditGeneralParams, auditPostsParams);
+        await auditPosts('global', auditGeneralParams, auditPostsParams);
       }
 
       if (reposts.length > 0) {
@@ -118,14 +106,14 @@ export default function GetGlobalFeed({
           fromBlockReposts: fromBlockReposts,
           toBlockReposts: toBlockReposts
         }
-        await auditReposts(auditGeneralParams, auditRepostsParams);
+        await auditReposts('global', auditGeneralParams, auditRepostsParams);
       }
 
       if (posts.length === 0 && reposts.length === 0) {
         setWhenZeroContent(true);
       }
 
-      mergeAndSortContent();
+      mergeAndSortContent(posts, reposts, setMergedContent);
       setFetchCompleted(false);
       setLoading(false);
     })();

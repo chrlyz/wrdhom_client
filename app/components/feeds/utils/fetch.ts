@@ -1,7 +1,8 @@
 import { Dispatch, SetStateAction } from "react";
-import { ContentType, EmbeddedReactions } from '../../types';
+import { ContentType, EmbeddedReactions, FeedType } from '../../types';
 
 export const fetchItems = async (
+    feedType: FeedType,
     contentType: ContentType,
     feedContext: {
         howManyPosts: number,
@@ -15,16 +16,18 @@ export const fetchItems = async (
         setReposts: Dispatch<SetStateAction<any[]>>,
         setLoading: Dispatch<SetStateAction<boolean>>,
         setErrorMessage: Dispatch<SetStateAction<any>>
-    }
+    },
+    profileAddress?: string
 ) => {
     try {
       const endpoint = contentType === 'Posts' ? '/posts' : '/reposts';
-      const queryParams = contentType === 'Posts' 
+      let queryParams = contentType === 'Posts' 
         ? `?howMany=${feedContext.howManyPosts}&fromBlock=${feedContext.fromBlock}`
           +`&toBlock=${feedContext.toBlock}&currentUser=${feedContext.account[0]}`
           
         : `?howMany=${feedContext.howManyReposts}&fromBlock=${feedContext.fromBlockReposts}`
           +`&toBlock=${feedContext.toBlockReposts}`;
+      queryParams = feedType === 'global' ? queryParams : queryParams + `&profileAddress=${profileAddress}`
 
       const response = await fetch(`${endpoint}${queryParams}`, {
         headers: {'Cache-Control': 'no-cache'}

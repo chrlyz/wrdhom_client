@@ -1,8 +1,9 @@
 import { Dispatch, SetStateAction } from "react";
 import { getCID } from '../../utils/cid';
-import { ContentType } from '../../types';
+import { ContentType, FeedType } from '../../types';
 
 export const auditPosts = async (
+    feedType: FeedType,
     feedGeneralContext: {
         setLoading: Dispatch<SetStateAction<boolean>>,
         setErrorMessage: Dispatch<SetStateAction<any>>,
@@ -21,6 +22,7 @@ export const auditPosts = async (
       if (feedPostsContext.posts.length === 0) return;
       await auditItems(
         feedPostsContext.posts,
+        feedType,
         'Posts',
         feedPostsContext.fromBlock,
         feedPostsContext.toBlock,
@@ -37,6 +39,7 @@ export const auditPosts = async (
   };
   
   export const auditReposts = async (
+    feedType: FeedType,
     feedGeneralContext: {
         setLoading: Dispatch<SetStateAction<boolean>>,
         setErrorMessage: Dispatch<SetStateAction<any>>,
@@ -55,6 +58,7 @@ export const auditPosts = async (
       if (feedRepostsContext.reposts.length === 0) return;
       await auditItems(
         feedRepostsContext.reposts,
+        feedType,
         'Reposts',
         feedRepostsContext.fromBlockReposts,
         feedRepostsContext.toBlockReposts,
@@ -72,6 +76,7 @@ export const auditPosts = async (
 
   async function auditItems(
     items: any[],
+    feedType: FeedType,
     contentType: ContentType,
     fromBlock: number,
     toBlock: number,
@@ -104,6 +109,7 @@ export const auditPosts = async (
     for (let i = 0; i < items.length; i++) {
       const itemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i][`${lowercaseSingularCT}State`]);
       const allItemsCounter = itemState[`all${contentType}Counter`];
+      const usersItemsCounter = itemState[`users${contentType}Counter`];
       if (i+1 < items.length) {
         const nextItemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i+1][`${lowercaseSingularCT}State`]);
         checkGap(allItemsCounter, nextItemState[`all${contentType}Counter`], contentType);
@@ -112,7 +118,8 @@ export const auditPosts = async (
 
       // Audit block range
       if (blockHeight < fromBlock || blockHeight > toBlock) {
-        throw new Error(`Block-length ${blockHeight} for ${singularCT} ${allItemsCounter} `
+        throw new Error(`Block-length ${blockHeight} for `
+          +`${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter} `
           +`isn't between the block range ${fromBlock} to ${toBlock}`);
       }
 
@@ -121,28 +128,29 @@ export const auditPosts = async (
   
       // Audit against items onchain root
       if ((contentType === 'Posts' ? fetchedPostsRoot : fetchedRepostsRoot) !== calculatedRoot) {
-        throw new Error(`${singularCT} ${items[i][`${lowercaseCT}State`][`all${contentType}Counter`]} has different root than zkApp state. `
-          +`The server may be experiencing some issues or manipulating results for your query.`);
+        throw new Error(`${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`
+          +` has different root than zkApp state. The server may be experiencing some issues or manipulating results for your query.`);
       }
   
       if (Number(itemState.deletionBlockHeight) === 0) {
         // Audit content
         const cid = await getCID(items[i].content);
         if (cid !== items[i].postContentID) {
-          throw new Error(`The content for ${singularCT} ${allItemsCounter} doesn't match the expected contentID. `
-            +`The server may be experiencing some issues or manipulating the content it shows.`);
+          throw new Error(`The content for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`+
+            ` doesn't match the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`);
         }
   
         // Audit embedded items
-        await auditEmbeddedItems(items[i], 'Reactions', fetchedReactionsRoot, fetchedTargetsReactionsCountersRoot);
-        await auditEmbeddedItems(items[i], 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot);
-        await auditEmbeddedItems(items[i], 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot);
+        await auditEmbeddedItems(items[i], feedType, 'Reactions', fetchedReactionsRoot, fetchedTargetsReactionsCountersRoot);
+        await auditEmbeddedItems(items[i], feedType, 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot);
+        await auditEmbeddedItems(items[i], feedType, 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot);
       }
     };
   }
 
   async function auditEmbeddedItems(
     parentItem: any,
+    feedType: FeedType,
     contentType: ContentType,
     fetchedItemsRoot: string,
     fetchedTargetItemsRoot: string
@@ -150,6 +158,8 @@ export const auditPosts = async (
     const { MerkleMapWitness, Field } = await import('o1js');
     const { ReactionState, CommentState, RepostState } = await import('wrdhom');
     const embeddedItems = parentItem[`embedded${contentType}`] ?? parentItem[`allEmbedded${contentType}`];
+    const allItemsCounter = parentItem[`all${contentType}Counter`];
+    const usersItemsCounter = parentItem[`users${contentType}Counter`];
     const lowercaseCT = contentType.toLowerCase();
     const lowercaseSingularCT =  contentType.toLowerCase().slice(0, -1);
     const singularCT = contentType.slice(0, -1);
@@ -157,7 +167,8 @@ export const auditPosts = async (
   
     if (embeddedItems.length !== statedNumberOfEmbeddedItems) {
       throw new Error(`The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} `
-        +`from Post ${parentItem.allPostsCounter}, but it only provided ${embeddedItems.length} ${contentType}s. `
+        +`for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter},`
+        +` but it only provided ${embeddedItems.length} ${contentType}s. `
         +`The server may be experiencing some issues or manipulating the content it shows.`);
     }
 
@@ -167,8 +178,9 @@ export const auditPosts = async (
     )[0].toString();
 
     if (fetchedTargetItemsRoot !== calculatedTargetsItemsCountersRoot ) {
-      throw new Error(`The server stated that there are ${statedNumberOfEmbeddedItems} ${lowercaseCT} for Post ${parentItem.allPostsCounter},`
-      +` but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
+      throw new Error(`The server stated that there are ${statedNumberOfEmbeddedItems} ${lowercaseCT} for `
+        +`${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter},`
+        +` but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
     }
   
     for (let i = 0; i < embeddedItems.length - 1; i++) {
@@ -178,8 +190,9 @@ export const auditPosts = async (
       const calculatedRoot = witness.computeRootAndKeyV2(state.hash())[0].toString();
   
       if (fetchedItemsRoot !== calculatedRoot) {
-        throw new Error(`${singularCT} ${stateJSON[`all${contentType}sCounter`]} from Post ${parentItem.allPostsCounter} `
-          +`has different root than zkApp state. `
+        throw new Error(`${singularCT} ${stateJSON[`all${contentType}sCounter`]} from `
+          +`${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter} `
+          +`${parentItem.allPostsCounter} has different root than zkApp state. `
           +`The server may be experiencing some issues or manipulating results for the ${lowercaseSingularCT}s`);
       }
 
