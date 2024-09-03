@@ -7,7 +7,7 @@ import CommentButton from '../comments/comment-button';
 import DeletePostButton from '../posts/delete-post-button';
 import DeleteRepostButton from '../reposts/delete-repost-button';
 import RepostButton from '../reposts/repost-button';
-import { FeedType } from '@/app/types';
+import { FeedType } from '../types';
 
 const ContentItem = ({
     feedType,

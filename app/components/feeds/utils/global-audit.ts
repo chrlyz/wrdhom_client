@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
-import { getCID } from '../../../utils/cid';
-import { ContentType } from '../../../types';
+import { getCID } from '../../utils/cid';
+import { ContentType } from '../../types';
 
 export const auditPosts = async (
     feedGeneralContext: {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getCID } from '../../utils/cid';
+import { getCID } from '../utils/cid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment } from '@fortawesome/free-solid-svg-icons';
 import { CommentState } from 'wrdhom';
