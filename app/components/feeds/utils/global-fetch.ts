@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
-import { ContentType, EmbeddedReactions } from '../../../types';
+import { ContentType, EmbeddedReactions } from '../../types';
 
 export const fetchItems = async (
     contentType: ContentType,

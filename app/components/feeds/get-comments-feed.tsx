@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCID } from '../../utils/cid';
+import { getCID } from '../utils/cid';
 import { Dispatch, SetStateAction } from "react";
 import ReactionButton from '../reactions/reaction-button';
 import CommentButton from '../comments/comment-button';

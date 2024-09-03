@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
-import { getCID } from '../../utils/cid';
+import { getCID } from '../utils/cid';
 import ItemContentList from './content-item';
 import { CommentState, PostState, ReactionState, RepostState } from 'wrdhom';
 import {
@@ -9,7 +9,7 @@ import {
   ProcessedReposts,
   EmbeddedComments,
   EmbeddedReposts
-} from '../../types';
+} from '../types';
 
 export default function GetProfileFeed({
   getProfileFeed,
