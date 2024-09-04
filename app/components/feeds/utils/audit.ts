@@ -85,7 +85,7 @@ export const auditPosts = async (
     commentsContractAddress: string,
     repostsContractAddress: string,
 ) {
-    const { MerkleMapWitness, Field } = await import('o1js');
+    const { MerkleMapWitness, Poseidon } = await import('o1js');
     const { PostState, RepostState } = await import('wrdhom');
     const lowercaseCT = contentType.toLowerCase();
     const lowercaseSingularCT =  lowercaseCT.slice(0, -1);
@@ -108,6 +108,7 @@ export const auditPosts = async (
   
     for (let i = 0; i < items.length; i++) {
       const itemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i][`${lowercaseSingularCT}State`]);
+      const postState = PostState.fromJSON(items[i].postState);
       const allItemsCounter = itemState[`all${contentType}Counter`];
       const usersItemsCounter = itemState[`users${contentType}Counter`];
       if (i+1 < items.length) {
@@ -118,26 +119,41 @@ export const auditPosts = async (
 
       // Audit block range
       if (blockHeight < fromBlock || blockHeight > toBlock) {
-        throw new Error(`Block-length ${blockHeight} for `
+        throw new Error(
+          `Block-length ${blockHeight} for `
           +`${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter} `
-          +`isn't between the block range ${fromBlock} to ${toBlock}`);
+          +`isn't between the block range ${fromBlock} to ${toBlock}`
+        );
       }
 
+      // Audit post key
+      const posterAddressAsField = Poseidon.hash(postState.posterAddress.toFields());
+      const postKeyAsField = Poseidon.hash([posterAddressAsField, postState.postContentID.hash()]);
+      if (postKeyAsField.toString() !== items[i].postKey) {
+        throw new Error(
+          `Post Key for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`
+          +`doesn't belong to ${singularCT}`
+        );
+      }
+
+      // // Audit that the items match the onchain state
       const itemWitness = MerkleMapWitness.fromJSON(items[i][`${lowercaseSingularCT}Witness`]);
       const calculatedRoot = itemWitness.computeRootAndKeyV2(itemState.hash())[0].toString();
-  
-      // Audit against items onchain root
       if ((contentType === 'Posts' ? fetchedPostsRoot : fetchedRepostsRoot) !== calculatedRoot) {
-        throw new Error(`${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`
-          +` has different root than zkApp state. The server may be experiencing some issues or manipulating results for your query.`);
+        throw new Error(
+          `${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`
+          +` has different root than zkApp state. The server may be experiencing some issues or manipulating results for your query.`
+        );
       }
   
       if (Number(itemState.deletionBlockHeight) === 0) {
-        // Audit content
+        // Audit that the content matches the onchain state
         const cid = await getCID(items[i].content);
         if (cid !== items[i].postContentID) {
-          throw new Error(`The content for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`+
-            ` doesn't match the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`);
+          throw new Error(
+            `The content for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`+
+            ` doesn't match the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`
+          );
         }
   
         // Audit embedded items
@@ -158,29 +174,36 @@ export const auditPosts = async (
     const { MerkleMapWitness, Field } = await import('o1js');
     const { ReactionState, CommentState, RepostState } = await import('wrdhom');
     const embeddedItems = parentItem[`embedded${contentType}`] ?? parentItem[`allEmbedded${contentType}`];
-    const allItemsCounter = parentItem[`all${contentType}Counter`];
-    const usersItemsCounter = parentItem[`users${contentType}Counter`];
-    const lowercaseCT = contentType.toLowerCase();
+    const parentContentType = 'repostState' in parentItem ? 'Reposts' : 'Posts';
+    const singularParentCT = parentContentType.slice(0 -1);
+    const statedNumberOfEmbeddedItems = parentItem[`numberOf${contentType}`];
+    const allItemsCounter = parentItem.postState[`all${contentType}Counter`];
+    const usersItemsCounter = parentItem.postState[`users${contentType}Counter`];
     const lowercaseSingularCT =  contentType.toLowerCase().slice(0, -1);
     const singularCT = contentType.slice(0, -1);
-    const statedNumberOfEmbeddedItems = parentItem[`numberOf${contentType}`];
   
+    // Audit that the server retrieves the same amount of embedded items it reports
     if (embeddedItems.length !== statedNumberOfEmbeddedItems) {
-      throw new Error(`The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} `
-        +`for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter},`
-        +` but it only provided ${embeddedItems.length} ${contentType}s. `
-        +`The server may be experiencing some issues or manipulating the content it shows.`);
+      throw new Error(
+        `The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} `
+        +`for ${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter},`
+        +` but it only provided ${embeddedItems.length} ${contentType}. `
+        +`The server may be experiencing some issues or manipulating the content it shows.`
+      );
     }
 
+    // Audit that the amount of embedded items the server reports matches the onchain state
     const numberOfItemsWitness = MerkleMapWitness.fromJSON(parentItem[`numberOf${contentType}Witness`]);
     const calculatedTargetsItemsCountersRoot = numberOfItemsWitness.computeRootAndKeyV2(
       Field(statedNumberOfEmbeddedItems)
     )[0].toString();
 
     if (fetchedTargetItemsRoot !== calculatedTargetsItemsCountersRoot ) {
-      throw new Error(`The server stated that there are ${statedNumberOfEmbeddedItems} ${lowercaseCT} for `
-        +`${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter},`
-        +` but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`);
+      throw new Error(
+        `The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} for `
+        +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter},`
+        +` but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`
+      );
     }
   
     for (let i = 0; i < embeddedItems.length - 1; i++) {
@@ -188,12 +211,24 @@ export const auditPosts = async (
       const witness = MerkleMapWitness.fromJSON(embeddedItems[i][`${lowercaseSingularCT}Witness`]);
       const state: any = (contentType === 'Reactions' ? ReactionState : contentType === 'Comments' ? CommentState : RepostState).fromJSON(stateJSON);
       const calculatedRoot = witness.computeRootAndKeyV2(state.hash())[0].toString();
+
+      // Audit that embedded items belong to the parent item
+      if (stateJSON.targetKey !== parentItem.postKey) {
+        throw new Error(
+          `${singularCT} ${stateJSON[`all${contentType}sCounter`]} from `
+          +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter} `
+          +`doesn't belong to ${singularParentCT}`
+        );
+      }
   
+      // Audit that the embedded items match the onchain state
       if (fetchedItemsRoot !== calculatedRoot) {
-        throw new Error(`${singularCT} ${stateJSON[`all${contentType}sCounter`]} from `
-          +`${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter} `
-          +`${parentItem.allPostsCounter} has different root than zkApp state. `
-          +`The server may be experiencing some issues or manipulating results for the ${lowercaseSingularCT}s`);
+        throw new Error(
+          `${singularCT} ${stateJSON[`all${contentType}sCounter`]} from `
+          +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter} `
+          +`has different root than zkApp state. `
+          +`The server may be experiencing some issues or manipulating results for the ${contentType}s`
+        );
       }
 
       checkGap(
@@ -201,8 +236,8 @@ export const auditPosts = async (
         embeddedItems[i+1][`target${contentType}Counter`],
         contentType,
         {
-          parentCounter: parentItem[`allPostsCounter`] ?? parentItem[`allRepostsCounter`],
-          parentCounterType: `allPostsCounter` in parentItem ? 'Posts' : 'Reposts'
+          parentCounter: parentItem.repostState[`allRepostsCounter`] ?? parentItem.postState[`allPostsCounter`],
+          parentContentType: parentContentType
         }
       );
     };
@@ -216,16 +251,19 @@ export const auditPosts = async (
 
   const checkGap = (
     current: string,
-    next: number,
+    next: string,
     contentType: ContentType,
     parentInfo?: {
       parentCounter: number,
-      parentCounterType: ContentType
+      parentContentType: ContentType
     }
   ) => {
+    // Audit that no items are being omitted
     if (Number(current) !== Number(next) + 1) {
-      throw new Error(`Gap between ${contentType} ${current} and ${next}${parentInfo?.parentCounter ? `, `
-        +`from ${parentInfo?.parentCounterType.slice(0, -1)} ${parentInfo?.parentCounter}` : ''}. `
-        +`The server may be experiencing some issues or censoring ${contentType}.`);
+      throw new Error(
+        `Gap between ${contentType} ${current} and ${next}${parentInfo?.parentCounter ? `, `
+        +`from ${parentInfo?.parentContentType.slice(0, -1)} ${parentInfo?.parentCounter}` : ''}. `
+        +`The server may be experiencing some issues or censoring ${contentType}.`
+      );
     }
   };
