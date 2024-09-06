@@ -87,7 +87,7 @@ export default function GetProfileFeed({
 
       setFetchCompleted(true);
     })();
-  }, [getProfileFeed, profileAddress]);
+  }, [getProfileFeed, profileAddress, account]);
 
   useEffect(() => {
     if (!fetchCompleted) return;

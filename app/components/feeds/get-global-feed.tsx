@@ -76,7 +76,7 @@ export default function GetGlobalFeed({
 
       setFetchCompleted(true);
     })();
-  }, [getGlobalFeed]);
+  }, [getGlobalFeed, account]);
 
   useEffect(() => {
     if (!fetchCompleted) return;
