@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { getCID } from '../../utils/cid';
 import { ContentType, FeedType } from '../../types';
+import { CircuitString, Field } from "o1js";
 
 export const auditPosts = async (
     feedType: FeedType,
@@ -85,7 +86,7 @@ export const auditPosts = async (
     commentsContractAddress: string,
     repostsContractAddress: string,
 ) {
-    const { MerkleMapWitness, Poseidon } = await import('o1js');
+    const { MerkleMapWitness, Poseidon, CircuitString } = await import('o1js');
     const { PostState, RepostState } = await import('wrdhom');
     const lowercaseCT = contentType.toLowerCase();
     const lowercaseSingularCT =  lowercaseCT.slice(0, -1);
@@ -110,7 +111,7 @@ export const auditPosts = async (
       const itemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i][`${lowercaseSingularCT}State`]);
       const postState = PostState.fromJSON(items[i].postState);
       const allItemsCounter = itemState[`all${contentType}Counter`];
-      const usersItemsCounter = itemState[`users${contentType}Counter`];
+      const usersItemsCounter = itemState[`user${contentType}Counter`];
       if (i+1 < items.length) {
         const nextItemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i+1][`${lowercaseSingularCT}State`]);
         checkGap(allItemsCounter, nextItemState[`all${contentType}Counter`], contentType);
@@ -132,7 +133,7 @@ export const auditPosts = async (
       if (postKeyAsField.toString() !== items[i].postKey) {
         throw new Error(
           `Post Key for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`
-          +`doesn't belong to ${singularCT}`
+          +` doesn't belong to ${singularCT}`
         );
       }
 
@@ -147,9 +148,10 @@ export const auditPosts = async (
       }
   
       if (Number(itemState.deletionBlockHeight) === 0) {
+
         // Audit that the content matches the onchain state
         const cid = await getCID(items[i].content);
-        if (cid !== items[i].postContentID) {
+        if (cid !== CircuitString.fromJSON(items[i].postState.postContentID).toString()) {
           throw new Error(
             `The content for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`+
             ` doesn't match the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`
@@ -164,6 +166,12 @@ export const auditPosts = async (
     };
   }
 
+  async function fetchContractData(contractAddress: string) {
+    const { fetchAccount } = await import('o1js');
+    const contractData = await fetchAccount({ publicKey: contractAddress }, '/graphql');
+    return contractData.account?.zkapp?.appState;
+  }
+
   async function auditEmbeddedItems(
     parentItem: any,
     feedType: FeedType,
@@ -175,10 +183,11 @@ export const auditPosts = async (
     const { ReactionState, CommentState, RepostState } = await import('wrdhom');
     const embeddedItems = parentItem[`embedded${contentType}`] ?? parentItem[`allEmbedded${contentType}`];
     const parentContentType = 'repostState' in parentItem ? 'Reposts' : 'Posts';
-    const singularParentCT = parentContentType.slice(0 -1);
+    const singularParentCT = parentContentType.slice(0, -1);
+    const lowercaseSingularParentCT = singularParentCT.toLocaleLowerCase();
     const statedNumberOfEmbeddedItems = parentItem[`numberOf${contentType}`];
-    const allItemsCounter = parentItem.postState[`all${contentType}Counter`];
-    const usersItemsCounter = parentItem.postState[`users${contentType}Counter`];
+    const allItemsCounter = parentItem[`${lowercaseSingularParentCT}State`][`all${parentContentType}Counter`];
+    const usersItemsCounter = parentItem[`${lowercaseSingularParentCT}State`][`user${parentContentType}Counter`];
     const lowercaseSingularCT =  contentType.toLowerCase().slice(0, -1);
     const singularCT = contentType.slice(0, -1);
   
@@ -206,7 +215,7 @@ export const auditPosts = async (
       );
     }
   
-    for (let i = 0; i < embeddedItems.length - 1; i++) {
+    for (let i = 0; i < embeddedItems.length; i++) {
       const stateJSON = embeddedItems[i][`${lowercaseSingularCT}State`];
       const witness = MerkleMapWitness.fromJSON(embeddedItems[i][`${lowercaseSingularCT}Witness`]);
       const state: any = (contentType === 'Reactions' ? ReactionState : contentType === 'Comments' ? CommentState : RepostState).fromJSON(stateJSON);
@@ -215,7 +224,7 @@ export const auditPosts = async (
       // Audit that embedded items belong to the parent item
       if (stateJSON.targetKey !== parentItem.postKey) {
         throw new Error(
-          `${singularCT} ${stateJSON[`all${contentType}sCounter`]} from `
+          `${singularCT} ${stateJSON[`target${contentType}Counter`]} from `
           +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter} `
           +`doesn't belong to ${singularParentCT}`
         );
@@ -224,29 +233,25 @@ export const auditPosts = async (
       // Audit that the embedded items match the onchain state
       if (fetchedItemsRoot !== calculatedRoot) {
         throw new Error(
-          `${singularCT} ${stateJSON[`all${contentType}sCounter`]} from `
+          `${singularCT} ${stateJSON[`target${contentType}Counter`]} from `
           +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter} `
           +`has different root than zkApp state. `
           +`The server may be experiencing some issues or manipulating results for the ${contentType}s`
         );
       }
 
-      checkGap(
-        embeddedItems[i][`target${contentType}Counter`],
-        embeddedItems[i+1][`target${contentType}Counter`],
-        contentType,
-        {
-          parentCounter: parentItem.repostState[`allRepostsCounter`] ?? parentItem.postState[`allPostsCounter`],
-          parentContentType: parentContentType
-        }
-      );
+      if (i+1 < embeddedItems.length) {
+        checkGap(
+          embeddedItems[i][`target${contentType}Counter`],
+          embeddedItems[i+1][`target${contentType}Counter`],
+          contentType,
+          {
+            parentCounter: parentItem.repostState[`allRepostsCounter`] ?? parentItem.postState[`allPostsCounter`],
+            parentContentType: parentContentType
+          }
+        );
+      }
     };
-  }
-
-  async function fetchContractData(contractAddress: string) {
-    const { fetchAccount } = await import('o1js');
-    const contractData = await fetchAccount({ publicKey: contractAddress }, '/graphql');
-    return contractData.account?.zkapp?.appState;
   }
 
   const checkGap = (
