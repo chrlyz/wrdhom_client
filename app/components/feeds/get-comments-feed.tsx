@@ -1,15 +1,10 @@
 import { useState, useEffect } from 'react';
 import { getCID } from '../utils/cid';
 import { Dispatch, SetStateAction } from "react";
-import ReactionButton from '../reactions/reaction-button';
-import CommentButton from '../comments/comment-button';
-import RepostButton from '../reposts/repost-button';
 import DeleteCommentButton from '../comments/delete-comment-button';
-import { faComments, faRetweet } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CommentState } from 'wrdhom';
-import DeleteRepostButton from '../reposts/delete-repost-button';
-import DeleteButton from '../posts/delete-post-button';
+import { ContentItem } from './content-item';
+import { FeedType } from '../types';
 
 export default function GetCommentsFeed({
   commentTarget,
@@ -23,7 +18,8 @@ export default function GetCommentsFeed({
   setHideGetGlobalPosts,
   setShowComments,
   commentsContractAddress,
-  account
+  account,
+  feedType
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -36,7 +32,8 @@ export default function GetCommentsFeed({
   setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
   setShowComments: Dispatch<SetStateAction<boolean>>,
   commentsContractAddress: string,
-  account: string[]
+  account: string[],
+  feedType: FeedType
 }) {
     const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
@@ -212,115 +209,60 @@ export default function GetCommentsFeed({
     }, [fetchCompleted]);
 
     return (
-        <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
-            <div className="p-2 border-b-2 shadow-lg">
-                <button className="hover:underline m-2" onClick={goBack}>{'<- Go back to feed'}</button>
-                <div key={commentTarget.postKey} className="p-2 border-b-2 shadow-lg">
-                    <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
-                    <span 
-                        className="mr-2 cursor-pointer hover:underline"
-                        onMouseEnter={() => setSelectedProfileAddress(commentTarget.postState.posterAddress)}
-                        onClick={() => setProfileAddress(selectedProfileAddress)}
-                        >
-                        <p className="mr-8">{commentTarget.shortPosterAddressEnd}</p>
-                        </span>
-                        <p className="mr-4">{'Post:' + commentTarget.postState.allPostsCounter}</p>
-                        <div className="flex-grow"></div>
-                         <p className="mr-1">{'Block:' + commentTarget.postState.postBlockHeight}</p>
-                    </div>
-                    <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
-                        <p>{commentTarget.content}</p>
-                    </div>
-                    <div className="flex flex-row">
-                      {commentTarget.top3Emojis.map((emoji: string) => emoji)}
-                      <p className="text-xs ml-1 mt-2">{commentTarget.numberOfReactions > 0 ? commentTarget.numberOfReactions : null}</p>
-                      {commentTarget.numberOfNonDeletedComments > 0 ?
-                      <FontAwesomeIcon className="ml-3 mt-1" icon={faComments} /> : null}
-                      <p className="text-xs ml-1 mt-2">{commentTarget.numberOfNonDeletedComments > 0 ? commentTarget.numberOfNonDeletedComments : null}</p>
-                      {commentTarget.numberOfNonDeletedReposts > 0 ? <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div> : null}
-                      <p className="text-xs ml-1 mt-2">{commentTarget.numberOfNonDeletedReposts > 0 ? commentTarget.numberOfNonDeletedReposts : null}</p>
-                      <div className="flex-grow"></div>
-                      {walletConnected && <ReactionButton
-                        targetKey={commentTarget.postKey}
-                        embeddedReactions={commentTarget.embeddedReactions}
-                        account={account[0]}
-                      />}
-                      {walletConnected && <CommentButton
-                        targetKey={commentTarget.postKey}
-                      />}
-                      {
-                        commentTarget.repostState !== undefined &&
-                        commentTarget.repostState.reposterAddress !== undefined &&
-                        account[0] === commentTarget.repostState.reposterAddress
-                        ?
-                          <DeleteRepostButton
-                            repostTargetKey={commentTarget.postKey}
-                            repostState={commentTarget.repostState}
-                            repostKey={commentTarget.repostKey}
-                          />
-                        :
-                          commentTarget.currentUserRepostState !== undefined &&
-                          commentTarget.currentUserRepostState.reposterAddress !== undefined &&
-                          account[0] === commentTarget.currentUserRepostState.reposterAddress
-                        ?
-                          <DeleteRepostButton
-                            repostTargetKey={commentTarget.postKey}
-                            repostState={commentTarget.currentUserRepostState}
-                            repostKey={commentTarget.currentUserRepostKey}
-                          />
-                        :
-                        walletConnected && <RepostButton targetKey={commentTarget.postKey}/>
-                      }
-                      {account[0] === commentTarget.postState.posterAddress ?
-                        <DeleteButton
-                          postState={commentTarget.postState}
-                          postKey={commentTarget.postKey}  
-                          />
-                          : null
-                      }
-                    </div>
-             </div>
-            </div>
-            {loading && <p className="border-4 p-2 shadow-lg">Loading comments...</p>}
-            {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
-            {!loading && Array.isArray(comments) && comments.map((comment) => {
-                return (
-                    <div key={comment.commentKey} className="p-2 border-b-2 shadow-lg">
-                        <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
-                          <span 
-                              className="mr-2 cursor-pointer hover:underline"
-                              onMouseEnter={() => setSelectedProfileAddress(comment.commentState.commenterAddress)}
-                              onClick={() => setProfileAddress(selectedProfileAddress)}
-                              >
-                              <p className="mr-8">{comment.shortCommenterAddressEnd}</p>
-                          </span>
-                          <p className="mr-4">{'Comment:' + comment.commentState.targetCommentsCounter}</p>
-                          <div className="flex-grow"></div>
-                          <p className="mr-1">{'Block:' + comment.commentState.commentBlockHeight}</p>
-                        </div>
-                        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
-                            <p>{comment.content}</p>
-                        </div>
-                        <div className="flex flex-row">
-                        <div className="flex-grow"></div>
-                          {
-                            account[0] === comment.commentState.commenterAddress ?
-                              <DeleteCommentButton
-                                commentTarget={commentTarget}
-                                commentState={comment.commentState}
-                                commentKey={comment.commentKey}  
-                              />
-                            : null
-                          }
-                        </div>
-                    </div>
-                );
-            })}
-            {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
-              <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
-                <p >The query threw zero results</p>
-              </div>
-            </div>}
+      <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
+        <div className="p-2 border-b-2 shadow-lg">
+          <button className="hover:underline m-2" onClick={goBack}>{'<- Go back to feed'}</button>
+          <ContentItem
+                feedType={feedType}
+                item={commentTarget}
+                walletConnected={walletConnected}
+                account={account}
+                setSelectedProfileAddress={setSelectedProfileAddress}
+                selectedProfileAddress={selectedProfileAddress}
+                setProfileAddress={setProfileAddress}
+                setCommentTarget={setCommentTarget}
+          />
         </div>
+        {loading && <p className="border-4 p-2 shadow-lg">Loading comments...</p>}
+        {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
+        {!loading && Array.isArray(comments) && comments.map((comment) => {
+          return (
+            <div key={comment.commentKey} className="p-2 border-b-2 shadow-lg">
+              <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
+                <span 
+                    className="mr-2 cursor-pointer hover:underline"
+                    onMouseEnter={() => setSelectedProfileAddress(comment.commentState.commenterAddress)}
+                    onClick={() => setProfileAddress(selectedProfileAddress)}
+                    >
+                    <p className="mr-8">{comment.shortCommenterAddressEnd}</p>
+                </span>
+                <p className="mr-4">{'Comment:' + comment.commentState.targetCommentsCounter}</p>
+                <div className="flex-grow"></div>
+                <p className="mr-1">{'Block:' + comment.commentState.commentBlockHeight}</p>
+              </div>
+              <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
+                  <p>{comment.content}</p>
+              </div>
+              <div className="flex flex-row">
+              <div className="flex-grow"></div>
+                {
+                  account[0] === comment.commentState.commenterAddress ?
+                    <DeleteCommentButton
+                      commentTarget={commentTarget}
+                      commentState={comment.commentState}
+                      commentKey={comment.commentKey}  
+                    />
+                  : null
+                }
+              </div>
+            </div>
+          );
+        })}
+        {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
+          <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
+            <p >The query threw zero results</p>
+          </div>
+        </div>}
+      </div>
     )
 }

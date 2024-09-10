@@ -5,6 +5,7 @@ import CreatePost from '../posts/create-post';
 import { fetchItems } from './utils/fetch';
 import { auditPosts, auditReposts } from './utils/audit';
 import { mergeAndSortContent } from './utils/structure';
+import { FeedType } from '../types';
 
 export default function GetGlobalFeed({
   getGlobalFeed,
@@ -22,7 +23,9 @@ export default function GetGlobalFeed({
   reactionsContractAddress,
   commentsContractAddress,
   repostsContractAddress,
-  account
+  account,
+  feedType,
+  setFeedType
 }: {
   getGlobalFeed: boolean,
   howManyPosts: number,
@@ -39,7 +42,9 @@ export default function GetGlobalFeed({
   reactionsContractAddress: string,
   commentsContractAddress: string,
   repostsContractAddress: string,
-  account: string[]
+  account: string[],
+  feedType: FeedType,
+  setFeedType: Dispatch<SetStateAction<FeedType>>
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [reposts, setReposts] = useState([] as any[]);
@@ -57,6 +62,7 @@ export default function GetGlobalFeed({
       setLoading(true);
       setErrorMessage(null);
       setWhenZeroContent(false);
+      setFeedType('global');
 
       const fetchItemsParams = {
         howManyPosts: howManyPosts,
@@ -125,7 +131,7 @@ export default function GetGlobalFeed({
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
       {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
       <ItemContentList
-        feedType='global'
+        feedType={feedType}
         mergedContent={mergedContent}
         loading={loading}
         walletConnected={walletConnected}

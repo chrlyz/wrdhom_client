@@ -9,7 +9,7 @@ import DeleteRepostButton from '../reposts/delete-repost-button';
 import RepostButton from '../reposts/repost-button';
 import { FeedType } from '../types';
 
-const ContentItem = ({
+export const ContentItem = ({
     feedType,
     item,
     walletConnected,
@@ -90,7 +90,7 @@ const ContentItem = ({
   );
 
   const renderCommentButton = () => {
-    if (item.numberOfNonDeletedComments <= 0) return null;
+    if (item.numberOfNonDeletedComments === 0) return null;
     return (
       <>
         <button className="hover:text-lg ml-3" onClick={() => setCommentTarget(item)}>
@@ -102,7 +102,7 @@ const ContentItem = ({
   };
 
   const renderRepostIcon = () => {
-    if (item.numberOfNonDeletedReposts <= 0) return null;
+    if (item.numberOfNonDeletedReposts === 0) return null;
     return (
       <>
         <div className="ml-3"><FontAwesomeIcon icon={faRetweet} /></div>

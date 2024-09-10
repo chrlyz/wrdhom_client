@@ -7,6 +7,7 @@ import GetGlobalFeed from './components/feeds/get-global-feed';
 import QuerySettings from './components/settings/query-settings';
 import GetProfileFeed from './components/feeds/get-profile-feed';
 import GetCommentsFeed from './components/feeds/get-comments-feed';
+import { FeedType } from './components/types';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,7 @@ export default function Home() {
   const [reactionsContractAddress] = useState(process.env.NEXT_PUBLIC_REACTIONS_CONTRACT_ADDRESS as string);
   const [commentsContractAddress] =  useState(process.env.NEXT_PUBLIC_COMMENTS_CONTRACT_ADDRESS as string);
   const [repostsContractAddress] = useState(process.env.NEXT_PUBLIC_REPOSTS_CONTRACT_ADDRESS as string);
+  const [feedType, setFeedType] = useState(null as any);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
@@ -118,6 +120,8 @@ export default function Home() {
         commentsContractAddress={commentsContractAddress}
         repostsContractAddress={repostsContractAddress}
         account={account}
+        feedType={feedType}
+        setFeedType={setFeedType}
       />
       {showProfile && <GetProfileFeed
         getProfileFeed={getProfileFeed}
@@ -138,6 +142,8 @@ export default function Home() {
         commentsContractAddress={commentsContractAddress}
         repostsContractAddress={repostsContractAddress}
         account={account}
+        feedType={feedType}
+        setFeedType={setFeedType}
       />}
       {showComments && <GetCommentsFeed
         commentTarget={commentTarget}
@@ -152,6 +158,7 @@ export default function Home() {
         setShowComments={setShowComments}
         commentsContractAddress={commentsContractAddress}
         account={account}
+        feedType={feedType}
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
