@@ -4,6 +4,7 @@ import ItemContentList from './content-item';
 import { fetchItems } from './utils/fetch';
 import { auditPosts, auditReposts } from './utils/audit';
 import { mergeAndSortContent } from './utils/structure';
+import { FeedType } from '../types';
 
 export default function GetProfileFeed({
   getProfileFeed,
@@ -23,7 +24,9 @@ export default function GetProfileFeed({
   reactionsContractAddress,
   commentsContractAddress,
   repostsContractAddress,
-  account
+  account,
+  feedType,
+  setFeedType
 }: {
   getProfileFeed: boolean,
   profileAddress: string,
@@ -42,7 +45,9 @@ export default function GetProfileFeed({
   reactionsContractAddress: string,
   commentsContractAddress: string,
   repostsContractAddress: string,
-  account: string[]
+  account: string[],
+  feedType: FeedType,
+  setFeedType: Dispatch<SetStateAction<FeedType>>
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [reposts, setReposts] = useState([] as any[]);
@@ -68,6 +73,7 @@ export default function GetProfileFeed({
       setLoading(true);
       setErrorMessage(null);
       setWhenZeroContent(false);
+      setFeedType('profile');
 
       const fetchItemsParams = {
         howManyPosts: howManyPosts,
@@ -138,7 +144,7 @@ export default function GetProfileFeed({
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
       {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
       <ItemContentList
-        feedType='profile'
+        feedType={feedType}
         mergedContent={mergedContent}
         loading={loading}
         walletConnected={walletConnected}

@@ -1,7 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { getCID } from '../../utils/cid';
 import { ContentType, FeedType } from '../../types';
-import { CircuitString, Field } from "o1js";
 
 export const auditPosts = async (
     feedType: FeedType,
