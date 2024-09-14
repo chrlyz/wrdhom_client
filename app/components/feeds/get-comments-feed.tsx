@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getCID } from '../utils/cid';
 import { Dispatch, SetStateAction } from "react";
-import DeleteCommentButton from '../comments/delete-comment-button';
 import { CommentState } from 'wrdhom';
-import { ContentItem } from './content-item';
+import { ContentItem, ItemContentList } from './content-item';
 import { FeedType } from '../types';
 
 export default function GetCommentsFeed({
@@ -213,51 +212,30 @@ export default function GetCommentsFeed({
         <div className="p-2 border-b-2 shadow-lg">
           <button className="hover:underline m-2" onClick={goBack}>{'<- Go back to feed'}</button>
           <ContentItem
-                feedType={feedType}
-                item={commentTarget}
-                walletConnected={walletConnected}
-                account={account}
-                setSelectedProfileAddress={setSelectedProfileAddress}
-                selectedProfileAddress={selectedProfileAddress}
-                setProfileAddress={setProfileAddress}
-                setCommentTarget={setCommentTarget}
+            feedType={feedType}
+            item={commentTarget}
+            walletConnected={walletConnected}
+            account={account}
+            setSelectedProfileAddress={setSelectedProfileAddress}
+            selectedProfileAddress={selectedProfileAddress}
+            setProfileAddress={setProfileAddress}
+            setCommentTarget={setCommentTarget}
           />
         </div>
         {loading && <p className="border-4 p-2 shadow-lg">Loading comments...</p>}
         {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
-        {!loading && Array.isArray(comments) && comments.map((comment) => {
-          return (
-            <div key={comment.commentKey} className="p-2 border-b-2 shadow-lg">
-              <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
-                <span 
-                    className="mr-2 cursor-pointer hover:underline"
-                    onMouseEnter={() => setSelectedProfileAddress(comment.commentState.commenterAddress)}
-                    onClick={() => setProfileAddress(selectedProfileAddress)}
-                    >
-                    <p className="mr-8">{comment.shortCommenterAddressEnd}</p>
-                </span>
-                <p className="mr-4">{'Comment:' + comment.commentState.targetCommentsCounter}</p>
-                <div className="flex-grow"></div>
-                <p className="mr-1">{'Block:' + comment.commentState.commentBlockHeight}</p>
-              </div>
-              <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-all">
-                  <p>{comment.content}</p>
-              </div>
-              <div className="flex flex-row">
-              <div className="flex-grow"></div>
-                {
-                  account[0] === comment.commentState.commenterAddress ?
-                    <DeleteCommentButton
-                      commentTarget={commentTarget}
-                      commentState={comment.commentState}
-                      commentKey={comment.commentKey}  
-                    />
-                  : null
-                }
-              </div>
-            </div>
-          );
-        })}
+        <ItemContentList
+          feedType={feedType}
+          mergedContent={comments}
+          loading={loading}
+          walletConnected={walletConnected}
+          account={account}
+          setSelectedProfileAddress={setSelectedProfileAddress}
+          selectedProfileAddress={selectedProfileAddress}
+          setProfileAddress={setProfileAddress}
+          setCommentTarget={setCommentTarget}
+          commentTarget={commentTarget}
+        />
         {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
           <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
             <p >The query threw zero results</p>

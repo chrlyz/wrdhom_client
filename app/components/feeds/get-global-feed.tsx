@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
-import ItemContentList from './content-item';
+import { ItemContentList } from './content-item';
 import CreatePost from '../posts/create-post';
 import { fetchItems } from './utils/fetch';
 import { auditPosts, auditReposts } from './utils/audit';
