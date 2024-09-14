@@ -8,6 +8,7 @@ import DeletePostButton from '../posts/delete-post-button';
 import DeleteRepostButton from '../reposts/delete-repost-button';
 import RepostButton from '../reposts/repost-button';
 import { FeedType } from '../types';
+import DeleteCommentButton from '../comments/delete-comment-button';
 
 export const ContentItem = ({
     feedType,
@@ -17,7 +18,8 @@ export const ContentItem = ({
     setSelectedProfileAddress,
     selectedProfileAddress,
     setProfileAddress,
-    setCommentTarget
+    setCommentTarget,
+    commentTarget
 }: {
     feedType: FeedType,
     item: any,
@@ -26,11 +28,12 @@ export const ContentItem = ({
     setSelectedProfileAddress: Dispatch<SetStateAction<string>>,
     selectedProfileAddress: string,
     setProfileAddress: Dispatch<SetStateAction<string>>,
-    setCommentTarget: Dispatch<SetStateAction<any>>
+    setCommentTarget: Dispatch<SetStateAction<any>>,
+    commentTarget?: any
 }) => {
   const isRepost = item.repostState !== undefined;
+  const isComment = item.commentState !== undefined;
   const isCurrentUserRepost = item.currentUserRepostState !== undefined;
-  const isCurrentUserPost = account[0] === item.postState.posterAddress;
 
   const renderRepostInfo = () => {
     if (!isRepost) return null;
@@ -52,42 +55,60 @@ export const ContentItem = ({
     );
   };
 
-  const renderPostHeader = () => (
-    <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
-      <span
-        className="mr-2 cursor-pointer hover:underline"
-        onMouseEnter={() => setSelectedProfileAddress(item.postState.posterAddress)}
-        onClick={() => setProfileAddress(selectedProfileAddress)}
-      >
-        <p className="mr-8">{item.shortPosterAddressEnd}</p>
-      </span>
-      <p className="mr-4">
-        {
-          feedType === 'global' ? 'Post:' + item.postState.allPostsCounter
-          : 'User Post:' + item.postState.userPostsCounter
-        }
-      </p>
-      <div className="flex-grow"></div>
-      <p className="mr-1">{'Block:' + item.postState.postBlockHeight}</p>
-    </div>
-  );
+  const renderHeader = (isComment: boolean) => {
+    const state = isComment ? item.commentState : item.postState;
+    const addressType = isComment ? 'commenter' : 'poster';
+    const itemType = isComment ? 'Comment' : 'Post';
+  
+    return (
+      <div className="flex items-center border-4 p-2 shadow-lg text-xs text-white bg-black">
+        <span
+          className="mr-2 cursor-pointer hover:underline"
+          onMouseEnter={() => setSelectedProfileAddress(state[`${addressType}Address`])}
+          onClick={() => setProfileAddress(selectedProfileAddress)}
+        >
+          <p className="mr-8">{item[`short${addressType.charAt(0).toUpperCase() + addressType.slice(1)}AddressEnd`]}</p>
+        </span>
+        <p className="mr-4">
+          {
+            feedType === 'global' 
+              ? `${itemType}: ${isComment ? state.allCommentsCounter : state.allPostsCounter}`
+              : `User ${itemType}: ${isComment ? state.userCommentsCounter : state.userPostsCounter}`
+          }
+        </p>
+        <div className="flex-grow"></div>
+        <p className="mr-1">{`Block: ${state[`${itemType.toLowerCase()}BlockHeight`]}`}</p>
+      </div>
+    );
+  };
 
-  const renderPostContent = () => (
+  const renderContent = () => (
     <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
       <p>{item.content}</p>
     </div>
   );
 
-  const renderPostFooter = () => (
-    <div className="flex flex-row">
-      {item.top3Emojis.map((emoji: string) => <span key={emoji}>{emoji}</span>)}
-      <p className="text-xs ml-1 mt-2">{item.filteredEmbeddedReactions.length > 0 ? item.filteredEmbeddedReactions.length : null}</p>
-      {renderCommentButton()}
-      {renderRepostIcon()}
-      <div className="flex-grow"></div>
-      {renderActionButtons()}
-    </div>
-  );
+  const renderFooter = (isComment: boolean) => {
+    if (!isComment) {
+      return (
+        <div className="flex flex-row">
+          {item.top3Emojis.map((emoji: string) => <span key={emoji}>{emoji}</span>)}
+          <p className="text-xs ml-1 mt-2">{item.filteredEmbeddedReactions.length > 0 ? item.filteredEmbeddedReactions.length : null}</p>
+          {renderCommentButton()}
+          {renderRepostIcon()}
+          <div className="flex-grow"></div>
+          {renderActionButtons(isComment)}
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex flex-row">
+          <div className="flex-grow"></div>
+          {renderActionButtons(isComment)}
+        </div>
+      );
+    }
+  };
 
   const renderCommentButton = () => {
     if (item.numberOfNonDeletedComments === 0) return null;
@@ -111,25 +132,39 @@ export const ContentItem = ({
     );
   };
 
-  const renderActionButtons = () => {
+  const renderActionButtons = (isComment: boolean) => {
     if (!walletConnected) return null;
-    return (
-      <>
-        <ReactionButton
-          targetKey={item.postKey}
-          embeddedReactions={item.filteredEmbeddedReactions}
-          account={account[0]}
-        />
-        <CommentButton targetKey={item.postKey} />
-        {renderRepostOrDeleteButton()}
-        {isCurrentUserPost && (
-          <DeletePostButton
-            postState={item.postState}
-            postKey={item.postKey}
+    if (!isComment) {
+      return (
+        <>
+          <ReactionButton
+            targetKey={item.postKey}
+            embeddedReactions={item.filteredEmbeddedReactions}
+            account={account[0]}
           />
-        )}
-      </>
-    );
+          <CommentButton targetKey={item.postKey} />
+          {renderRepostOrDeleteButton()}
+          {account[0] === item.postState.posterAddress && (
+            <DeletePostButton
+              postState={item.postState}
+              postKey={item.postKey}
+            />
+          )}
+        </>
+      );
+    } else {
+      return (
+        <>
+          {account[0] === item.commentState.commenterAddress ?
+            <DeleteCommentButton
+              commentTarget={commentTarget}
+              commentState={item.commentState}
+              commentKey={item.commentKey}  
+            />
+          : null}
+        </>
+      );
+    }
   };
 
   const renderRepostOrDeleteButton = () => {
@@ -155,16 +190,16 @@ export const ContentItem = ({
   };
 
   return (
-    <div key={item.repostKey === undefined ? item.postKey : item.repostKey} className="p-2 border-b-2 shadow-lg">
+    <div className="p-2 border-b-2 shadow-lg">
       {renderRepostInfo()}
-      {renderPostHeader()}
-      {renderPostContent()}
-      {renderPostFooter()}
+      {renderHeader(isComment)}
+      {renderContent()}
+      {renderFooter(isComment)}
     </div>
   );
 };
 
-const ItemContentList = ({
+export const ItemContentList = ({
     feedType,
     mergedContent,
     loading,
@@ -173,7 +208,8 @@ const ItemContentList = ({
     setSelectedProfileAddress,
     selectedProfileAddress,
     setProfileAddress,
-    setCommentTarget
+    setCommentTarget,
+    commentTarget
 }: {
     feedType: FeedType,
     mergedContent: any[],
@@ -183,14 +219,21 @@ const ItemContentList = ({
     setSelectedProfileAddress: Dispatch<SetStateAction<string>>,
     selectedProfileAddress: string,
     setProfileAddress: Dispatch<SetStateAction<string>>,
-    setCommentTarget: Dispatch<SetStateAction<any>>
+    setCommentTarget: Dispatch<SetStateAction<any>>,
+    commentTarget?: any
 }) => {
   if (loading || !Array.isArray(mergedContent)) return null;
 
   return mergedContent.map((item) => (
     <ContentItem
       feedType={feedType}
-      key={item.repostKey === undefined ? item.postKey : item.repostKey}
+      key={
+        item.commentKey !== undefined
+        ? item.commentKey
+        : item.repostKey === undefined
+        ? item.postKey
+        : item.repostKey
+      }
       item={item}
       walletConnected={walletConnected}
       account={account}
@@ -198,8 +241,7 @@ const ItemContentList = ({
       selectedProfileAddress={selectedProfileAddress}
       setProfileAddress={setProfileAddress}
       setCommentTarget={setCommentTarget}
+      commentTarget={commentTarget}
     />
   ));
 };
-
-export default ItemContentList;
