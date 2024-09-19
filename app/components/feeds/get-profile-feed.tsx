@@ -64,6 +64,7 @@ export default function GetProfileFeed({
     setProfileAddress('');
     setCommentTarget(null);
     setHideGetGlobalPosts('');
+    setFeedType('global');
   }
 
   useEffect(() => {
