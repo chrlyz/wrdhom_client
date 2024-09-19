@@ -73,7 +73,7 @@ export const ContentItem = ({
           {
             feedType === 'global' 
               ? `${itemType}: ${isComment ? state.allCommentsCounter : state.allPostsCounter}`
-              : `User ${itemType}: ${isComment ? state.userCommentsCounter : state.userPostsCounter}`
+              : `User ${itemType}: ${isComment ? state.allCommentsCounter : state.userPostsCounter}`
           }
         </p>
         <div className="flex-grow"></div>

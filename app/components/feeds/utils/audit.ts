@@ -240,12 +240,14 @@ export const auditPosts = async (
       }
 
       if (i+1 < embeddedItems.length) {
+        const nextStateJSON = embeddedItems[i+1][`${lowercaseSingularCT}State`];
+        const nextState: any = (contentType === 'Reactions' ? ReactionState : contentType === 'Comments' ? CommentState : RepostState).fromJSON(nextStateJSON);
         checkGap(
-          embeddedItems[i][`target${contentType}Counter`],
-          embeddedItems[i+1][`target${contentType}Counter`],
+          state[`target${contentType}Counter`],
+          nextState[`target${contentType}Counter`],
           contentType,
           {
-            parentCounter: parentItem.repostState[`allRepostsCounter`] ?? parentItem.postState[`allPostsCounter`],
+            parentCounter: parentContentType === 'Reposts' ? parentItem.repostState[`allRepostsCounter`] : parentItem.postState[`allPostsCounter`],
             parentContentType: parentContentType
           }
         );
