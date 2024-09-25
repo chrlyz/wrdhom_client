@@ -7,7 +7,6 @@ import GetGlobalFeed from './components/feeds/get-global-feed';
 import QuerySettings from './components/settings/query-settings';
 import GetProfileFeed from './components/feeds/get-profile-feed';
 import GetCommentsFeed from './components/feeds/get-comments-feed';
-import { FeedType } from './components/types';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -159,6 +158,7 @@ export default function Home() {
         commentsContractAddress={commentsContractAddress}
         account={account}
         feedType={feedType}
+        setFeedType={setFeedType}
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">

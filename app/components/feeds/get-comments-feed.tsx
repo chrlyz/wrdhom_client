@@ -18,7 +18,8 @@ export default function GetCommentsFeed({
   setShowComments,
   commentsContractAddress,
   account,
-  feedType
+  feedType,
+  setFeedType
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -32,7 +33,8 @@ export default function GetCommentsFeed({
   setShowComments: Dispatch<SetStateAction<boolean>>,
   commentsContractAddress: string,
   account: string[],
-  feedType: FeedType
+  feedType: FeedType,
+  setFeedType: Dispatch<SetStateAction<FeedType>>
 }) {
     const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
@@ -179,6 +181,7 @@ export default function GetCommentsFeed({
         setCommentTarget(null);
         setProfileAddress('');
         setHideGetGlobalPosts('');
+        setFeedType('global');
     }
   
     useEffect(() => {
