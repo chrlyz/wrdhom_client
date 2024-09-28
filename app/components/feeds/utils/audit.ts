@@ -111,9 +111,19 @@ export const auditPosts = async (
       const postState = PostState.fromJSON(items[i].postState);
       const allItemsCounter = itemState[`all${contentType}Counter`];
       const usersItemsCounter = itemState[`user${contentType}Counter`];
+      const targetItemsCounter = itemState[`target${contentType}Counter`];
       if (i+1 < items.length) {
         const nextItemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i+1][`${lowercaseSingularCT}State`]);
-        checkGap(allItemsCounter, nextItemState[`all${contentType}Counter`], contentType);
+        checkGap(
+          feedType === 'global' && contentType !== 'Comments' ? allItemsCounter
+            : contentType === 'Comments' ? targetItemsCounter
+            : usersItemsCounter,
+          nextItemState[`${feedType === 'global' && contentType !== 'Comments' ? `all${contentType}Counter`
+            : contentType === 'Comments' ? `target${contentType}Counter`
+            : `user${contentType}Counter`
+          }`],
+          contentType
+        );
       }
       const blockHeight = Number(itemState[`${lowercaseSingularCT}BlockHeight`]);
 
