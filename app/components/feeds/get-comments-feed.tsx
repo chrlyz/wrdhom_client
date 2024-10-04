@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction } from "react";
 import { CommentState } from 'wrdhom';
 import { ContentItem, ItemContentList } from './content-item';
 import { FeedType } from '../types';
+import { fetchItems } from './utils/fetch';
 
 export default function GetCommentsFeed({
   commentTarget,
@@ -42,57 +43,6 @@ export default function GetCommentsFeed({
     const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
     const [fetchCompleted, setFetchCompleted] = useState(false);
     const [whenZeroContent, setWhenZeroContent] = useState(false);
-
-    const fetchComments = async () => {
-      try {
-        const response = await fetch(`/comments`+
-            `?targetKey=${commentTarget.postKey}`+
-            `&howMany=${howManyComments}`+
-            `&fromBlock=${fromBlockComments}`+
-            `&toBlock=${toBlockComments}`,
-          {
-            headers: {'Cache-Control': 'no-cache'}
-          }
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data: any = await response.json();
-        if (data.commentsResponse.length === 0) {
-          return;
-        }
-  
-        const processedData: {
-          commentState: JSON,
-          commentWitness: JSON,
-          commentKey: string,
-          commentContentID: string,
-          content: string,
-          shortCommenterAddressEnd: string,
-        }[] = [];
-        
-        for (let i = 0; i < data.commentsResponse.length; i++) {
-          const commentStateJSON = JSON.parse(data.commentsResponse[i].commentState);
-          const shortCommenterAddressEnd = commentStateJSON.commenterAddress.slice(-12);
-  
-          processedData.push({
-              commentState: commentStateJSON,
-              commentWitness: JSON.parse(data.commentsResponse[i].commentWitness),
-              commentKey: data.commentsResponse[i].commentKey,
-              commentContentID: data.commentsResponse[i].commentContentID,
-              content: data.commentsResponse[i].content,
-              shortCommenterAddressEnd: shortCommenterAddressEnd
-          });
-        };
-  
-        setComments(processedData);
-
-      } catch (e: any) {
-          console.log(e);
-          setLoading(false);
-          setErrorMessage(e.message);
-      }
-    };
   
     const auditComments = async () => {
       try {
@@ -190,7 +140,19 @@ export default function GetCommentsFeed({
         setLoading(true);
         setErrorMessage(null);
         setWhenZeroContent(false);
-        howManyComments > 0 ? await fetchComments() : null;
+
+        const fetchItemsParams = {
+          account: account,
+          commentTarget: commentTarget,
+          howManyComments: howManyComments,
+          fromBlockComments: fromBlockComments,
+          toBlockComments: toBlockComments,
+          setComments: setComments,
+          setLoading: setLoading,
+          setErrorMessage: setErrorMessage
+        }
+        howManyComments > 0 ? await fetchItems('comments', 'Comments', fetchItemsParams) : null;
+
         setFetchCompleted(true);
       })();
     }, [getCommentsFeed, commentTarget]);
