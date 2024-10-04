@@ -1,5 +1,5 @@
 export type ContentType = 'Posts' | 'Reposts' | 'Reactions' | 'Comments';
-export type FeedType = 'global' | 'profile';
+export type FeedType = 'global' | 'profile' | 'comments';
 
 export type EmbeddedReactions = {
     reactionState: any,

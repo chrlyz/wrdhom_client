@@ -77,6 +77,7 @@ export default function GetProfileFeed({
       setFeedType('profile');
 
       const fetchItemsParams = {
+        profileAddress: profileAddress,
         howManyPosts: howManyPosts,
         fromBlock: fromBlock,
         toBlock: toBlock,
@@ -89,8 +90,8 @@ export default function GetProfileFeed({
         setLoading: setLoading,
         setErrorMessage: setErrorMessage
       }
-      howManyPosts > 0 ? await fetchItems('profile', 'Posts', fetchItemsParams, profileAddress) : null;
-      howManyReposts > 0 ? await fetchItems('profile', 'Reposts', fetchItemsParams, profileAddress) : null;
+      howManyPosts > 0 ? await fetchItems('profile', 'Posts', fetchItemsParams) : null;
+      howManyReposts > 0 ? await fetchItems('profile', 'Reposts', fetchItemsParams) : null;
 
       setFetchCompleted(true);
     })();

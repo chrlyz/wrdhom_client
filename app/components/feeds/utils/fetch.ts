@@ -4,30 +4,59 @@ import { ContentType, EmbeddedReactions, FeedType } from '../../types';
 export const fetchItems = async (
     feedType: FeedType,
     contentType: ContentType,
-    feedContext: {
-        howManyPosts: number,
-        fromBlock: number,
-        toBlock: number,
-        howManyReposts: number,
-        fromBlockReposts: number,
-        toBlockReposts: number,
-        account: string[],
-        setPosts: Dispatch<SetStateAction<any[]>>,
-        setReposts: Dispatch<SetStateAction<any[]>>,
-        setLoading: Dispatch<SetStateAction<boolean>>,
-        setErrorMessage: Dispatch<SetStateAction<any>>
-    },
-    profileAddress?: string
+    {
+      account,
+      setLoading,
+      setErrorMessage,
+      profileAddress,
+      howManyPosts,
+      fromBlock,
+      toBlock,
+      setPosts,
+      howManyReposts,
+      fromBlockReposts,
+      toBlockReposts,
+      setReposts,
+      howManyComments,
+      fromBlockComments,
+      toBlockComments,
+      commentTarget,
+      setComments
+    }: {
+      account: string[],
+      setLoading: Dispatch<SetStateAction<boolean>>,
+      setErrorMessage: Dispatch<SetStateAction<any>>
+      profileAddress?: string,
+      howManyPosts?: number,
+      fromBlock?: number,
+      toBlock?: number,
+      setPosts?: Dispatch<SetStateAction<any[]>>,
+      howManyReposts?: number,
+      fromBlockReposts?: number,
+      toBlockReposts?: number,
+      setReposts?: Dispatch<SetStateAction<any[]>>,
+      howManyComments?: number,
+      fromBlockComments?: number,
+      toBlockComments?: number,
+      commentTarget?: any,
+      setComments?: Dispatch<SetStateAction<any[]>>
+    }
 ) => {
     try {
-      const endpoint = contentType === 'Posts' ? '/posts' : '/reposts';
-      let queryParams = contentType === 'Posts' 
-        ? `?howMany=${feedContext.howManyPosts}&fromBlock=${feedContext.fromBlock}`
-          +`&toBlock=${feedContext.toBlock}&currentUser=${feedContext.account[0]}`
-          
-        : `?howMany=${feedContext.howManyReposts}&fromBlock=${feedContext.fromBlockReposts}`
-          +`&toBlock=${feedContext.toBlockReposts}`;
-      queryParams = feedType === 'global' ? queryParams : queryParams + `&profileAddress=${profileAddress}`
+      const endpoint = contentType === 'Posts' ? '/posts'
+                                        : contentType === 'Reposts' ? '/reposts'
+                                        : '/comments';
+
+      let queryParams = contentType === 'Posts' ? `?howMany=${howManyPosts}&fromBlock=${fromBlock}`
+                                          +`&toBlock=${toBlock}&currentUser=${account[0]}`
+                                        : contentType === 'Reposts' ? `?howMany=${howManyReposts}&fromBlock=${fromBlockReposts}`
+                                          +`&toBlock=${toBlockReposts}`
+                                        : `?howMany=${howManyComments}&fromBlock=${fromBlockComments}`
+                                          +`&toBlock=${toBlockComments}`;
+
+      queryParams = feedType === 'global' ? queryParams
+                                  : feedType === 'profile' ? queryParams + `&profileAddress=${profileAddress}`
+                                  : queryParams + `&targetKey=${commentTarget.postKey}`;
 
       const response = await fetch(`${endpoint}${queryParams}`, {
         headers: {'Cache-Control': 'no-cache'}
@@ -38,7 +67,9 @@ export const fetchItems = async (
       }
 
       const data: any = await response.json();
-      const itemsResponse = contentType === 'Posts' ? data.postsResponse : data.repostsResponse;
+      const itemsResponse = contentType === 'Posts' ? data.postsResponse
+                                            : contentType === 'Reposts' ? data.repostsResponse
+                                            : data.commentsResponse;
 
       if (itemsResponse.length === 0) {
         return;
@@ -46,69 +77,81 @@ export const fetchItems = async (
 
       const processedItems = itemsResponse.map((item: any) => processItem(item, contentType));
 
-      if (contentType === 'Posts') {
-        feedContext.setPosts(processedItems);
-      } else {
-        feedContext.setReposts(processedItems);
+      if (contentType === 'Posts' && setPosts) {
+        setPosts(processedItems);
+      } else if (contentType === 'Reposts' && setReposts) {
+        setReposts(processedItems);
+      } else if (setComments) {
+        setComments(processedItems);
       }
 
     } catch (e: any) {
       console.log(e);
-      feedContext.setLoading(false);
-      feedContext.setErrorMessage(e.message);
+      setLoading(false);
+      setErrorMessage(e.message);
     }
   };
 
   const processItem = (item: any, contentType: ContentType) => {
-    const postStateJSON = JSON.parse(contentType === 'Posts' ? item.postState : item.postState);
-    const repostStateJSON = contentType === 'Reposts' ? JSON.parse(item.repostState) : undefined;
+    if (contentType !== 'Comments') {
+      const postStateJSON = JSON.parse(item.postState);
+      const repostStateJSON = contentType === 'Reposts' ? JSON.parse(item.repostState) : undefined;
+      const shortPosterAddressEnd = postStateJSON?.posterAddress.slice(-12);
+      const shortReposterAddressEnd = repostStateJSON?.reposterAddress.slice(-12);
+      const { allEmbeddedReactions, filteredEmbeddedReactions } = processReactions(item.embeddedReactions);
+      const top3Emojis = getTop3Emojis(filteredEmbeddedReactions);
+      const { embeddedComments, numberOfNonDeletedComments } = processComments(item.embeddedComments, item.numberOfComments);
+      const { embeddedReposts, numberOfNonDeletedReposts } = processReposts(item.embeddedReposts, item.numberOfReposts);
 
-    const shortPosterAddressEnd = postStateJSON.posterAddress.slice(-12);
-    const shortReposterAddressEnd = repostStateJSON?.reposterAddress.slice(-12);
-
-    const { allEmbeddedReactions, filteredEmbeddedReactions } = processReactions(item.embeddedReactions);
-    const top3Emojis = getTop3Emojis(filteredEmbeddedReactions);
-
-    const { embeddedComments, numberOfNonDeletedComments } = processComments(item.embeddedComments, item.numberOfComments);
-    const { embeddedReposts, numberOfNonDeletedReposts } = processReposts(item.embeddedReposts, item.numberOfReposts);
-
-    const baseProcessedItem = {
-      postState: postStateJSON,
-      postWitness: JSON.parse(item.postWitness),
-      postKey: item.postKey,
-      postContentID: item.postContentID,
-      content: item.content,
-      shortPosterAddressEnd,
-      allEmbeddedReactions,
-      filteredEmbeddedReactions,
-      top3Emojis,
-      numberOfReactions: item.numberOfReactions,
-      numberOfReactionsWitness: JSON.parse(item.numberOfReactionsWitness),
-      embeddedComments,
-      numberOfComments: item.numberOfComments,
-      numberOfCommentsWitness: JSON.parse(item.numberOfCommentsWitness),
-      numberOfNonDeletedComments,
-      embeddedReposts,
-      numberOfReposts: item.numberOfReposts,
-      numberOfRepostsWitness: JSON.parse(item.numberOfRepostsWitness),
-      numberOfNonDeletedReposts,
-    };
-
-    if (contentType === 'Posts') {
-      return {
-        ...baseProcessedItem,
-        currentUserRepostState: item.currentUserRepostState ? JSON.parse(item.currentUserRepostState) : undefined,
-        currentUserRepostKey: item.currentUserRepostKey,
-        currentUserRepostWitness: item.currentUserRepostWitness ? JSON.parse(item.currentUserRepostWitness) : undefined,
+      const baseProcessedItem = {
+        postState: postStateJSON,
+        postWitness: JSON.parse(item.postWitness),
+        postKey: item.postKey,
+        postContentID: item.postContentID,
+        content: item.content,
+        shortPosterAddressEnd,
+        allEmbeddedReactions,
+        filteredEmbeddedReactions,
+        top3Emojis,
+        numberOfReactions: item.numberOfReactions,
+        numberOfReactionsWitness: JSON.parse(item.numberOfReactionsWitness),
+        embeddedComments,
+        numberOfComments: item.numberOfComments,
+        numberOfCommentsWitness: JSON.parse(item.numberOfCommentsWitness),
+        numberOfNonDeletedComments,
+        embeddedReposts,
+        numberOfReposts: item.numberOfReposts,
+        numberOfRepostsWitness: JSON.parse(item.numberOfRepostsWitness),
+        numberOfNonDeletedReposts,
       };
+  
+      if (contentType === 'Posts') {
+        return {
+          ...baseProcessedItem,
+          currentUserRepostState: item.currentUserRepostState ? JSON.parse(item.currentUserRepostState) : undefined,
+          currentUserRepostKey: item.currentUserRepostKey,
+          currentUserRepostWitness: item.currentUserRepostWitness ? JSON.parse(item.currentUserRepostWitness) : undefined,
+        };
+      } else {
+        return {
+          ...baseProcessedItem,
+          repostState: repostStateJSON,
+          repostWitness: JSON.parse(item.repostWitness),
+          repostKey: item.repostKey,
+          shortReposterAddressEnd,
+        };
+      }
     } else {
+      const commentStateJSON = contentType === 'Comments' ? JSON.parse(item.commentState) : undefined;
+      const shortCommenterAddressEnd = commentStateJSON?.commenterAddress.slice(-12);
       return {
-        ...baseProcessedItem,
-        repostState: repostStateJSON,
-        repostWitness: JSON.parse(item.repostWitness),
-        repostKey: item.repostKey,
-        shortReposterAddressEnd,
-      };
+        commentState: commentStateJSON,
+        commentWitness: JSON.parse(item.commentWitness),
+        commentKey: item.commentKey,
+        commentContentID: item.commentContentID,
+        content: item.content,
+        shortCommenterAddressEnd: shortCommenterAddressEnd
+      }
     }
   };
 
