@@ -2,177 +2,161 @@ import { Dispatch, SetStateAction } from "react";
 import { getCID } from '../../utils/cid';
 import { ContentType, FeedType } from '../../types';
 
-export const auditPosts = async (
-    feedType: FeedType,
-    feedGeneralContext: {
-        setLoading: Dispatch<SetStateAction<boolean>>,
-        setErrorMessage: Dispatch<SetStateAction<any>>,
-        postsContractAddress: string,
-        reactionsContractAddress: string,
-        commentsContractAddress: string,
-        repostsContractAddress: string,
-    },
-    feedPostsContext: {
-        posts: any[],
-        fromBlock: number,
-        toBlock: number,
-    }
-) => {
-    try {
-      if (feedPostsContext.posts.length === 0) return;
-      await auditItems(
-        feedPostsContext.posts,
-        feedType,
-        'Posts',
-        feedPostsContext.fromBlock,
-        feedPostsContext.toBlock,
-        feedGeneralContext.postsContractAddress,
-        feedGeneralContext.reactionsContractAddress,
-        feedGeneralContext.commentsContractAddress,
-        feedGeneralContext.repostsContractAddress
-    );
-    } catch (e: any) {
-      console.log(e);
-      feedGeneralContext.setLoading(false);
-      feedGeneralContext.setErrorMessage(e.message);
-    }
-  };
-  
-  export const auditReposts = async (
-    feedType: FeedType,
-    feedGeneralContext: {
-        setLoading: Dispatch<SetStateAction<boolean>>,
-        setErrorMessage: Dispatch<SetStateAction<any>>,
-        postsContractAddress: string,
-        reactionsContractAddress: string,
-        commentsContractAddress: string,
-        repostsContractAddress: string,
-    },
-    feedRepostsContext: {
-        reposts: any[],
-        fromBlockReposts: number,
-        toBlockReposts: number
-    }
-  ) => {
-    try {
-      if (feedRepostsContext.reposts.length === 0) return;
-      await auditItems(
-        feedRepostsContext.reposts,
-        feedType,
-        'Reposts',
-        feedRepostsContext.fromBlockReposts,
-        feedRepostsContext.toBlockReposts,
-        feedGeneralContext.postsContractAddress,
-        feedGeneralContext.reactionsContractAddress,
-        feedGeneralContext.commentsContractAddress,
-        feedGeneralContext.repostsContractAddress
-    );
-    } catch (e: any) {
-      console.log(e);
-      feedGeneralContext.setLoading(false);
-      feedGeneralContext.setErrorMessage(e.message);
-    }
-  };
-
-  async function auditItems(
-    items: any[],
+  export async function auditItems(
     feedType: FeedType,
     contentType: ContentType,
-    fromBlock: number,
-    toBlock: number,
-    postsContractAddress: string,
-    reactionsContractAddress: string,
-    commentsContractAddress: string,
-    repostsContractAddress: string,
+    {
+      setLoading,
+      setErrorMessage,
+      postsContractAddress,
+      reactionsContractAddress,
+      commentsContractAddress,
+      repostsContractAddress,
+    }: {
+      setLoading: Dispatch<SetStateAction<boolean>>,
+      setErrorMessage: Dispatch<SetStateAction<any>>,
+      postsContractAddress: string,
+      reactionsContractAddress: string,
+      commentsContractAddress: string,
+      repostsContractAddress: string,
+    },
+    {
+      items,
+      fromBlock,
+      toBlock,
+    }: {
+      items: any[],
+      fromBlock: number,
+      toBlock: number,
+    },
+    commentTarget?: any
 ) {
-    const { MerkleMapWitness, Poseidon, CircuitString } = await import('o1js');
-    const { PostState, RepostState } = await import('wrdhom');
-    const lowercaseCT = contentType.toLowerCase();
-    const lowercaseSingularCT =  lowercaseCT.slice(0, -1);
-    const singularCT = contentType.slice(0, -1);
-  
-    const [postsAppState, reactionsAppState, commentsAppState, repostsAppState] = await Promise.all([
-      fetchContractData(postsContractAddress),
-      fetchContractData(reactionsContractAddress),
-      fetchContractData(commentsContractAddress),
-      fetchContractData(repostsContractAddress)
-    ]);
-  
-    const fetchedPostsRoot = postsAppState![2].toString();
-    const fetchedTargetsReactionsCountersRoot = reactionsAppState![2].toString();
-    const fetchedReactionsRoot = reactionsAppState![3].toString();
-    const fetchedTargetsCommentsCountersRoot = commentsAppState![2].toString();
-    const fetchedCommentsRoot = commentsAppState![3].toString();
-    const fetchedTargetsRepostsCountersRoot = repostsAppState![2].toString();
-    const fetchedRepostsRoot = repostsAppState![3].toString();
-  
-    for (let i = 0; i < items.length; i++) {
-      const itemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i][`${lowercaseSingularCT}State`]);
-      const postState = PostState.fromJSON(items[i].postState);
-      const allItemsCounter = itemState[`all${contentType}Counter`];
-      const usersItemsCounter = itemState[`user${contentType}Counter`];
-      const targetItemsCounter = itemState[`target${contentType}Counter`];
-      if (i+1 < items.length) {
-        const nextItemState: any = (contentType === 'Posts' ? PostState : RepostState).fromJSON(items[i+1][`${lowercaseSingularCT}State`]);
-        checkGap(
-          feedType === 'global' && contentType !== 'Comments' ? allItemsCounter
-            : contentType === 'Comments' ? targetItemsCounter
-            : usersItemsCounter,
-          nextItemState[`${feedType === 'global' && contentType !== 'Comments' ? `all${contentType}Counter`
-            : contentType === 'Comments' ? `target${contentType}Counter`
-            : `user${contentType}Counter`
-          }`],
-          contentType
-        );
-      }
-      const blockHeight = Number(itemState[`${lowercaseSingularCT}BlockHeight`]);
+    try {
+      if (items.length === 0) return;
 
-      // Audit block range
-      if (blockHeight < fromBlock || blockHeight > toBlock) {
-        throw new Error(
-          `Block-length ${blockHeight} for `
-          +`${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter} `
-          +`isn't between the block range ${fromBlock} to ${toBlock}`
-        );
-      }
+      const { MerkleMapWitness, Poseidon, CircuitString } = await import('o1js');
+      const { PostState, RepostState, CommentState } = await import('wrdhom');
+      const lowercaseCT = contentType.toLowerCase();
+      const lowercaseSingularCT =  lowercaseCT.slice(0, -1);
+      const singularCT = contentType.slice(0, -1);
+    
+      const [postsAppState, reactionsAppState, commentsAppState, repostsAppState] = await Promise.all([
+        fetchContractData(postsContractAddress),
+        fetchContractData(reactionsContractAddress),
+        fetchContractData(commentsContractAddress),
+        fetchContractData(repostsContractAddress)
+      ]);
+    
+      const fetchedPostsRoot = postsAppState![2].toString();
+      const fetchedTargetsReactionsCountersRoot = reactionsAppState![2].toString();
+      const fetchedReactionsRoot = reactionsAppState![3].toString();
+      const fetchedTargetsCommentsCountersRoot = commentsAppState![2].toString();
+      const fetchedCommentsRoot = commentsAppState![3].toString();
+      const fetchedTargetsRepostsCountersRoot = repostsAppState![2].toString();
+      const fetchedRepostsRoot = repostsAppState![3].toString();
+    
+      for (let i = 0; i < items.length; i++) {
+        const itemState: any = (contentType === 'Posts' ? PostState 
+                                                        : contentType === 'Reposts' ? RepostState
+                                                        : CommentState)
+                                                        .fromJSON(items[i][`${lowercaseSingularCT}State`]);
+        const postState = PostState.fromJSON(contentType !== 'Comments' ? items[i].postState : commentTarget.postState);
+        const allItemsCounter = itemState[`all${contentType}Counter`];
+        const usersItemsCounter = itemState[`user${contentType}Counter`];
+        const targetItemsCounter = itemState[`target${contentType}Counter`];
 
-      // Audit post key
-      const posterAddressAsField = Poseidon.hash(postState.posterAddress.toFields());
-      const postKeyAsField = Poseidon.hash([posterAddressAsField, postState.postContentID.hash()]);
-      if (postKeyAsField.toString() !== items[i].postKey) {
-        throw new Error(
-          `Post Key for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`
-          +` doesn't belong to ${singularCT}`
-        );
-      }
+        if (i+1 < items.length) {
+            const nextItemState: any = (contentType === 'Posts' ? PostState
+                                                                : contentType === 'Reposts' ? RepostState
+                                                                : CommentState)
+                                                                .fromJSON(items[i+1][`${lowercaseSingularCT}State`]);
+            const currentIndex = feedType === 'global' && contentType !== 'Comments'
+                                    ? allItemsCounter
+                                    : contentType === 'Comments'
+                                    ? targetItemsCounter
+                                    : usersItemsCounter;
+            const nextIndex = 
+                              `${
+                                  feedType === 'global' && contentType !== 'Comments'
+                                    ?`all${contentType}Counter`
+                                    : contentType === 'Comments'
+                                    ? `target${contentType}Counter`
+                                    : `user${contentType}Counter`
+                                }`;
+            checkGap(currentIndex, nextItemState[nextIndex], contentType);
+        }
 
-      // // Audit that the items match the onchain state
-      const itemWitness = MerkleMapWitness.fromJSON(items[i][`${lowercaseSingularCT}Witness`]);
-      const calculatedRoot = itemWitness.computeRootAndKeyV2(itemState.hash())[0].toString();
-      if ((contentType === 'Posts' ? fetchedPostsRoot : fetchedRepostsRoot) !== calculatedRoot) {
-        throw new Error(
-          `${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`
-          +` has different root than zkApp state. The server may be experiencing some issues or manipulating results for your query.`
-        );
-      }
-  
-      if (Number(itemState.deletionBlockHeight) === 0) {
+        const blockHeight = Number(itemState[`${lowercaseSingularCT}BlockHeight`]);
 
-        // Audit that the content matches the onchain state
-        const cid = await getCID(items[i].content);
-        if (cid !== CircuitString.fromJSON(items[i].postState.postContentID).toString()) {
+        const middleMessage = feedType === 'global' && contentType !== 'Comments'
+                                ? singularCT + ' ' + allItemsCounter
+                                : contentType === 'Comments'
+                                ? singularCT + ' ' + targetItemsCounter
+                                : 'User ' + singularCT + ' ' + usersItemsCounter;
+
+        // Audit block range
+        if (blockHeight < fromBlock || blockHeight > toBlock) {
           throw new Error(
-            `The content for ${feedType === 'global' ? singularCT + ' ' + allItemsCounter : 'User ' + singularCT + ' ' + usersItemsCounter}`+
-            ` doesn't match the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`
+            `Block-length ${blockHeight} for ${middleMessage}`
+              +` isn't between the block range ${fromBlock} to ${toBlock}`
           );
         }
-  
-        // Audit embedded items
-        await auditEmbeddedItems(items[i], feedType, 'Reactions', fetchedReactionsRoot, fetchedTargetsReactionsCountersRoot);
-        await auditEmbeddedItems(items[i], feedType, 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot);
-        await auditEmbeddedItems(items[i], feedType, 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot);
-      }
-    };
+
+        // Audit post key
+        const posterAddressAsField = Poseidon.hash(postState.posterAddress.toFields());
+        const calculatedPostKey = Poseidon.hash([posterAddressAsField, postState.postContentID.hash()]);
+        const statedPostKey = contentType !== 'Comments' ? items[i].postKey : itemState.targetKey;
+        if (calculatedPostKey.toString() !== statedPostKey.toString()) {
+          throw new Error(
+            `Post Key for ${middleMessage}`
+              +` doesn't belong to Post`
+          );
+        }
+
+        // // Audit that the items match the onchain state
+        const itemWitness = MerkleMapWitness.fromJSON(items[i][`${lowercaseSingularCT}Witness`]);
+        const calculatedRoot = itemWitness.computeRootAndKeyV2(itemState.hash())[0].toString();
+        if (
+          (
+            contentType === 'Posts'
+              ? fetchedPostsRoot
+              : contentType === 'Reposts' ? fetchedRepostsRoot
+              : fetchedCommentsRoot
+          )
+          !== calculatedRoot
+        ) {
+          throw new Error(
+            `${middleMessage}`
+            +` has different root than zkApp state. The server may be experiencing some issues or manipulating results for your query.`
+          );
+        }
+    
+        if (Number(itemState.deletionBlockHeight) === 0) {
+
+          // Audit that the content matches the onchain state
+          const calculatedCID = await getCID(items[i].content);
+          const statedCID = contentType !== 'Comments' ? items[i].postState.postContentID : itemState.commentContentID
+          if (calculatedCID !== CircuitString.fromJSON(statedCID).toString()) {
+            throw new Error(
+              `The content for ${middleMessage}`
+                +` doesn't match the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`
+            );
+          }
+    
+          if (contentType !== 'Comments') {
+            // Audit embedded items
+            await auditEmbeddedItems(items[i], feedType, 'Reactions', fetchedReactionsRoot, fetchedTargetsReactionsCountersRoot);
+            await auditEmbeddedItems(items[i], feedType, 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot);
+            await auditEmbeddedItems(items[i], feedType, 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot);
+          }
+        }
+      };
+
+    } catch (e: any) {
+      console.log(e);
+      setLoading(false);
+      setErrorMessage(e.message);
+    }
   }
 
   async function fetchContractData(contractAddress: string) {
