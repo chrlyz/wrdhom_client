@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { ItemContentList } from './content-item';
 import { fetchItems } from './utils/fetch';
-import { auditPosts, auditReposts } from './utils/audit';
+import { auditItems } from './utils/audit';
 import { mergeAndSortContent } from './utils/structure';
 import { FeedType } from '../types';
 
@@ -112,19 +112,19 @@ export default function GetProfileFeed({
 
       if (posts.length > 0) {
         const auditPostsParams = {
-          posts: posts,
+          items: posts,
           fromBlock: fromBlock,
           toBlock: toBlock,
         }
-        await auditPosts('profile', auditGeneralParams, auditPostsParams);
+        await auditItems('profile', 'Posts', auditGeneralParams, auditPostsParams);
       }
       if (reposts.length > 0) {
         const auditRepostsParams = {
-          reposts: reposts,
-          fromBlockReposts: fromBlockReposts,
-          toBlockReposts: toBlockReposts
+          items: reposts,
+          fromBlock: fromBlockReposts,
+          toBlock: toBlockReposts
         }
-        await auditReposts('profile', auditGeneralParams, auditRepostsParams);
+        await auditItems('profile', 'Reposts', auditGeneralParams, auditRepostsParams);
       }
       if (posts.length === 0 && reposts.length === 0) {
         setWhenZeroContent(true);

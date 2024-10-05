@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from "react";
 import { ItemContentList } from './content-item';
 import CreatePost from '../posts/create-post';
 import { fetchItems } from './utils/fetch';
-import { auditPosts, auditReposts } from './utils/audit';
+import { auditItems } from './utils/audit';
 import { mergeAndSortContent } from './utils/structure';
 import { FeedType } from '../types';
 
@@ -99,20 +99,20 @@ export default function GetGlobalFeed({
 
       if (posts.length > 0) {
         const auditPostsParams = {
-          posts: posts,
+          items: posts,
           fromBlock: fromBlock,
           toBlock: toBlock,
         }
-        await auditPosts('global', auditGeneralParams, auditPostsParams);
+        await auditItems('global', 'Posts', auditGeneralParams, auditPostsParams);
       }
 
       if (reposts.length > 0) {
         const auditRepostsParams = {
-          reposts: reposts,
-          fromBlockReposts: fromBlockReposts,
-          toBlockReposts: toBlockReposts
+          items: reposts,
+          fromBlock: fromBlockReposts,
+          toBlock: toBlockReposts
         }
-        await auditReposts('global', auditGeneralParams, auditRepostsParams);
+        await auditItems('global', 'Reposts', auditGeneralParams, auditRepostsParams);
       }
 
       if (posts.length === 0 && reposts.length === 0) {

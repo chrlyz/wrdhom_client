@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { getCID } from '../utils/cid';
 import { Dispatch, SetStateAction } from "react";
-import { CommentState } from 'wrdhom';
 import { ContentItem, ItemContentList } from './content-item';
 import { FeedType } from '../types';
 import { fetchItems } from './utils/fetch';
+import { auditItems } from './utils/audit';
 
 export default function GetCommentsFeed({
   commentTarget,
@@ -17,7 +16,10 @@ export default function GetCommentsFeed({
   setCommentTarget,
   setHideGetGlobalPosts,
   setShowComments,
+  postsContractAddress,
+  reactionsContractAddress,
   commentsContractAddress,
+  repostsContractAddress,
   account,
   feedType,
   setFeedType
@@ -32,7 +34,10 @@ export default function GetCommentsFeed({
   setCommentTarget: Dispatch<SetStateAction<any>>,
   setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
   setShowComments: Dispatch<SetStateAction<boolean>>,
+  postsContractAddress: string,
+  reactionsContractAddress: string,
   commentsContractAddress: string,
+  repostsContractAddress: string,
   account: string[],
   feedType: FeedType,
   setFeedType: Dispatch<SetStateAction<FeedType>>
@@ -44,88 +49,6 @@ export default function GetCommentsFeed({
     const [fetchCompleted, setFetchCompleted] = useState(false);
     const [whenZeroContent, setWhenZeroContent] = useState(false);
   
-    const auditComments = async () => {
-      try {
-        const { MerkleMapWitness, fetchAccount, Field } = await import('o1js');
-        const { CommentState } = await import('wrdhom');
-        const commentsContractData = await fetchAccount({
-          publicKey: commentsContractAddress
-        }, '/graphql');
-        const fetchedTargetsCommentsCountersRoot = commentsContractData.account?.zkapp?.appState[2].toString();
-        const fetchedCommentsRoot = commentsContractData.account?.zkapp?.appState[3].toString();
-  
-        // Remove comment to cause a gap error
-        // comments.splice(1, 1);
-        
-        for (let i = 0; i < comments.length; i++) {
-          const commentWitness = MerkleMapWitness.fromJSON(comments[i].commentWitness);
-          const commentState = CommentState.fromJSON(comments[i].commentState) as CommentState;
-          let calculatedCommentsRoot = commentWitness.computeRootAndKeyV2(commentState.hash())[0].toString();
-
-          // Introduce different root to cause a root mismatch
-          /*if (i === 1) {
-            calculatedCommentsRoot = 'badRoot'
-          }*/
-
-          // Audit that all roots calculated from the state of each comment and their witnesses, match zkApp state
-          if (fetchedCommentsRoot !== calculatedCommentsRoot) {
-            throw new Error(`Comment ${comments[i].commentState.targetCommentsCounter} has different root than zkApp state. The server may be experiencing some issues or\
-            manipulating results for your query.`);
-          }
-  
-          // Introduce different block-length to cause block mismatch
-          /*if (i === 1) {
-            comments[i].commentState.commentBlockHeight = 10000000000;
-          }*/
-  
-          // Introduce different content to cause content mismatch
-          /*if (i === 1) {
-            comments[i].content = 'wrong content';
-          }*/
-
-          if (Number(comments[i].commentState.deletionBlockHeight) === 0) {
-            // Audit that all comments are between the block range in the user query
-            if (comments[i].commentState.commentBlockHeight < fromBlockComments ||  comments[i].commentState.commentBlockHeight > toBlockComments) {
-              throw new Error(`Block-length ${comments[i].commentState.commentBlockHeight} for Comment ${comments[i].commentState.targetCommentsCounter} isn't between the block range\
-              ${fromBlockComments} to ${toBlockComments}`);
-            }
-    
-            // Audit that the content of comments matches the contentID signed by the author
-            const cid = await getCID(comments[i].content);
-            if (cid !== comments[i].commentContentID) {
-              throw new Error(`The content for Comment ${comments[i].commentState.targetCommentsCounter} doesn't match the expected contentID. The server may be experiencing\
-              some issues or manipulating the content it shows.`);
-            }
-          }
-        };
-
-      } catch (e: any) {
-          console.log(e);
-          setLoading(false);
-          setErrorMessage(e.message);
-      }
-    };
-  
-    const auditNoMissingContent = () => {
-      try {
-        for (let i = 0; i < comments.length-1; i++) {
-          if (Number(comments[i].commentState.targetCommentsCounter) !== Number(comments[i+1].commentState.targetCommentsCounter)+1) {
-            throw new Error(`Gap between comments ${comments[i].commentState.targetCommentsCounter} and ${comments[i+1].commentState.targetCommentsCounter}.\
-            The server may be experiencing some issues or censoring comments.`);
-          }
-        }
-      } catch (e: any) {
-          console.log(e);
-          setLoading(false);
-          setErrorMessage(e.message);
-      }
-    }
-
-    const filterDeleted = () => {
-      const filtered = comments.filter(comment => Number(comment.commentState.deletionBlockHeight) === 0);
-      setComments(filtered);
-    }
-
     const goBack = () => {
         setShowComments(false);
         setCommentTarget(null);
@@ -160,10 +83,23 @@ export default function GetCommentsFeed({
     useEffect(() => {
       if (!fetchCompleted) return;
       (async () => {
+
+        const auditGeneralParams = {
+          setLoading: setLoading,
+          setErrorMessage: setErrorMessage,
+          postsContractAddress: postsContractAddress,
+          reactionsContractAddress: reactionsContractAddress,
+          commentsContractAddress: commentsContractAddress,
+          repostsContractAddress: repostsContractAddress,
+        }
+
         if (comments.length > 0) {
-          await auditComments();
-          auditNoMissingContent();
-          filterDeleted();
+          const auditCommentsParams = {
+            items: comments,
+            fromBlock: fromBlockComments,
+            toBlock: toBlockComments
+          }
+          await auditItems('comments', 'Comments', auditGeneralParams, auditCommentsParams, commentTarget)
         } else {
           setWhenZeroContent(true);
         }
