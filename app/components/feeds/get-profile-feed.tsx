@@ -110,14 +110,6 @@ export default function GetProfileFeed({
         repostsContractAddress: repostsContractAddress,
       }
 
-      if (posts.length > 0) {
-        const auditPostsParams = {
-          items: posts,
-          fromBlock: fromBlock,
-          toBlock: toBlock,
-        }
-        await auditItems('profile', 'Posts', auditGeneralParams, auditPostsParams);
-      }
       if (reposts.length > 0) {
         const auditRepostsParams = {
           items: reposts,

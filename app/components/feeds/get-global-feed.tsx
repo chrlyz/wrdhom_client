@@ -97,15 +97,6 @@ export default function GetGlobalFeed({
         repostsContractAddress: repostsContractAddress,
       }
 
-      if (posts.length > 0) {
-        const auditPostsParams = {
-          items: posts,
-          fromBlock: fromBlock,
-          toBlock: toBlock,
-        }
-        await auditItems('global', 'Posts', auditGeneralParams, auditPostsParams);
-      }
-
       if (reposts.length > 0) {
         const auditRepostsParams = {
           items: reposts,
