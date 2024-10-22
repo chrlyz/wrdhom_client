@@ -67,6 +67,7 @@ export const fetchItems = async (
       }
 
       const data: any = await response.json();
+
       const itemsResponse = contentType === 'Posts' ? data.postsResponse
                                             : contentType === 'Reposts' ? data.repostsResponse
                                             : data.commentsResponse;
@@ -79,6 +80,45 @@ export const fetchItems = async (
 
       if (contentType === 'Posts' && setPosts) {
         setPosts(processedItems);
+
+        const { Poseidon, Field, PublicKey, Signature } = await import('o1js');
+        const serverPublicAddress = PublicKey.fromBase58(process.env.NEXT_PUBLIC_SERVER_PUBLIC_ADDRESS!);
+        const howManyPostsAsField = Field(howManyPosts!);
+        const fromBlockAsField = Field(fromBlock!);
+        const toBlockAsField = Field(toBlock!);
+
+        let profileAddressAsField;
+        if (feedType === 'profile') {
+          profileAddressAsField = Poseidon.hash(
+            PublicKey.fromBase58(profileAddress!).toFields()
+          );
+        } else {
+          profileAddressAsField = Field(0);
+        }
+
+        // Audit that the server response is signed by the server
+        const severSignature = Signature.fromJSON(
+          JSON.parse(data.postsAuditMetadata.severSignature)
+        );
+        const isSigned = severSignature.verify(serverPublicAddress, [
+          Field(data.postsAuditMetadata.hashedQuery),
+          Field(data.postsAuditMetadata.hashedState),
+          Field(data.postsAuditMetadata.atBlockHeight)
+        ]).toBoolean();
+        if(!isSigned) {
+          throw new Error(`Invalid signature for server response`);
+        }
+
+        // Audit that server responds with proper Posts query params
+        const hashedQuery = Poseidon.hash([
+          howManyPostsAsField,
+          fromBlockAsField,
+          toBlockAsField,
+          profileAddressAsField
+        ]).toString();
+        if (data.postsAuditMetadata.hashedQuery !== hashedQuery) {
+          throw new Error(`The server response doesn't match query for Posts`);
+        }
       } else if (contentType === 'Reposts' && setReposts) {
         setReposts(processedItems);
       } else if (setComments) {
