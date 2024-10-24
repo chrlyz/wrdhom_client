@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { ContentType, EmbeddedReactions, FeedType } from '../../types';
+import { addPostsQuery, getPostsQuery } from "@/app/db/indexed-db";
 
 export const fetchItems = async (
     feedType: FeedType,
@@ -8,6 +9,9 @@ export const fetchItems = async (
       account,
       setLoading,
       setErrorMessage,
+      postsQueries,
+      setPostsQueries,
+      isDBLoaded,
       profileAddress,
       howManyPosts,
       fromBlock,
@@ -25,7 +29,10 @@ export const fetchItems = async (
     }: {
       account: string[],
       setLoading: Dispatch<SetStateAction<boolean>>,
-      setErrorMessage: Dispatch<SetStateAction<any>>
+      setErrorMessage: Dispatch<SetStateAction<any>>,
+      postsQueries: any[],
+      setPostsQueries: Dispatch<SetStateAction<any>>,
+      isDBLoaded: boolean,
       profileAddress?: string,
       howManyPosts?: number,
       fromBlock?: number,
@@ -79,8 +86,8 @@ export const fetchItems = async (
       const processedItems = itemsResponse.map((item: any) => processItem(item, contentType));
 
       if (contentType === 'Posts' && setPosts) {
-        setPosts(processedItems);
 
+        // Start quick audit
         const { Poseidon, Field, PublicKey, Signature } = await import('o1js');
         const serverPublicAddress = PublicKey.fromBase58(process.env.NEXT_PUBLIC_SERVER_PUBLIC_ADDRESS!);
         const howManyPostsAsField = Field(howManyPosts!);
@@ -119,6 +126,17 @@ export const fetchItems = async (
         if (data.postsAuditMetadata.hashedQuery !== hashedQuery) {
           throw new Error(`The server response doesn't match query for Posts`);
         }
+
+        if (isDBLoaded) {
+          // Set current state to latest query and store it in db if the same query doesn't already exists
+          const postsQuery = await getPostsQuery(hashedQuery, data.postsAuditMetadata.atBlockHeight);
+          !postsQuery ? await addPostsQuery(data) : null;
+          setPostsQueries([...postsQueries, data]);
+          setPosts(processedItems);
+        } else {
+
+        }
+
       } else if (contentType === 'Reposts' && setReposts) {
         setReposts(processedItems);
       } else if (setComments) {
