@@ -7,6 +7,7 @@ import GetGlobalFeed from './components/feeds/get-global-feed';
 import QuerySettings from './components/settings/query-settings';
 import GetProfileFeed from './components/feeds/get-profile-feed';
 import GetCommentsFeed from './components/feeds/get-comments-feed';
+import { getPostsQueries } from './db/indexed-db';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,8 @@ export default function Home() {
   const [commentsContractAddress] =  useState(process.env.NEXT_PUBLIC_COMMENTS_CONTRACT_ADDRESS as string);
   const [repostsContractAddress] = useState(process.env.NEXT_PUBLIC_REPOSTS_CONTRACT_ADDRESS as string);
   const [feedType, setFeedType] = useState(null as any);
+  const [postsQueries, setPostsQueries] = useState([] as any);
+  const [isDBLoaded, setIsDBLoaded] = useState(false);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
@@ -46,8 +49,24 @@ export default function Home() {
         setHasWallet(true);
       }
       setLoading(false);
+
+      if(!isDBLoaded) {
+        const data = await getPostsQueries();
+        setPostsQueries(data);
+        setIsDBLoaded(true);
+      }
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      if(!isDBLoaded) {
+        const data = await getPostsQueries();
+        setPostsQueries(data);
+        setIsDBLoaded(true);
+      }
+    })();
+  }, [isDBLoaded]);
 
   useEffect(() => {
     (async () => {
@@ -121,6 +140,9 @@ export default function Home() {
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
+        postsQueries={postsQueries}
+        setPostsQueries={setPostsQueries}
+        isDBLoaded={isDBLoaded}
       />
       {showProfile && <GetProfileFeed
         getProfileFeed={getProfileFeed}

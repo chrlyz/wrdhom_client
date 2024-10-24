@@ -25,7 +25,10 @@ export default function GetGlobalFeed({
   repostsContractAddress,
   account,
   feedType,
-  setFeedType
+  setFeedType,
+  postsQueries,
+  setPostsQueries,
+  isDBLoaded
 }: {
   getGlobalFeed: boolean,
   howManyPosts: number,
@@ -44,7 +47,10 @@ export default function GetGlobalFeed({
   repostsContractAddress: string,
   account: string[],
   feedType: FeedType,
-  setFeedType: Dispatch<SetStateAction<FeedType>>
+  setFeedType: Dispatch<SetStateAction<FeedType>>,
+  postsQueries: any[],
+  setPostsQueries: Dispatch<SetStateAction<any>>,
+  isDBLoaded: boolean
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [reposts, setReposts] = useState([] as any[]);
@@ -65,24 +71,27 @@ export default function GetGlobalFeed({
       setFeedType('global');
 
       const fetchItemsParams = {
+        account: account,
+        setLoading: setLoading,
+        setErrorMessage: setErrorMessage,
+        postsQueries: postsQueries,
+        setPostsQueries: setPostsQueries,
+        isDBLoaded,
         howManyPosts: howManyPosts,
         fromBlock: fromBlock,
         toBlock: toBlock,
+        setPosts: setPosts,
         howManyReposts: howManyReposts,
         fromBlockReposts: fromBlockReposts,
         toBlockReposts: toBlockReposts,
-        account: account,
-        setPosts: setPosts,
-        setReposts: setReposts,
-        setLoading: setLoading,
-        setErrorMessage: setErrorMessage
+        setReposts: setReposts
       }
       howManyPosts > 0 ? await fetchItems('global', 'Posts', fetchItemsParams) : null;
       howManyReposts > 0 ? await fetchItems('global', 'Reposts', fetchItemsParams) : null;
 
       setFetchCompleted(true);
     })();
-  }, [getGlobalFeed, account]);
+  }, [getGlobalFeed, account, isDBLoaded]);
 
   useEffect(() => {
     if (!fetchCompleted) return;
