@@ -1,4 +1,4 @@
-import { EmbeddedReactions } from "../feeds/get-global-feed";
+import { EmbeddedReactions } from "../types";
 
 export default function EmojiPicker({
     createReaction,

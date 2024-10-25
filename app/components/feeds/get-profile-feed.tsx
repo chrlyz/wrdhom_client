@@ -26,7 +26,10 @@ export default function GetProfileFeed({
   repostsContractAddress,
   account,
   feedType,
-  setFeedType
+  setFeedType,
+  postsQueries,
+  setPostsQueries,
+  isDBLoaded
 }: {
   getProfileFeed: boolean,
   profileAddress: string,
@@ -47,7 +50,10 @@ export default function GetProfileFeed({
   repostsContractAddress: string,
   account: string[],
   feedType: FeedType,
-  setFeedType: Dispatch<SetStateAction<FeedType>>
+  setFeedType: Dispatch<SetStateAction<FeedType>>,
+  postsQueries: any[],
+  setPostsQueries: Dispatch<SetStateAction<any>>,
+  isDBLoaded: boolean
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [reposts, setReposts] = useState([] as any[]);
@@ -77,6 +83,12 @@ export default function GetProfileFeed({
       setFeedType('profile');
 
       const fetchItemsParams = {
+        account: account,
+        setLoading: setLoading,
+        setErrorMessage: setErrorMessage,
+        postsQueries,
+        setPostsQueries,
+        isDBLoaded,
         profileAddress: profileAddress,
         howManyPosts: howManyPosts,
         fromBlock: fromBlock,
@@ -84,11 +96,8 @@ export default function GetProfileFeed({
         howManyReposts: howManyReposts,
         fromBlockReposts: fromBlockReposts,
         toBlockReposts: toBlockReposts,
-        account: account,
         setPosts: setPosts,
-        setReposts: setReposts,
-        setLoading: setLoading,
-        setErrorMessage: setErrorMessage
+        setReposts: setReposts
       }
       howManyPosts > 0 ? await fetchItems('profile', 'Posts', fetchItemsParams) : null;
       howManyReposts > 0 ? await fetchItems('profile', 'Reposts', fetchItemsParams) : null;

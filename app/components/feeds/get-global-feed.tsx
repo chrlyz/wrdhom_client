@@ -88,10 +88,11 @@ export default function GetGlobalFeed({
       }
       howManyPosts > 0 ? await fetchItems('global', 'Posts', fetchItemsParams) : null;
       howManyReposts > 0 ? await fetchItems('global', 'Reposts', fetchItemsParams) : null;
+      console.log('fetchCompleted: ' + fetchCompleted)
 
       setFetchCompleted(true);
     })();
-  }, [getGlobalFeed, account, isDBLoaded]);
+  }, [getGlobalFeed, account]);
 
   useEffect(() => {
     if (!fetchCompleted) return;
