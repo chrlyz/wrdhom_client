@@ -128,13 +128,18 @@ export const fetchItems = async (
         }
 
         if (isDBLoaded) {
-          // Set current state to latest query and store it in db if the same query doesn't already exists
           const postsQuery = await getPostsQuery(hashedQuery, data.postsAuditMetadata.atBlockHeight);
-          !postsQuery ? await addPostsQuery(data) : null;
-          setPostsQueries([...postsQueries, data]);
+          if (!postsQuery) {
+            await addPostsQuery(data);
+            setPostsQueries([...postsQueries, data]);
+          }
+          console.log('loaded:')
+          console.log(postsQueries)
           setPosts(processedItems);
         } else {
-
+          console.log('not loaded:')
+          console.log(postsQueries)
+          setPosts(processedItems);
         }
 
       } else if (contentType === 'Reposts' && setReposts) {

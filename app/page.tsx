@@ -49,12 +49,6 @@ export default function Home() {
         setHasWallet(true);
       }
       setLoading(false);
-
-      if(!isDBLoaded) {
-        const data = await getPostsQueries();
-        setPostsQueries(data);
-        setIsDBLoaded(true);
-      }
     })();
   }, []);
 
@@ -165,6 +159,9 @@ export default function Home() {
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
+        postsQueries={postsQueries}
+        setPostsQueries={setPostsQueries}
+        isDBLoaded={isDBLoaded}
       />}
       {showComments && <GetCommentsFeed
         commentTarget={commentTarget}
@@ -184,6 +181,9 @@ export default function Home() {
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
+        postsQueries={postsQueries}
+        setPostsQueries={setPostsQueries}
+        isDBLoaded={isDBLoaded}
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">

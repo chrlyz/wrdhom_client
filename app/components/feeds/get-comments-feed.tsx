@@ -22,7 +22,10 @@ export default function GetCommentsFeed({
   repostsContractAddress,
   account,
   feedType,
-  setFeedType
+  setFeedType,
+  postsQueries,
+  setPostsQueries,
+  isDBLoaded
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -40,7 +43,10 @@ export default function GetCommentsFeed({
   repostsContractAddress: string,
   account: string[],
   feedType: FeedType,
-  setFeedType: Dispatch<SetStateAction<FeedType>>
+  setFeedType: Dispatch<SetStateAction<FeedType>>,
+  postsQueries: any[],
+  setPostsQueries: Dispatch<SetStateAction<any>>,
+  isDBLoaded: boolean
 }) {
     const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
@@ -66,13 +72,16 @@ export default function GetCommentsFeed({
 
         const fetchItemsParams = {
           account: account,
+          setLoading: setLoading,
+          setErrorMessage: setErrorMessage,
+          postsQueries: postsQueries,
+          setPostsQueries: setPostsQueries,
+          isDBLoaded,
           commentTarget: commentTarget,
           howManyComments: howManyComments,
           fromBlockComments: fromBlockComments,
           toBlockComments: toBlockComments,
-          setComments: setComments,
-          setLoading: setLoading,
-          setErrorMessage: setErrorMessage
+          setComments: setComments
         }
         howManyComments > 0 ? await fetchItems('comments', 'Comments', fetchItemsParams) : null;
 
