@@ -28,7 +28,9 @@ export default function GetGlobalFeed({
   setFeedType,
   postsQueries,
   setPostsQueries,
-  isDBLoaded
+  isDBLoaded,
+  initialPostsQuery,
+  setInitialPostsQuery
 }: {
   getGlobalFeed: boolean,
   howManyPosts: number,
@@ -49,8 +51,10 @@ export default function GetGlobalFeed({
   feedType: FeedType,
   setFeedType: Dispatch<SetStateAction<FeedType>>,
   postsQueries: any[],
-  setPostsQueries: Dispatch<SetStateAction<any>>,
-  isDBLoaded: boolean
+  setPostsQueries: Dispatch<SetStateAction<any[]>>,
+  isDBLoaded: boolean,
+  initialPostsQuery: any;
+  setInitialPostsQuery: Dispatch<SetStateAction<any>>
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [reposts, setReposts] = useState([] as any[]);
@@ -71,24 +75,25 @@ export default function GetGlobalFeed({
       setFeedType('global');
 
       const fetchItemsParams = {
-        account: account,
-        setLoading: setLoading,
-        setErrorMessage: setErrorMessage,
-        postsQueries: postsQueries,
-        setPostsQueries: setPostsQueries,
+        account,
+        setLoading,
+        setErrorMessage,
+        postsQueries,
+        setPostsQueries,
         isDBLoaded,
-        howManyPosts: howManyPosts,
-        fromBlock: fromBlock,
-        toBlock: toBlock,
-        setPosts: setPosts,
-        howManyReposts: howManyReposts,
-        fromBlockReposts: fromBlockReposts,
-        toBlockReposts: toBlockReposts,
+        initialPostsQuery,
+        setInitialPostsQuery,
+        howManyPosts,
+        fromBlock,
+        toBlock,
+        setPosts,
+        howManyReposts,
+        fromBlockReposts,
+        toBlockReposts,
         setReposts: setReposts
       }
       howManyPosts > 0 ? await fetchItems('global', 'Posts', fetchItemsParams) : null;
       howManyReposts > 0 ? await fetchItems('global', 'Reposts', fetchItemsParams) : null;
-      console.log('fetchCompleted: ' + fetchCompleted)
 
       setFetchCompleted(true);
     })();
@@ -99,12 +104,12 @@ export default function GetGlobalFeed({
     (async () => {
 
       const auditGeneralParams = {
-        setLoading: setLoading,
-        setErrorMessage: setErrorMessage,
-        postsContractAddress: postsContractAddress,
-        reactionsContractAddress: reactionsContractAddress,
-        commentsContractAddress: commentsContractAddress,
-        repostsContractAddress: repostsContractAddress,
+        setLoading,
+        setErrorMessage,
+        postsContractAddress,
+        reactionsContractAddress,
+        commentsContractAddress,
+        repostsContractAddress,
       }
 
       if (reposts.length > 0) {

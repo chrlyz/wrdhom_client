@@ -37,8 +37,9 @@ export default function Home() {
   const [commentsContractAddress] =  useState(process.env.NEXT_PUBLIC_COMMENTS_CONTRACT_ADDRESS as string);
   const [repostsContractAddress] = useState(process.env.NEXT_PUBLIC_REPOSTS_CONTRACT_ADDRESS as string);
   const [feedType, setFeedType] = useState(null as any);
-  const [postsQueries, setPostsQueries] = useState([] as any);
+  const [postsQueries, setPostsQueries] = useState([] as any[]);
   const [isDBLoaded, setIsDBLoaded] = useState(false);
+  const [initialPostsQuery, setInitialPostsQuery] = useState(null as any);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
   
@@ -137,6 +138,8 @@ export default function Home() {
         postsQueries={postsQueries}
         setPostsQueries={setPostsQueries}
         isDBLoaded={isDBLoaded}
+        initialPostsQuery={initialPostsQuery}
+        setInitialPostsQuery={setInitialPostsQuery}
       />
       {showProfile && <GetProfileFeed
         getProfileFeed={getProfileFeed}
@@ -162,6 +165,8 @@ export default function Home() {
         postsQueries={postsQueries}
         setPostsQueries={setPostsQueries}
         isDBLoaded={isDBLoaded}
+        initialPostsQuery={initialPostsQuery}
+        setInitialPostsQuery={setInitialPostsQuery}
       />}
       {showComments && <GetCommentsFeed
         commentTarget={commentTarget}
@@ -184,6 +189,8 @@ export default function Home() {
         postsQueries={postsQueries}
         setPostsQueries={setPostsQueries}
         isDBLoaded={isDBLoaded}
+        initialPostsQuery={initialPostsQuery}
+        setInitialPostsQuery={setInitialPostsQuery}
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
