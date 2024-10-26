@@ -25,7 +25,9 @@ export default function GetCommentsFeed({
   setFeedType,
   postsQueries,
   setPostsQueries,
-  isDBLoaded
+  isDBLoaded,
+  initialPostsQuery,
+  setInitialPostsQuery
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -45,8 +47,10 @@ export default function GetCommentsFeed({
   feedType: FeedType,
   setFeedType: Dispatch<SetStateAction<FeedType>>,
   postsQueries: any[],
-  setPostsQueries: Dispatch<SetStateAction<any>>,
-  isDBLoaded: boolean
+  setPostsQueries: Dispatch<SetStateAction<any[]>>,
+  isDBLoaded: boolean,
+  initialPostsQuery: any;
+  setInitialPostsQuery: Dispatch<SetStateAction<any>>
 }) {
     const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
@@ -71,17 +75,19 @@ export default function GetCommentsFeed({
         setWhenZeroContent(false);
 
         const fetchItemsParams = {
-          account: account,
-          setLoading: setLoading,
-          setErrorMessage: setErrorMessage,
-          postsQueries: postsQueries,
-          setPostsQueries: setPostsQueries,
+          account,
+          setLoading,
+          setErrorMessage,
+          postsQueries,
+          setPostsQueries,
           isDBLoaded,
-          commentTarget: commentTarget,
-          howManyComments: howManyComments,
-          fromBlockComments: fromBlockComments,
-          toBlockComments: toBlockComments,
-          setComments: setComments
+          initialPostsQuery,
+          setInitialPostsQuery,
+          commentTarget,
+          howManyComments,
+          fromBlockComments,
+          toBlockComments,
+          setComments
         }
         howManyComments > 0 ? await fetchItems('comments', 'Comments', fetchItemsParams) : null;
 
@@ -94,12 +100,12 @@ export default function GetCommentsFeed({
       (async () => {
 
         const auditGeneralParams = {
-          setLoading: setLoading,
-          setErrorMessage: setErrorMessage,
-          postsContractAddress: postsContractAddress,
-          reactionsContractAddress: reactionsContractAddress,
-          commentsContractAddress: commentsContractAddress,
-          repostsContractAddress: repostsContractAddress,
+          setLoading,
+          setErrorMessage,
+          postsContractAddress,
+          reactionsContractAddress,
+          commentsContractAddress,
+          repostsContractAddress,
         }
 
         if (comments.length > 0) {

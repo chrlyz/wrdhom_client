@@ -29,7 +29,9 @@ export default function GetProfileFeed({
   setFeedType,
   postsQueries,
   setPostsQueries,
-  isDBLoaded
+  isDBLoaded,
+  initialPostsQuery,
+  setInitialPostsQuery
 }: {
   getProfileFeed: boolean,
   profileAddress: string,
@@ -52,8 +54,10 @@ export default function GetProfileFeed({
   feedType: FeedType,
   setFeedType: Dispatch<SetStateAction<FeedType>>,
   postsQueries: any[],
-  setPostsQueries: Dispatch<SetStateAction<any>>,
-  isDBLoaded: boolean
+  setPostsQueries: Dispatch<SetStateAction<any[]>>,
+  isDBLoaded: boolean,
+  initialPostsQuery: any;
+  setInitialPostsQuery: Dispatch<SetStateAction<any>>
 }) {
   const [posts, setPosts] = useState([] as any[]);
   const [reposts, setReposts] = useState([] as any[]);
@@ -83,21 +87,23 @@ export default function GetProfileFeed({
       setFeedType('profile');
 
       const fetchItemsParams = {
-        account: account,
-        setLoading: setLoading,
-        setErrorMessage: setErrorMessage,
+        account,
+        setLoading,
+        setErrorMessage,
         postsQueries,
         setPostsQueries,
         isDBLoaded,
-        profileAddress: profileAddress,
-        howManyPosts: howManyPosts,
-        fromBlock: fromBlock,
-        toBlock: toBlock,
-        howManyReposts: howManyReposts,
-        fromBlockReposts: fromBlockReposts,
-        toBlockReposts: toBlockReposts,
-        setPosts: setPosts,
-        setReposts: setReposts
+        initialPostsQuery,
+        setInitialPostsQuery,
+        profileAddress,
+        howManyPosts,
+        fromBlock,
+        toBlock,
+        howManyReposts,
+        fromBlockReposts,
+        toBlockReposts,
+        setPosts,
+        setReposts
       }
       howManyPosts > 0 ? await fetchItems('profile', 'Posts', fetchItemsParams) : null;
       howManyReposts > 0 ? await fetchItems('profile', 'Reposts', fetchItemsParams) : null;
@@ -111,12 +117,12 @@ export default function GetProfileFeed({
     (async () => {
 
       const auditGeneralParams = {
-        setLoading: setLoading,
-        setErrorMessage: setErrorMessage,
-        postsContractAddress: postsContractAddress,
-        reactionsContractAddress: reactionsContractAddress,
-        commentsContractAddress: commentsContractAddress,
-        repostsContractAddress: repostsContractAddress,
+        setLoading,
+        setErrorMessage,
+        postsContractAddress,
+        reactionsContractAddress,
+        commentsContractAddress,
+        repostsContractAddress,
       }
 
       if (reposts.length > 0) {

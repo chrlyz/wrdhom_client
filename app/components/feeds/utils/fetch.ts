@@ -12,6 +12,8 @@ export const fetchItems = async (
       postsQueries,
       setPostsQueries,
       isDBLoaded,
+      initialPostsQuery,
+      setInitialPostsQuery,
       profileAddress,
       howManyPosts,
       fromBlock,
@@ -31,8 +33,10 @@ export const fetchItems = async (
       setLoading: Dispatch<SetStateAction<boolean>>,
       setErrorMessage: Dispatch<SetStateAction<any>>,
       postsQueries: any[],
-      setPostsQueries: Dispatch<SetStateAction<any>>,
+      setPostsQueries: Dispatch<SetStateAction<any[]>>,
       isDBLoaded: boolean,
+      initialPostsQuery: any;
+      setInitialPostsQuery: Dispatch<SetStateAction<any>>,
       profileAddress?: string,
       howManyPosts?: number,
       fromBlock?: number,
@@ -133,12 +137,9 @@ export const fetchItems = async (
             await addPostsQuery(data);
             setPostsQueries([...postsQueries, data]);
           }
-          console.log('loaded:')
-          console.log(postsQueries)
           setPosts(processedItems);
         } else {
-          console.log('not loaded:')
-          console.log(postsQueries)
+          setInitialPostsQuery(data);
           setPosts(processedItems);
         }
 
