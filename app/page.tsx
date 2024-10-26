@@ -8,6 +8,7 @@ import QuerySettings from './components/settings/query-settings';
 import GetProfileFeed from './components/feeds/get-profile-feed';
 import GetCommentsFeed from './components/feeds/get-comments-feed';
 import { getPostsQueries } from './db/indexed-db';
+import NavigationPanel from './components/navigation/navigation-panel';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -40,9 +41,11 @@ export default function Home() {
   const [postsQueries, setPostsQueries] = useState([] as any[]);
   const [isDBLoaded, setIsDBLoaded] = useState(false);
   const [initialPostsQuery, setInitialPostsQuery] = useState(null as any);
+  const [currentPostsQuery, setCurrentPostsQuery] = useState(null as any);
+  const [previousPostsQuery, setPreviousPostsQuery] = useState(null as any);
+  const [posts, setPosts] = useState([] as any[]);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
-  
 
   useEffect(() => {
     (async () => {
@@ -115,6 +118,16 @@ export default function Home() {
           {loading ? null : !hasWallet && <InstallWallet />}
           <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
           {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
+          {!loading && <NavigationPanel
+            initialPostsQuery={initialPostsQuery}
+            postsQueries={postsQueries}
+            currentPostsQuery={currentPostsQuery}
+            setCurrentPostsQuery={setCurrentPostsQuery}
+            previousPostsQuery={previousPostsQuery}
+            setPreviousPostsQuery={setPreviousPostsQuery}
+            posts={posts}
+            setPosts={setPosts}
+          />}
         </div>
       </div>
       <GetGlobalFeed getGlobalFeed={getGlobalFeed}
@@ -128,10 +141,6 @@ export default function Home() {
         howManyReposts={howManyReposts}
         fromBlockReposts={fromBlockReposts}
         toBlockReposts={toBlockReposts}
-        postsContractAddress={postsContractAddress}
-        reactionsContractAddress={reactionsContractAddress}
-        commentsContractAddress={commentsContractAddress}
-        repostsContractAddress={repostsContractAddress}
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
@@ -140,6 +149,11 @@ export default function Home() {
         isDBLoaded={isDBLoaded}
         initialPostsQuery={initialPostsQuery}
         setInitialPostsQuery={setInitialPostsQuery}
+        currentPostsQuery={currentPostsQuery}
+        setCurrentPostsQuery={setCurrentPostsQuery}
+        previousPostsQuery={previousPostsQuery}
+        posts={posts}
+        setPosts={setPosts}
       />
       {showProfile && <GetProfileFeed
         getProfileFeed={getProfileFeed}

@@ -14,6 +14,7 @@ export const fetchItems = async (
       isDBLoaded,
       initialPostsQuery,
       setInitialPostsQuery,
+      setCurrentPostsQuery,
       profileAddress,
       howManyPosts,
       fromBlock,
@@ -37,6 +38,7 @@ export const fetchItems = async (
       isDBLoaded: boolean,
       initialPostsQuery: any;
       setInitialPostsQuery: Dispatch<SetStateAction<any>>,
+      setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
       profileAddress?: string,
       howManyPosts?: number,
       fromBlock?: number,
@@ -132,14 +134,35 @@ export const fetchItems = async (
         }
 
         if (isDBLoaded) {
-          const postsQuery = await getPostsQuery(hashedQuery, data.postsAuditMetadata.atBlockHeight);
-          if (!postsQuery) {
-            await addPostsQuery(data);
-            setPostsQueries([...postsQueries, data]);
-          }
           setPosts(processedItems);
+          if (
+            initialPostsQuery.postsAuditMetadata.hashedQuery === data.postsAuditMetadata.hashedQuery
+            && initialPostsQuery.postsAuditMetadata.hashedState === data.postsAuditMetadata.hashedState
+            && initialPostsQuery.postsAuditMetadata.atBlockHeight === data.postsAuditMetadata.atBlockHeight
+          ) {
+            const postsQuery = await getPostsQuery(hashedQuery, data.postsAuditMetadata.atBlockHeight);
+            if (!postsQuery) {
+              await addPostsQuery({postsAuditMetadata: initialPostsQuery.postsAuditMetadata, processedPosts: initialPostsQuery.processedPosts});
+            }
+          } else {
+            const postsQuery = await getPostsQuery(hashedQuery, data.postsAuditMetadata.atBlockHeight);
+            if (!postsQuery) {
+              setPostsQueries([...postsQueries, {postsAuditMetadata: data.postsAuditMetadata, processedPosts: processedItems}]);
+              await addPostsQuery({postsAuditMetadata: data.postsAuditMetadata, processedPosts: processedItems});
+            } else {
+              console.log(postsQueries[postsQuery.id-1])
+              if (postsQueries[postsQuery.id-1]) {
+                setPosts(postsQuery.processedPosts);
+                setCurrentPostsQuery(postsQuery);
+              } else {
+                setPosts(postsQuery.processedPosts);
+                setCurrentPostsQuery(postsQuery);
+                setPostsQueries([...postsQueries, postsQuery]);
+              }
+            }
+          }
         } else {
-          setInitialPostsQuery(data);
+          setInitialPostsQuery({postsAuditMetadata: data.postsAuditMetadata, processedPosts: processedItems});
           setPosts(processedItems);
         }
 
