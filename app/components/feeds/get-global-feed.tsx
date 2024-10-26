@@ -19,10 +19,6 @@ export default function GetGlobalFeed({
   howManyReposts,
   fromBlockReposts,
   toBlockReposts,
-  postsContractAddress,
-  reactionsContractAddress,
-  commentsContractAddress,
-  repostsContractAddress,
   account,
   feedType,
   setFeedType,
@@ -30,7 +26,12 @@ export default function GetGlobalFeed({
   setPostsQueries,
   isDBLoaded,
   initialPostsQuery,
-  setInitialPostsQuery
+  setInitialPostsQuery,
+  currentPostsQuery,
+  setCurrentPostsQuery,
+  previousPostsQuery,
+  posts,
+  setPosts
 }: {
   getGlobalFeed: boolean,
   howManyPosts: number,
@@ -43,20 +44,20 @@ export default function GetGlobalFeed({
   howManyReposts: number,
   fromBlockReposts: number,
   toBlockReposts: number,
-  postsContractAddress: string,
-  reactionsContractAddress: string,
-  commentsContractAddress: string,
-  repostsContractAddress: string,
   account: string[],
   feedType: FeedType,
   setFeedType: Dispatch<SetStateAction<FeedType>>,
   postsQueries: any[],
   setPostsQueries: Dispatch<SetStateAction<any[]>>,
   isDBLoaded: boolean,
-  initialPostsQuery: any;
-  setInitialPostsQuery: Dispatch<SetStateAction<any>>
+  initialPostsQuery: any,
+  setInitialPostsQuery: Dispatch<SetStateAction<any>>,
+  currentPostsQuery: any,
+  setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
+  previousPostsQuery: any,
+  posts: any[],
+  setPosts: Dispatch<SetStateAction<any[]>>
 }) {
-  const [posts, setPosts] = useState([] as any[]);
   const [reposts, setReposts] = useState([] as any[]);
   const [mergedContent, setMergedContent] = useState([] as any);
   const [loading, setLoading] = useState(true);
@@ -67,6 +68,7 @@ export default function GetGlobalFeed({
 
   useEffect(() => {
     (async () => {
+      setFetchCompleted(false);
       setPosts([]);
       setReposts([]);
       setLoading(true);
@@ -83,6 +85,7 @@ export default function GetGlobalFeed({
         isDBLoaded,
         initialPostsQuery,
         setInitialPostsQuery,
+        setCurrentPostsQuery,
         howManyPosts,
         fromBlock,
         toBlock,
@@ -100,36 +103,17 @@ export default function GetGlobalFeed({
   }, [getGlobalFeed, account]);
 
   useEffect(() => {
-    if (!fetchCompleted) return;
     (async () => {
-
-      const auditGeneralParams = {
-        setLoading,
-        setErrorMessage,
-        postsContractAddress,
-        reactionsContractAddress,
-        commentsContractAddress,
-        repostsContractAddress,
-      }
-
-      if (reposts.length > 0) {
-        const auditRepostsParams = {
-          items: reposts,
-          fromBlock: fromBlockReposts,
-          toBlock: toBlockReposts
+      if (fetchCompleted) {
+        if (posts.length === 0 && reposts.length === 0) {
+          setWhenZeroContent(true);
         }
-        await auditItems('global', 'Reposts', auditGeneralParams, auditRepostsParams);
+  
+        mergeAndSortContent(posts, reposts, setMergedContent);
+        setLoading(false);
       }
-
-      if (posts.length === 0 && reposts.length === 0) {
-        setWhenZeroContent(true);
-      }
-
-      mergeAndSortContent(posts, reposts, setMergedContent);
-      setFetchCompleted(false);
-      setLoading(false);
     })();
-  }, [fetchCompleted]);
+  }, [fetchCompleted, posts]);
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh] ${hideGetGlobalPosts}`}>
