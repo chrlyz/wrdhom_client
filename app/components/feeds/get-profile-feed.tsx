@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { ItemContentList } from './content-item';
 import { fetchItems } from './utils/fetch';
-import { auditItems } from './utils/audit';
 import { mergeAndSortContent } from './utils/structure';
 import { FeedType } from '../types';
 
@@ -13,17 +12,11 @@ export default function GetProfileFeed({
   howManyPosts,
   fromBlock,
   toBlock,
-  setShowProfile,
-  setHideGetGlobalPosts,
   walletConnected,
   setCommentTarget,
   howManyReposts,
   fromBlockReposts,
   toBlockReposts,
-  postsContractAddress,
-  reactionsContractAddress,
-  commentsContractAddress,
-  repostsContractAddress,
   account,
   feedType,
   setFeedType,
@@ -33,7 +26,9 @@ export default function GetProfileFeed({
   setIsDBLoaded,
   initialPostsQuery,
   setInitialPostsQuery,
-  setCurrentPostsQuery
+  setCurrentPostsQuery,
+  posts,
+  setPosts
 }: {
   getProfileFeed: boolean,
   profileAddress: string,
@@ -41,8 +36,6 @@ export default function GetProfileFeed({
   howManyPosts: number,
   fromBlock: number,
   toBlock: number,
-  setShowProfile: Dispatch<SetStateAction<boolean>>,
-  setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
   walletConnected: boolean,
   setCommentTarget: Dispatch<SetStateAction<any>>,
   howManyReposts: number,
@@ -61,9 +54,11 @@ export default function GetProfileFeed({
   setIsDBLoaded: Dispatch<SetStateAction<boolean>>,
   initialPostsQuery: any,
   setInitialPostsQuery: Dispatch<SetStateAction<any>>,
-  setCurrentPostsQuery: Dispatch<SetStateAction<any>>
+  setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
+  posts: any[],
+  setPosts: Dispatch<SetStateAction<any[]>>
 }) {
-  const [posts, setPosts] = useState([] as any[]);
+
   const [reposts, setReposts] = useState([] as any[]);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [mergedContent, setMergedContent] = useState([] as any);
@@ -72,17 +67,9 @@ export default function GetProfileFeed({
   const [fetchCompleted, setFetchCompleted] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
 
-
-  const goBack = () => {
-    setShowProfile(false);
-    setProfileAddress('');
-    setCommentTarget(null);
-    setHideGetGlobalPosts('');
-    setFeedType('global');
-  }
-
   useEffect(() => {
     (async () => {
+      setFetchCompleted(false);
       setPosts([]);
       setReposts([]);
       setLoading(true);
@@ -116,42 +103,25 @@ export default function GetProfileFeed({
 
       setFetchCompleted(true);
     })();
-  }, [getProfileFeed, profileAddress, account]);
+  }, [getProfileFeed, account]);
 
   useEffect(() => {
-    if (!fetchCompleted) return;
     (async () => {
 
-      const auditGeneralParams = {
-        setLoading,
-        setErrorMessage,
-        postsContractAddress,
-        reactionsContractAddress,
-        commentsContractAddress,
-        repostsContractAddress,
-      }
-
-      if (reposts.length > 0) {
-        const auditRepostsParams = {
-          items: reposts,
-          fromBlock: fromBlockReposts,
-          toBlock: toBlockReposts
+      if (fetchCompleted) {
+        if (posts.length === 0 && reposts.length === 0) {
+          setWhenZeroContent(true);
         }
-        await auditItems('profile', 'Reposts', auditGeneralParams, auditRepostsParams);
+  
+        mergeAndSortContent(posts, reposts, setMergedContent);
+        setLoading(false);
       }
-      if (posts.length === 0 && reposts.length === 0) {
-        setWhenZeroContent(true);
-      }
-      mergeAndSortContent(posts, reposts, setMergedContent);
-      setFetchCompleted(false);
-      setLoading(false);
   })();
-  }, [fetchCompleted]);
+  }, [fetchCompleted, posts]);
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
       <div className="p-2 border-b-2 shadow-lg">
-        <button className="hover:underline m-2" onClick={goBack}>{'<- Go back to feed'}</button>
         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap">
             <p >{`Posts from user:\n\n${profileAddress}`}</p>
         </div>
@@ -171,7 +141,7 @@ export default function GetProfileFeed({
       />
       {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
-            <p >The query threw zero results</p>
+            <p >The query threw zero results (profile)</p>
         </div>
       </div>}
     </div>
