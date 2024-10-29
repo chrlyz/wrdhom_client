@@ -41,7 +41,6 @@ export default function Home() {
   const [isDBLoaded, setIsDBLoaded] = useState(false);
   const [initialPostsQuery, setInitialPostsQuery] = useState(null as any);
   const [currentPostsQuery, setCurrentPostsQuery] = useState(null as any);
-  const [previousPostsQuery, setPreviousPostsQuery] = useState(null as any);
   const [posts, setPosts] = useState([] as any[]);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
@@ -111,7 +110,6 @@ export default function Home() {
             postsQueries={postsQueries}
             currentPostsQuery={currentPostsQuery}
             setCurrentPostsQuery={setCurrentPostsQuery}
-            setPreviousPostsQuery={setPreviousPostsQuery}
             setPosts={setPosts}
           />}
         </div>
@@ -164,8 +162,10 @@ export default function Home() {
         postsQueries={postsQueries}
         setPostsQueries={setPostsQueries}
         isDBLoaded={isDBLoaded}
+        setIsDBLoaded={setIsDBLoaded}
         initialPostsQuery={initialPostsQuery}
         setInitialPostsQuery={setInitialPostsQuery}
+        setCurrentPostsQuery={setCurrentPostsQuery}
       />}
       {showComments && <GetCommentsFeed
         commentTarget={commentTarget}
@@ -188,8 +188,10 @@ export default function Home() {
         postsQueries={postsQueries}
         setPostsQueries={setPostsQueries}
         isDBLoaded={isDBLoaded}
+        setIsDBLoaded={setIsDBLoaded}
         initialPostsQuery={initialPostsQuery}
         setInitialPostsQuery={setInitialPostsQuery}
+        setCurrentPostsQuery={setCurrentPostsQuery}
       />}
       <div className="flex flex-col w-1/5 border-r">
         <div className="flex-grow">
