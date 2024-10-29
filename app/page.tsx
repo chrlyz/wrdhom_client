@@ -7,7 +7,6 @@ import GetGlobalFeed from './components/feeds/get-global-feed';
 import QuerySettings from './components/settings/query-settings';
 import GetProfileFeed from './components/feeds/get-profile-feed';
 import GetCommentsFeed from './components/feeds/get-comments-feed';
-import { getPostsQueries } from './db/indexed-db';
 import NavigationPanel from './components/navigation/navigation-panel';
 
 export default function Home() {
@@ -55,16 +54,6 @@ export default function Home() {
       setLoading(false);
     })();
   }, []);
-
-  useEffect(() => {
-    (async () => {
-      if(!isDBLoaded) {
-        const data = await getPostsQueries();
-        setPostsQueries(data);
-        setIsDBLoaded(true);
-      }
-    })();
-  }, [isDBLoaded]);
 
   useEffect(() => {
     (async () => {
@@ -119,13 +108,10 @@ export default function Home() {
           <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
           {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
           {!loading && <NavigationPanel
-            initialPostsQuery={initialPostsQuery}
             postsQueries={postsQueries}
             currentPostsQuery={currentPostsQuery}
             setCurrentPostsQuery={setCurrentPostsQuery}
-            previousPostsQuery={previousPostsQuery}
             setPreviousPostsQuery={setPreviousPostsQuery}
-            posts={posts}
             setPosts={setPosts}
           />}
         </div>
@@ -147,11 +133,10 @@ export default function Home() {
         postsQueries={postsQueries}
         setPostsQueries={setPostsQueries}
         isDBLoaded={isDBLoaded}
+        setIsDBLoaded={setIsDBLoaded}
         initialPostsQuery={initialPostsQuery}
         setInitialPostsQuery={setInitialPostsQuery}
-        currentPostsQuery={currentPostsQuery}
         setCurrentPostsQuery={setCurrentPostsQuery}
-        previousPostsQuery={previousPostsQuery}
         posts={posts}
         setPosts={setPosts}
       />
