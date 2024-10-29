@@ -3,7 +3,6 @@ import { Dispatch, SetStateAction } from "react";
 import { ItemContentList } from './content-item';
 import CreatePost from '../posts/create-post';
 import { fetchItems } from './utils/fetch';
-import { auditItems } from './utils/audit';
 import { mergeAndSortContent } from './utils/structure';
 import { FeedType } from '../types';
 
@@ -25,11 +24,10 @@ export default function GetGlobalFeed({
   postsQueries,
   setPostsQueries,
   isDBLoaded,
+  setIsDBLoaded,
   initialPostsQuery,
   setInitialPostsQuery,
-  currentPostsQuery,
   setCurrentPostsQuery,
-  previousPostsQuery,
   posts,
   setPosts
 }: {
@@ -50,11 +48,10 @@ export default function GetGlobalFeed({
   postsQueries: any[],
   setPostsQueries: Dispatch<SetStateAction<any[]>>,
   isDBLoaded: boolean,
+  setIsDBLoaded: Dispatch<SetStateAction<boolean>>,
   initialPostsQuery: any,
   setInitialPostsQuery: Dispatch<SetStateAction<any>>,
-  currentPostsQuery: any,
   setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
-  previousPostsQuery: any,
   posts: any[],
   setPosts: Dispatch<SetStateAction<any[]>>
 }) {
@@ -83,6 +80,7 @@ export default function GetGlobalFeed({
         postsQueries,
         setPostsQueries,
         isDBLoaded,
+        setIsDBLoaded,
         initialPostsQuery,
         setInitialPostsQuery,
         setCurrentPostsQuery,

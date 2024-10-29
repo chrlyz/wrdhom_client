@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { ContentType, EmbeddedReactions, FeedType } from '../../types';
-import { addPostsQuery, getPostsQuery } from "@/app/db/indexed-db";
+import { addPostsQuery, getPostsQuery, getPostsQueries } from "@/app/db/indexed-db";
 
 export const fetchItems = async (
     feedType: FeedType,
@@ -28,7 +28,8 @@ export const fetchItems = async (
       fromBlockComments,
       toBlockComments,
       commentTarget,
-      setComments
+      setComments,
+      setIsDBLoaded
     }: {
       account: string[],
       setLoading: Dispatch<SetStateAction<boolean>>,
@@ -36,6 +37,7 @@ export const fetchItems = async (
       postsQueries: any[],
       setPostsQueries: Dispatch<SetStateAction<any[]>>,
       isDBLoaded: boolean,
+      setIsDBLoaded: Dispatch<SetStateAction<boolean>>,
       initialPostsQuery: any;
       setInitialPostsQuery: Dispatch<SetStateAction<any>>,
       setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
@@ -133,37 +135,57 @@ export const fetchItems = async (
           throw new Error(`The server response doesn't match query for Posts`);
         }
 
-        if (isDBLoaded) {
-          setPosts(processedItems);
-          if (
-            initialPostsQuery.postsAuditMetadata.hashedQuery === data.postsAuditMetadata.hashedQuery
-            && initialPostsQuery.postsAuditMetadata.hashedState === data.postsAuditMetadata.hashedState
-            && initialPostsQuery.postsAuditMetadata.atBlockHeight === data.postsAuditMetadata.atBlockHeight
-          ) {
-            const postsQuery = await getPostsQuery(hashedQuery, data.postsAuditMetadata.atBlockHeight);
-            if (!postsQuery) {
-              await addPostsQuery({postsAuditMetadata: initialPostsQuery.postsAuditMetadata, processedPosts: initialPostsQuery.processedPosts});
-            }
+        const currentProcessedQuery = {
+          postsAuditMetadata: data.postsAuditMetadata,
+          processedPosts: processedItems
+        }
+        if (!isDBLoaded) {
+
+          const loadedPostsQueries = await getPostsQueries();
+          const postsQuery = await getPostsQuery(
+            data.postsAuditMetadata.hashedQuery,
+            data.postsAuditMetadata.atBlockHeight
+          );
+          if (!postsQuery) {
+            setPosts(processedItems);
+            setCurrentPostsQuery(currentProcessedQuery);
+            setPostsQueries([
+              ...loadedPostsQueries,
+              currentProcessedQuery
+            ]);
           } else {
-            const postsQuery = await getPostsQuery(hashedQuery, data.postsAuditMetadata.atBlockHeight);
-            if (!postsQuery) {
-              setPostsQueries([...postsQueries, {postsAuditMetadata: data.postsAuditMetadata, processedPosts: processedItems}]);
-              await addPostsQuery({postsAuditMetadata: data.postsAuditMetadata, processedPosts: processedItems});
-            } else {
-              console.log(postsQueries[postsQuery.id-1])
-              if (postsQueries[postsQuery.id-1]) {
-                setPosts(postsQuery.processedPosts);
-                setCurrentPostsQuery(postsQuery);
-              } else {
-                setPosts(postsQuery.processedPosts);
-                setCurrentPostsQuery(postsQuery);
-                setPostsQueries([...postsQueries, postsQuery]);
-              }
-            }
+            setPosts(postsQuery.processedPosts);
+            setCurrentPostsQuery(postsQuery);
+            setPostsQueries(loadedPostsQueries);
           }
+          
+          setInitialPostsQuery(currentProcessedQuery);
+          setIsDBLoaded(true);
+
         } else {
-          setInitialPostsQuery({postsAuditMetadata: data.postsAuditMetadata, processedPosts: processedItems});
+
+          const postsAtStart = await getPostsQuery(
+            initialPostsQuery.postsAuditMetadata.hashedQuery,
+            initialPostsQuery.postsAuditMetadata.atBlockHeight
+          );
+          if (!postsAtStart) await addPostsQuery(initialPostsQuery);
+
           setPosts(processedItems);
+
+          const postsQuery = await getPostsQuery(
+            data.postsAuditMetadata.hashedQuery,
+            data.postsAuditMetadata.atBlockHeight
+          );
+          if (!postsQuery) {
+            setCurrentPostsQuery(currentProcessedQuery);
+            setPostsQueries([...postsQueries, currentProcessedQuery]);
+            await addPostsQuery(currentProcessedQuery);
+          } else {
+            setCurrentPostsQuery(postsQuery);
+            if (!postsQueries[postsQuery.id-1])
+              setPostsQueries([...postsQueries, postsQuery]);
+          }
+
         }
 
       } else if (contentType === 'Reposts' && setReposts) {
