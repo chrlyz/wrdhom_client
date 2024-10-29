@@ -42,6 +42,7 @@ export default function Home() {
   const [initialPostsQuery, setInitialPostsQuery] = useState(null as any);
   const [currentPostsQuery, setCurrentPostsQuery] = useState(null as any);
   const [posts, setPosts] = useState([] as any[]);
+  const [profilePosts, setProfilePosts] = useState([] as any[]);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
 
@@ -111,6 +112,12 @@ export default function Home() {
             currentPostsQuery={currentPostsQuery}
             setCurrentPostsQuery={setCurrentPostsQuery}
             setPosts={setPosts}
+            setProfileAddress={setProfileAddress}
+            setShowProfile={setShowProfile}
+            setCommentTarget={setCommentTarget}
+            setHideGetGlobalPosts={setHideGetGlobalPosts}
+            setFeedType={setFeedType}
+            setProfilePosts={setProfilePosts}
           />}
         </div>
       </div>
@@ -145,8 +152,6 @@ export default function Home() {
         howManyPosts={howManyPosts}
         fromBlock={fromBlock}
         toBlock={toBlock}
-        setShowProfile={setShowProfile}
-        setHideGetGlobalPosts={setHideGetGlobalPosts}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
         howManyReposts={howManyReposts}
@@ -166,6 +171,8 @@ export default function Home() {
         initialPostsQuery={initialPostsQuery}
         setInitialPostsQuery={setInitialPostsQuery}
         setCurrentPostsQuery={setCurrentPostsQuery}
+        posts={profilePosts}
+        setPosts={setProfilePosts}
       />}
       {showComments && <GetCommentsFeed
         commentTarget={commentTarget}

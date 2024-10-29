@@ -1,23 +1,50 @@
 import { Dispatch, SetStateAction, useState, useEffect } from 'react';
+import { FeedType } from '../types';
 
 export default function NavigationPanel({
     postsQueries,
     currentPostsQuery,
     setCurrentPostsQuery,
-    setPosts
+    setPosts,
+    setProfilePosts,
+    setProfileAddress,
+    setShowProfile,
+    setCommentTarget,
+    setHideGetGlobalPosts,
+    setFeedType
 }: {
     postsQueries: any[],
     currentPostsQuery: any,
     setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
-    setPosts: Dispatch<SetStateAction<any[]>>
+    setPosts: Dispatch<SetStateAction<any[]>>,
+    setProfilePosts: Dispatch<SetStateAction<any[]>>,
+    setProfileAddress: Dispatch<SetStateAction<string>>,
+    setShowProfile: Dispatch<SetStateAction<boolean>>,
+    setCommentTarget: Dispatch<SetStateAction<any>>,
+    setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
+    setFeedType: Dispatch<SetStateAction<FeedType>>
 }) {
   const [clicked, setClicked] = useState(false);
 
   useEffect(() => {
     (async () => {
       if (currentPostsQuery && clicked) {
+
         setClicked(false);
-        setPosts(currentPostsQuery.processedPosts);
+        
+
+        if (currentPostsQuery.feedType === 'profile') {
+          setProfilePosts(currentPostsQuery.processedPosts);
+          setProfileAddress(currentPostsQuery.profileAddress);
+          setFeedType('profile');
+        } else if (currentPostsQuery.feedType === 'global') {
+          setPosts(currentPostsQuery.processedPosts);
+          setProfileAddress('');
+          setShowProfile(false);
+          setCommentTarget(null);
+          setHideGetGlobalPosts('');
+          setFeedType('global');
+        }
       }
     })();
   });

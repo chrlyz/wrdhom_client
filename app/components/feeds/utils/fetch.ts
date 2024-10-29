@@ -136,6 +136,8 @@ export const fetchItems = async (
         }
 
         const currentProcessedQuery = {
+          feedType: feedType,
+          profileAddress: profileAddress,
           postsAuditMetadata: data.postsAuditMetadata,
           processedPosts: processedItems
         }

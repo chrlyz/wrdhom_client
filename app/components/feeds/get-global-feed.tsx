@@ -131,7 +131,7 @@ export default function GetGlobalFeed({
       />
       {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
-            <p >The query threw zero results</p>
+            <p >The query threw zero results (global)</p>
         </div>
       </div>}
     </div>
