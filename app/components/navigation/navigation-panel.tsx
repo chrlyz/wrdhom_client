@@ -4,16 +4,13 @@ export default function NavigationPanel({
     postsQueries,
     currentPostsQuery,
     setCurrentPostsQuery,
-    setPreviousPostsQuery,
     setPosts
 }: {
     postsQueries: any[],
     currentPostsQuery: any,
     setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
-    setPreviousPostsQuery: Dispatch<SetStateAction<any>>,
     setPosts: Dispatch<SetStateAction<any[]>>
 }) {
-  const [postsQueryLength, setPostsQueryLength] = useState(0);
   const [clicked, setClicked] = useState(false);
 
   useEffect(() => {
@@ -31,9 +28,6 @@ export default function NavigationPanel({
         return (<button
           key={index}
           onClick={() => {
-            if (postsQueries.length > 1) {
-              setPreviousPostsQuery(currentPostsQuery);
-            }
             setCurrentPostsQuery(postsQuery);
             setClicked(true);
           }}

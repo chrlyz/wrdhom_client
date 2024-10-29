@@ -26,8 +26,10 @@ export default function GetCommentsFeed({
   postsQueries,
   setPostsQueries,
   isDBLoaded,
+  setIsDBLoaded,
   initialPostsQuery,
-  setInitialPostsQuery
+  setInitialPostsQuery,
+  setCurrentPostsQuery
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -49,8 +51,10 @@ export default function GetCommentsFeed({
   postsQueries: any[],
   setPostsQueries: Dispatch<SetStateAction<any[]>>,
   isDBLoaded: boolean,
-  initialPostsQuery: any;
-  setInitialPostsQuery: Dispatch<SetStateAction<any>>
+  setIsDBLoaded: Dispatch<SetStateAction<boolean>>,
+  initialPostsQuery: any,
+  setInitialPostsQuery: Dispatch<SetStateAction<any>>,
+  setCurrentPostsQuery: Dispatch<SetStateAction<any>>
 }) {
     const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
@@ -81,8 +85,10 @@ export default function GetCommentsFeed({
           postsQueries,
           setPostsQueries,
           isDBLoaded,
+          setIsDBLoaded,
           initialPostsQuery,
           setInitialPostsQuery,
+          setCurrentPostsQuery,
           commentTarget,
           howManyComments,
           fromBlockComments,
