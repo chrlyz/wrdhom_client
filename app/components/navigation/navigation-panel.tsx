@@ -48,6 +48,8 @@ export default function NavigationPanel({
       }
     })();
   });
+  console.log('navigation')
+  console.log(currentPostsQuery)
 
   return (
     <div className="flex flex-wrap gap-2 p-4 border-t mt-auto">

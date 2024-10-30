@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from "react";
 import { ContentItem, ItemContentList } from './content-item';
 import { FeedType } from '../types';
 import { fetchItems } from './utils/fetch';
-import { auditItems } from './utils/audit';
+import { auditItems } from './../audit/utils/audit';
 
 export default function GetCommentsFeed({
   commentTarget,
@@ -112,15 +112,13 @@ export default function GetCommentsFeed({
           reactionsContractAddress,
           commentsContractAddress,
           repostsContractAddress,
+          items: comments,
+          fromBlock: fromBlockComments,
+          toBlock: toBlockComments
         }
 
         if (comments.length > 0) {
-          const auditCommentsParams = {
-            items: comments,
-            fromBlock: fromBlockComments,
-            toBlock: toBlockComments
-          }
-          await auditItems('comments', 'Comments', auditGeneralParams, auditCommentsParams, commentTarget)
+          await auditItems('comments', 'Comments', auditGeneralParams, commentTarget)
         } else {
           setWhenZeroContent(true);
         }

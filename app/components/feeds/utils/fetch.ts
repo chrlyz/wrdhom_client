@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { ContentType, EmbeddedReactions, FeedType } from '../../types';
-import { addPostsQuery, getPostsQuery, getPostsQueries } from "@/app/db/indexed-db";
+import { addPostsQuery, getPostsQuery, getAllPostsQueries } from "@/app/db/indexed-db";
 
 export const fetchItems = async (
     feedType: FeedType,
@@ -143,17 +143,17 @@ export const fetchItems = async (
         }
         if (!isDBLoaded) {
 
-          const loadedPostsQueries = await getPostsQueries();
+          const loadedPostsQueries = await getAllPostsQueries();
           const postsQuery = await getPostsQuery(
             data.postsAuditMetadata.hashedQuery,
             data.postsAuditMetadata.atBlockHeight
           );
           if (!postsQuery) {
             setPosts(processedItems);
-            setCurrentPostsQuery(currentProcessedQuery);
+            setCurrentPostsQuery({...currentProcessedQuery, ...{id: loadedPostsQueries.length+1}});
             setPostsQueries([
               ...loadedPostsQueries,
-              currentProcessedQuery
+              {...currentProcessedQuery, ...{id: loadedPostsQueries.length+1}}
             ]);
           } else {
             setPosts(postsQuery.processedPosts);
@@ -179,15 +179,15 @@ export const fetchItems = async (
             data.postsAuditMetadata.atBlockHeight
           );
           if (!postsQuery) {
-            setCurrentPostsQuery(currentProcessedQuery);
-            setPostsQueries([...postsQueries, currentProcessedQuery]);
+            setCurrentPostsQuery({...currentProcessedQuery, ...{id: postsQueries.length+1}});
+            console.log(postsQueries)
+            setPostsQueries([...postsQueries, {...currentProcessedQuery, ...{id: postsQueries.length+1}}]);
             await addPostsQuery(currentProcessedQuery);
           } else {
             setCurrentPostsQuery(postsQuery);
             if (!postsQueries[postsQuery.id-1])
               setPostsQueries([...postsQueries, postsQuery]);
           }
-
         }
 
       } else if (contentType === 'Reposts' && setReposts) {
