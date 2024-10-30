@@ -9,7 +9,9 @@ export default function AuditButton({
   commentsContractAddress,
   repostsContractAddress,
   setAuditing,
-  setErrorMessage
+  setErrorMessage,
+  postsQueries,
+  setPostsQueries
 }: {
   currentPostsQuery: any,
   postsContractAddress: string,
@@ -18,8 +20,21 @@ export default function AuditButton({
   repostsContractAddress: string,
   setAuditing: Dispatch<SetStateAction<boolean>>,
   setErrorMessage: Dispatch<SetStateAction<any>>,
+  postsQueries: any[],
+  setPostsQueries: Dispatch<SetStateAction<any[]>>
 }) {
   const [clicked, setClicked] = useState(false);
+
+  const updatePostsQueriesWithAudit = (
+    index: number,
+    isValid: boolean
+  ) => {
+      setPostsQueries(prevPostsQueries => {
+        const newPostsQueries = [...prevPostsQueries];
+        newPostsQueries[index] = {...currentPostsQuery, ...{isValid: isValid}};
+        return newPostsQueries;
+      });
+  }
 
   useEffect(() => {
   (async () => {
@@ -42,9 +57,11 @@ export default function AuditButton({
         console.log(currentPostsQuery)
         if (currentPostsQuery.feedType === 'profile') {
           const isValid = await auditItems('profile', 'Posts', auditGeneralParams);
+          updatePostsQueriesWithAudit(currentPostsQuery.id-1, isValid);
           await updatePostsQuery(currentPostsQuery.id, {isValid: isValid});
         } else if (currentPostsQuery.feedType === 'global') {
             const isValid = await auditItems('global', 'Posts', auditGeneralParams);
+            updatePostsQueriesWithAudit(currentPostsQuery.id-1, isValid);
             await updatePostsQuery(currentPostsQuery.id, {isValid: isValid});
         }
 

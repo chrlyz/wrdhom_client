@@ -11,7 +11,8 @@ export default function NavigationPanel({
     setShowProfile,
     setCommentTarget,
     setHideGetGlobalPosts,
-    setFeedType
+    setFeedType,
+    auditing
 }: {
     postsQueries: any[],
     currentPostsQuery: any,
@@ -22,9 +23,18 @@ export default function NavigationPanel({
     setShowProfile: Dispatch<SetStateAction<boolean>>,
     setCommentTarget: Dispatch<SetStateAction<any>>,
     setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
-    setFeedType: Dispatch<SetStateAction<FeedType>>
+    setFeedType: Dispatch<SetStateAction<FeedType>>,
+    auditing: boolean,
 }) {
   const [clicked, setClicked] = useState(false);
+  
+  const isAuditMetadataEqual = (query1: any, query2: any) => {
+    if (!query1 || !query2) return false;
+    
+    return query1.postsAuditMetadata.hashedQuery === query2.postsAuditMetadata.hashedQuery
+      && query1.postsAuditMetadata.hashedState === query2.postsAuditMetadata.hashedState
+      && query1.postsAuditMetadata.atBlockHeight === query2.postsAuditMetadata.atBlockHeight;
+  };
 
   useEffect(() => {
     (async () => {
@@ -50,6 +60,7 @@ export default function NavigationPanel({
   });
   console.log('navigation')
   console.log(currentPostsQuery)
+  console.log(postsQueries)
 
   return (
     <div className="flex flex-wrap gap-2 p-4 border-t mt-auto">
@@ -65,11 +76,9 @@ export default function NavigationPanel({
             transition-all duration-200 ease-in-out
             hover:opacity-80
             ${
-              currentPostsQuery && postsQuery
-              && currentPostsQuery.postsAuditMetadata.hashedQuery === postsQuery.postsAuditMetadata.hashedQuery
-              && currentPostsQuery.postsAuditMetadata.hashedState === postsQuery.postsAuditMetadata.hashedState
-              && currentPostsQuery.postsAuditMetadata.atBlockHeight === postsQuery.postsAuditMetadata.atBlockHeight
-              ? 'bg-black' : 'bg-gray-300'
+              postsQuery.isValid && isAuditMetadataEqual(currentPostsQuery, postsQuery) ? 'bg-green-700'
+              : isAuditMetadataEqual(currentPostsQuery, postsQuery) ? 'bg-black'
+              : postsQuery.isValid ? 'bg-green-500' : 'bg-gray-300'
             }
           `}
         />)
