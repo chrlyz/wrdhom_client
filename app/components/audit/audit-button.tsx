@@ -10,8 +10,8 @@ export default function AuditButton({
   repostsContractAddress,
   setAuditing,
   setErrorMessage,
-  postsQueries,
-  setPostsQueries
+  setPostsQueries,
+  auditing
 }: {
   currentPostsQuery: any,
   postsContractAddress: string,
@@ -20,8 +20,8 @@ export default function AuditButton({
   repostsContractAddress: string,
   setAuditing: Dispatch<SetStateAction<boolean>>,
   setErrorMessage: Dispatch<SetStateAction<any>>,
-  postsQueries: any[],
-  setPostsQueries: Dispatch<SetStateAction<any[]>>
+  setPostsQueries: Dispatch<SetStateAction<any[]>>,
+  auditing: boolean
 }) {
   const [clicked, setClicked] = useState(false);
 
@@ -53,8 +53,6 @@ export default function AuditButton({
           repostsContractAddress: repostsContractAddress,
         }
 
-        console.log('auditing')
-        console.log(currentPostsQuery)
         if (currentPostsQuery.feedType === 'profile') {
           const isValid = await auditItems('profile', 'Posts', auditGeneralParams);
           updatePostsQueriesWithAudit(currentPostsQuery.id-1, isValid);
@@ -71,9 +69,9 @@ export default function AuditButton({
   });
   
   return (
-    <div className="w-full p-2 border-b-2 shadow-lg">
+    <div className="p-4 w-full mb-32">
       <button
-        className="w-full p-1 bg-black text-white"
+        className="w-full p-2 bg-black text-white"
         onClick={() => {
           if (currentPostsQuery.isValid === undefined) {
             setClicked(true);
@@ -81,6 +79,7 @@ export default function AuditButton({
           }
         }}
       >Audit</button>
+      {auditing && <p className="border-4 p-2 shadow-lg">Auditing...</p>}
     </div>
   );
 }
