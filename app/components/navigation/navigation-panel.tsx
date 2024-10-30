@@ -58,7 +58,7 @@ export default function NavigationPanel({
   });
 
   return (
-    <div className="flex flex-wrap gap-2 p-4 border-t mt-auto">
+    <div className="flex flex-wrap gap-2 p-4 border-t mt-10">
       {postsQueries.map((postsQuery, index) => {
         return (<button
           key={index}
