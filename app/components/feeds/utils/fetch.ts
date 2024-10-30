@@ -180,7 +180,6 @@ export const fetchItems = async (
           );
           if (!postsQuery) {
             setCurrentPostsQuery({...currentProcessedQuery, ...{id: postsQueries.length+1}});
-            console.log(postsQueries)
             setPostsQueries([...postsQueries, {...currentProcessedQuery, ...{id: postsQueries.length+1}}]);
             await addPostsQuery(currentProcessedQuery);
           } else {

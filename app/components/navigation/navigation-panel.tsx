@@ -11,8 +11,7 @@ export default function NavigationPanel({
     setShowProfile,
     setCommentTarget,
     setHideGetGlobalPosts,
-    setFeedType,
-    auditing
+    setFeedType
 }: {
     postsQueries: any[],
     currentPostsQuery: any,
@@ -23,8 +22,7 @@ export default function NavigationPanel({
     setShowProfile: Dispatch<SetStateAction<boolean>>,
     setCommentTarget: Dispatch<SetStateAction<any>>,
     setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
-    setFeedType: Dispatch<SetStateAction<FeedType>>,
-    auditing: boolean,
+    setFeedType: Dispatch<SetStateAction<FeedType>>
 }) {
   const [clicked, setClicked] = useState(false);
   
@@ -58,9 +56,6 @@ export default function NavigationPanel({
       }
     })();
   });
-  console.log('navigation')
-  console.log(currentPostsQuery)
-  console.log(postsQueries)
 
   return (
     <div className="flex flex-wrap gap-2 p-4 border-t mt-auto">

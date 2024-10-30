@@ -120,9 +120,9 @@ export default function Home() {
             setHideGetGlobalPosts={setHideGetGlobalPosts}
             setFeedType={setFeedType}
             setProfilePosts={setProfilePosts}
-            auditing={auditing}
           />}
-          {loading ? null : <AuditButton
+        </div>
+        {loading ? null : <AuditButton
                 currentPostsQuery={currentPostsQuery}
                 postsContractAddress={postsContractAddress}
                 reactionsContractAddress={reactionsContractAddress}
@@ -130,11 +130,9 @@ export default function Home() {
                 repostsContractAddress={repostsContractAddress}
                 setAuditing={setAuditing}
                 setErrorMessage={setErrorMessage}
-                postsQueries={postsQueries}
                 setPostsQueries={setPostsQueries}
-          />}
-          {auditing && <p className="border-4 p-2 shadow-lg">Auditing...</p>}
-        </div>
+                auditing={auditing}
+        />}
       </div>
       <GetGlobalFeed getGlobalFeed={getGlobalFeed}
         howManyPosts={howManyPosts}
