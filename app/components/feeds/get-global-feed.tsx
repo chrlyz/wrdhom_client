@@ -29,7 +29,11 @@ export default function GetGlobalFeed({
   setInitialPostsQuery,
   setCurrentPostsQuery,
   posts,
-  setPosts
+  setPosts,
+  loading,
+  setLoading,
+  errorMessage,
+  setErrorMessage
 }: {
   getGlobalFeed: boolean,
   howManyPosts: number,
@@ -53,12 +57,14 @@ export default function GetGlobalFeed({
   setInitialPostsQuery: Dispatch<SetStateAction<any>>,
   setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
   posts: any[],
-  setPosts: Dispatch<SetStateAction<any[]>>
+  setPosts: Dispatch<SetStateAction<any[]>>,
+  loading: boolean,
+  setLoading: Dispatch<SetStateAction<boolean>>,
+  errorMessage: any,
+  setErrorMessage: Dispatch<SetStateAction<any>>
 }) {
   const [reposts, setReposts] = useState([] as any[]);
   const [mergedContent, setMergedContent] = useState([] as any);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState(null);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [fetchCompleted, setFetchCompleted] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
@@ -98,7 +104,7 @@ export default function GetGlobalFeed({
 
       setFetchCompleted(true);
     })();
-  }, [getGlobalFeed, account]);
+  }, [getGlobalFeed, account, isDBLoaded]);
 
   useEffect(() => {
     (async () => {
@@ -115,7 +121,7 @@ export default function GetGlobalFeed({
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh] ${hideGetGlobalPosts}`}>
-      {loading ? null : walletConnected && <CreatePost account={account} />}
+      {loading ? null : walletConnected && <CreatePost/>}
       {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
       {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
       <ItemContentList

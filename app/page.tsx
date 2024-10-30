@@ -8,6 +8,7 @@ import QuerySettings from './components/settings/query-settings';
 import GetProfileFeed from './components/feeds/get-profile-feed';
 import GetCommentsFeed from './components/feeds/get-comments-feed';
 import NavigationPanel from './components/navigation/navigation-panel';
+import AuditButton from './components/audit/audit-button';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,8 @@ export default function Home() {
   const [currentPostsQuery, setCurrentPostsQuery] = useState(null as any);
   const [posts, setPosts] = useState([] as any[]);
   const [profilePosts, setProfilePosts] = useState([] as any[]);
+  const [errorMessage, setErrorMessage] = useState(null as any);
+  const [auditing, setAuditing] = useState(false);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
 
@@ -51,7 +54,6 @@ export default function Home() {
       if (typeof (window as any).mina !== 'undefined') {
         setHasWallet(true);
       }
-      setLoading(false);
     })();
   }, []);
 
@@ -105,9 +107,9 @@ export default function Home() {
           <h1 className="text-2xl font-bold mb-3">WrdHom: The auditable social-media platform</h1>
           <br/>
           {loading ? null : !hasWallet && <InstallWallet />}
-          <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>
+          {loading ? null : <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>}
           {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
-          {!loading && <NavigationPanel
+          {loading ? null : <NavigationPanel
             postsQueries={postsQueries}
             currentPostsQuery={currentPostsQuery}
             setCurrentPostsQuery={setCurrentPostsQuery}
@@ -119,6 +121,16 @@ export default function Home() {
             setFeedType={setFeedType}
             setProfilePosts={setProfilePosts}
           />}
+          {loading ? null : <AuditButton
+                currentPostsQuery={currentPostsQuery}
+                postsContractAddress={postsContractAddress}
+                reactionsContractAddress={reactionsContractAddress}
+                commentsContractAddress={commentsContractAddress}
+                repostsContractAddress={repostsContractAddress}
+                setAuditing={setAuditing}
+                setErrorMessage={setErrorMessage}
+          />}
+          {auditing && <p className="border-4 p-2 shadow-lg">Auditing...</p>}
         </div>
       </div>
       <GetGlobalFeed getGlobalFeed={getGlobalFeed}
@@ -144,6 +156,10 @@ export default function Home() {
         setCurrentPostsQuery={setCurrentPostsQuery}
         posts={posts}
         setPosts={setPosts}
+        loading={loading}
+        setLoading={setLoading}
+        errorMessage={errorMessage}
+        setErrorMessage={setErrorMessage}
       />
       {showProfile && <GetProfileFeed
         getProfileFeed={getProfileFeed}
@@ -157,10 +173,6 @@ export default function Home() {
         howManyReposts={howManyReposts}
         fromBlockReposts={fromBlockReposts}
         toBlockReposts={toBlockReposts}
-        postsContractAddress={postsContractAddress}
-        reactionsContractAddress={reactionsContractAddress}
-        commentsContractAddress={commentsContractAddress}
-        repostsContractAddress={repostsContractAddress}
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
@@ -173,6 +185,10 @@ export default function Home() {
         setCurrentPostsQuery={setCurrentPostsQuery}
         posts={profilePosts}
         setPosts={setProfilePosts}
+        loading={loading}
+        setLoading={setLoading}
+        errorMessage={errorMessage}
+        setErrorMessage={setErrorMessage}
       />}
       {showComments && <GetCommentsFeed
         commentTarget={commentTarget}
@@ -201,7 +217,7 @@ export default function Home() {
         setCurrentPostsQuery={setCurrentPostsQuery}
       />}
       <div className="flex flex-col w-1/5 border-r">
-        <div className="flex-grow">
+        {loading ? null : <div className="flex-grow">
           <QuerySettings
             howManyPosts={howManyPosts}
             setHowManyPosts={setHowManyPosts}
@@ -222,8 +238,8 @@ export default function Home() {
             toBlockReposts={toBlockReposts}
             setToBlockReposts={setToBlockReposts}
           />
-        </div>
-        {!showProfile && !showComments && (
+        </div>}
+        {loading ? null : !showProfile && !showComments && (
             <div className="p-4 w-full mb-32">
               <button 
                 className="w-full p-2 bg-black text-white"
@@ -232,7 +248,7 @@ export default function Home() {
               </button>
             </div>
           )}
-        {showProfile && (
+        {loading ? null : showProfile && (
           <div className="p-4 w-full mb-32">
             <button 
               className="w-full p-2 bg-black text-white"
@@ -241,7 +257,7 @@ export default function Home() {
             </button>
           </div>
         )}
-        {showComments && (
+        {loading ? null : showComments && (
           <div className="p-4 w-full mb-32">
             <button 
               className="w-full p-2 bg-black text-white"

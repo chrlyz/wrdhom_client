@@ -1,38 +1,35 @@
 import { Dispatch, SetStateAction } from "react";
-import { getCID } from '../../utils/cid';
+import { getCID } from "../../utils/cid";
 import { ContentType, FeedType } from '../../types';
 
 export async function auditItems(
   feedType: FeedType,
   contentType: ContentType,
   {
-    setLoading,
+    items,
+    fromBlock,
+    toBlock,
+    setAuditing,
     setErrorMessage,
     postsContractAddress,
     reactionsContractAddress,
     commentsContractAddress,
-    repostsContractAddress,
-  }: {
-    setLoading: Dispatch<SetStateAction<boolean>>,
-    setErrorMessage: Dispatch<SetStateAction<any>>,
-    postsContractAddress: string,
-    reactionsContractAddress: string,
-    commentsContractAddress: string,
-    repostsContractAddress: string,
-  },
-  {
-    items,
-    fromBlock,
-    toBlock,
+    repostsContractAddress
   }: {
     items: any[],
     fromBlock: number,
     toBlock: number,
+    setAuditing: Dispatch<SetStateAction<boolean>>,
+    setErrorMessage: Dispatch<SetStateAction<any>>,
+    postsContractAddress: string,
+    reactionsContractAddress: string,
+    commentsContractAddress: string,
+    repostsContractAddress: string
   },
   commentTarget?: any
 ) {
   try {
-    if (items.length === 0) return;
+    if (items.length === 0) return false;
 
     const { MerkleMapWitness, Poseidon, CircuitString } = await import('o1js');
     const { PostState, RepostState, CommentState } = await import('wrdhom');
@@ -64,6 +61,7 @@ export async function auditItems(
       const allItemsCounter = itemState[`all${contentType}Counter`];
       const usersItemsCounter = itemState[`user${contentType}Counter`];
       const targetItemsCounter = itemState[`target${contentType}Counter`];
+      const f = {setAuditing: setAuditing, setErrorMessage: setErrorMessage}
 
       if (i+1 < items.length) {
           const nextItemState: any = (contentType === 'Posts' ? PostState
@@ -83,7 +81,7 @@ export async function auditItems(
                                   ? `target${contentType}Counter`
                                   : `user${contentType}Counter`
                               }`;
-          checkGap(currentIndex, nextItemState[nextIndex], contentType);
+          checkGap(currentIndex, nextItemState[nextIndex], contentType, f);
       }
 
       const blockHeight = Number(itemState[`${lowercaseSingularCT}BlockHeight`]);
@@ -96,10 +94,12 @@ export async function auditItems(
 
       // Audit block range
       if (blockHeight < fromBlock || blockHeight > toBlock) {
-        throw new Error(
+        setAuditing(false);
+        setErrorMessage(
           `Block-length ${blockHeight} for ${middleMessage}`
             +` isn't between the block range ${fromBlock} to ${toBlock}`
         );
+        return false;
       }
 
       // Audit post key
@@ -107,10 +107,12 @@ export async function auditItems(
       const calculatedPostKey = Poseidon.hash([posterAddressAsField, postState.postContentID.hash()]);
       const statedPostKey = contentType !== 'Comments' ? items[i].postKey : itemState.targetKey;
       if (calculatedPostKey.toString() !== statedPostKey.toString()) {
-        throw new Error(
+        setAuditing(false);
+        setErrorMessage(
           `Post Key for ${middleMessage}`
             +` doesn't belong to Post`
         );
+        return false;
       }
 
       // // Audit that the items match the onchain state
@@ -125,10 +127,12 @@ export async function auditItems(
         )
         !== calculatedRoot
       ) {
-        throw new Error(
+        setAuditing(false);
+        setErrorMessage(
           `${middleMessage}`
-          +` has different root than zkApp state. The server may be experiencing some issues or manipulating results for your query.`
+            +` has different root than zkApp state. The server may be experiencing some issues or manipulating results for your query.`
         );
+        return false;
       }
   
       if (Number(itemState.deletionBlockHeight) === 0) {
@@ -137,25 +141,27 @@ export async function auditItems(
         const calculatedCID = await getCID(items[i].content);
         const statedCID = contentType !== 'Comments' ? items[i].postState.postContentID : itemState.commentContentID
         if (calculatedCID !== CircuitString.fromJSON(statedCID).toString()) {
-          throw new Error(
+          setAuditing(false);
+          setErrorMessage(
             `The content for ${middleMessage}`
               +` doesn't match the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`
           );
+          return false;
         }
   
         if (contentType !== 'Comments') {
           // Audit embedded items
-          await auditEmbeddedItems(items[i], feedType, 'Reactions', fetchedReactionsRoot, fetchedTargetsReactionsCountersRoot);
-          await auditEmbeddedItems(items[i], feedType, 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot);
-          await auditEmbeddedItems(items[i], feedType, 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot);
+          await auditEmbeddedItems(items[i], feedType, 'Reactions', fetchedReactionsRoot, fetchedTargetsReactionsCountersRoot, f);
+          await auditEmbeddedItems(items[i], feedType, 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot, f);
+          await auditEmbeddedItems(items[i], feedType, 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot, f);
         }
       }
     };
+    return true;
 
   } catch (e: any) {
     console.log(e);
-    setLoading(false);
-    setErrorMessage(e.message);
+    return false;
   }
 }
 
@@ -170,7 +176,14 @@ async function auditEmbeddedItems(
   feedType: FeedType,
   contentType: ContentType,
   fetchedItemsRoot: string,
-  fetchedTargetItemsRoot: string
+  fetchedTargetItemsRoot: string,
+  {
+    setAuditing,
+    setErrorMessage
+  }: {
+    setAuditing: Dispatch<SetStateAction<boolean>>,
+    setErrorMessage: Dispatch<SetStateAction<any>>
+  }
 ) {
   const { MerkleMapWitness, Field } = await import('o1js');
   const { ReactionState, CommentState, RepostState } = await import('wrdhom');
@@ -186,12 +199,14 @@ async function auditEmbeddedItems(
 
   // Audit that the server retrieves the same amount of embedded items it reports
   if (embeddedItems.length !== statedNumberOfEmbeddedItems) {
-    throw new Error(
+    setAuditing(false);
+    setErrorMessage(
       `The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} `
       +`for ${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter},`
       +` but it only provided ${embeddedItems.length} ${contentType}. `
       +`The server may be experiencing some issues or manipulating the content it shows.`
     );
+    return false;
   }
 
   // Audit that the amount of embedded items the server reports matches the onchain state
@@ -201,11 +216,13 @@ async function auditEmbeddedItems(
   )[0].toString();
 
   if (fetchedTargetItemsRoot !== calculatedTargetsItemsCountersRoot ) {
-    throw new Error(
+    setAuditing(false);
+    setErrorMessage(
       `The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} for `
       +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter},`
       +` but the contract accounts for a different amount. The server may be experiencing issues or manipulating responses.`
     );
+    return false;
   }
 
   for (let i = 0; i < embeddedItems.length; i++) {
@@ -216,21 +233,25 @@ async function auditEmbeddedItems(
 
     // Audit that embedded items belong to the parent item
     if (stateJSON.targetKey !== parentItem.postKey) {
-      throw new Error(
+      setAuditing(false);
+      setErrorMessage(
         `${singularCT} ${stateJSON[`target${contentType}Counter`]} from `
         +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter} `
         +`doesn't belong to ${singularParentCT}`
       );
+      return false;
     }
 
     // Audit that the embedded items match the onchain state
     if (fetchedItemsRoot !== calculatedRoot) {
-      throw new Error(
+      setAuditing(false);
+      setErrorMessage(
         `${singularCT} ${stateJSON[`target${contentType}Counter`]} from `
         +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter} `
         +`has different root than zkApp state. `
         +`The server may be experiencing some issues or manipulating results for the ${contentType}s`
       );
+      return false;
     }
 
     if (i+1 < embeddedItems.length) {
@@ -240,6 +261,7 @@ async function auditEmbeddedItems(
         state[`target${contentType}Counter`],
         nextState[`target${contentType}Counter`],
         contentType,
+        {setAuditing, setErrorMessage},
         {
           parentCounter: parentContentType === 'Reposts' ? parentItem.repostState[`allRepostsCounter`] : parentItem.postState[`allPostsCounter`],
           parentContentType: parentContentType
@@ -253,6 +275,13 @@ const checkGap = (
   current: string,
   next: string,
   contentType: ContentType,
+  {
+    setAuditing,
+    setErrorMessage
+  }: {
+    setAuditing: Dispatch<SetStateAction<boolean>>,
+    setErrorMessage: Dispatch<SetStateAction<any>>
+  },
   parentInfo?: {
     parentCounter: number,
     parentContentType: ContentType
@@ -260,10 +289,12 @@ const checkGap = (
 ) => {
   // Audit that no items are being omitted
   if (Number(current) !== Number(next) + 1) {
-    throw new Error(
+    setAuditing(false);
+    setErrorMessage(
       `Gap between ${contentType} ${current} and ${next}${parentInfo?.parentCounter ? `, `
-      +`from ${parentInfo?.parentContentType.slice(0, -1)} ${parentInfo?.parentCounter}` : ''}. `
-      +`The server may be experiencing some issues or censoring ${contentType}.`
+        +`from ${parentInfo?.parentContentType.slice(0, -1)} ${parentInfo?.parentCounter}` : ''}. `
+        +`The server may be experiencing some issues or censoring ${contentType}.`
     );
+    return false;
   }
 };

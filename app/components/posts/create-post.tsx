@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react';
 import { getCID } from '../utils/cid';
 import { PostState } from 'wrdhom';
 
-export default function CreatePost({
-    account
-}: {
-    account: string[]
-}) {
+export default function CreatePost() {
     const [post, setPost] = useState('');
     const [postCID, setPostCID] = useState('');
     const [signedData, setSignedData] = useState(null as any);

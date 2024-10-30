@@ -28,7 +28,11 @@ export default function GetProfileFeed({
   setInitialPostsQuery,
   setCurrentPostsQuery,
   posts,
-  setPosts
+  setPosts,
+  loading,
+  setLoading,
+  errorMessage,
+  setErrorMessage
 }: {
   getProfileFeed: boolean,
   profileAddress: string,
@@ -41,10 +45,6 @@ export default function GetProfileFeed({
   howManyReposts: number,
   fromBlockReposts: number,
   toBlockReposts: number,
-  postsContractAddress: string,
-  reactionsContractAddress: string,
-  commentsContractAddress: string,
-  repostsContractAddress: string,
   account: string[],
   feedType: FeedType,
   setFeedType: Dispatch<SetStateAction<FeedType>>,
@@ -56,14 +56,16 @@ export default function GetProfileFeed({
   setInitialPostsQuery: Dispatch<SetStateAction<any>>,
   setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
   posts: any[],
-  setPosts: Dispatch<SetStateAction<any[]>>
+  setPosts: Dispatch<SetStateAction<any[]>>,
+  loading: boolean,
+  setLoading: Dispatch<SetStateAction<boolean>>,
+  errorMessage: any,
+  setErrorMessage: Dispatch<SetStateAction<any>>
 }) {
 
   const [reposts, setReposts] = useState([] as any[]);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [mergedContent, setMergedContent] = useState([] as any);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState(null);
   const [fetchCompleted, setFetchCompleted] = useState(false);
   const [whenZeroContent, setWhenZeroContent] = useState(false);
 
