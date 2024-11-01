@@ -46,6 +46,7 @@ export default function Home() {
   const [profilePosts, setProfilePosts] = useState([] as any[]);
   const [errorMessage, setErrorMessage] = useState(null as any);
   const [auditing, setAuditing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
 
@@ -99,6 +100,10 @@ export default function Home() {
     }
   }, [commentTarget]);
 
+  useEffect(() => {
+    setInitialLoading(false);
+  }, []);
+
   return (
   <main>
     <div className="flex min-h-screen">
@@ -106,10 +111,10 @@ export default function Home() {
         <div className="p-4 flex-grow">
           <h1 className="text-2xl font-bold mb-3">WrdHom: The auditable social-media platform</h1>
           <br/>
-          {loading ? null : !hasWallet && <InstallWallet />}
-          {loading ? null : <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>}
-          {loading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
-          {loading ? null : <NavigationPanel
+          {initialLoading ? null : !hasWallet && <InstallWallet />}
+          {initialLoading ? null : <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>}
+          {initialLoading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
+          {<NavigationPanel
             postsQueries={postsQueries}
             currentPostsQuery={currentPostsQuery}
             setCurrentPostsQuery={setCurrentPostsQuery}
@@ -122,7 +127,7 @@ export default function Home() {
             setProfilePosts={setProfilePosts}
           />}
         </div>
-        {loading ? null : <AuditButton
+        {initialLoading ? null : <AuditButton
                 currentPostsQuery={currentPostsQuery}
                 postsContractAddress={postsContractAddress}
                 reactionsContractAddress={reactionsContractAddress}
@@ -218,7 +223,7 @@ export default function Home() {
         setCurrentPostsQuery={setCurrentPostsQuery}
       />}
       <div className="flex flex-col w-1/5 border-r">
-        {loading ? null : <div className="flex-grow">
+        {initialLoading ? null : <div className="flex-grow">
           <QuerySettings
             howManyPosts={howManyPosts}
             setHowManyPosts={setHowManyPosts}
@@ -240,7 +245,7 @@ export default function Home() {
             setToBlockReposts={setToBlockReposts}
           />
         </div>}
-        {loading ? null : !showProfile && !showComments && (
+        {initialLoading ? null : !showProfile && !showComments && (
             <div className="p-4 w-full mb-32">
               <button 
                 className="w-full p-2 bg-black text-white"
@@ -249,7 +254,7 @@ export default function Home() {
               </button>
             </div>
           )}
-        {loading ? null : showProfile && (
+        {showProfile && (
           <div className="p-4 w-full mb-32">
             <button 
               className="w-full p-2 bg-black text-white"
@@ -258,7 +263,7 @@ export default function Home() {
             </button>
           </div>
         )}
-        {loading ? null : showComments && (
+        {showComments && (
           <div className="p-4 w-full mb-32">
             <button 
               className="w-full p-2 bg-black text-white"
