@@ -124,7 +124,7 @@ export default function GetProfileFeed({
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
       <div className="p-2 border-b-2 shadow-lg">
-        <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap">
+        <div className="flex items-center border-4 p-2 shadow-lg break-all whitespace-pre-line">
             <p >{`Posts from user:\n\n${profileAddress}`}</p>
         </div>
       </div>
