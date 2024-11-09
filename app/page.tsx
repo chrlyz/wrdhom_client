@@ -40,7 +40,7 @@ export default function Home() {
   const [feedType, setFeedType] = useState(null as any);
   const [postsQueries, setPostsQueries] = useState([] as any[]);
   const [isDBLoaded, setIsDBLoaded] = useState(false);
-  const [initialPostsQuery, setInitialPostsQuery] = useState(null as any);
+  const [pastPostsQuery, setPastPostsQuery] = useState(null as any);
   const [currentPostsQuery, setCurrentPostsQuery] = useState(null as any);
   const [posts, setPosts] = useState([] as any[]);
   const [profilePosts, setProfilePosts] = useState([] as any[]);
@@ -157,8 +157,8 @@ export default function Home() {
         setPostsQueries={setPostsQueries}
         isDBLoaded={isDBLoaded}
         setIsDBLoaded={setIsDBLoaded}
-        initialPostsQuery={initialPostsQuery}
-        setInitialPostsQuery={setInitialPostsQuery}
+        pastPostsQuery={pastPostsQuery}
+        setPastPostsQuery={setPastPostsQuery}
         setCurrentPostsQuery={setCurrentPostsQuery}
         posts={posts}
         setPosts={setPosts}
@@ -186,8 +186,8 @@ export default function Home() {
         setPostsQueries={setPostsQueries}
         isDBLoaded={isDBLoaded}
         setIsDBLoaded={setIsDBLoaded}
-        initialPostsQuery={initialPostsQuery}
-        setInitialPostsQuery={setInitialPostsQuery}
+        pastPostsQuery={pastPostsQuery}
+        setPastPostsQuery={setPastPostsQuery}
         setCurrentPostsQuery={setCurrentPostsQuery}
         posts={profilePosts}
         setPosts={setProfilePosts}
@@ -218,8 +218,8 @@ export default function Home() {
         setPostsQueries={setPostsQueries}
         isDBLoaded={isDBLoaded}
         setIsDBLoaded={setIsDBLoaded}
-        initialPostsQuery={initialPostsQuery}
-        setInitialPostsQuery={setInitialPostsQuery}
+        pastPostsQuery={pastPostsQuery}
+        setPastPostsQuery={setPastPostsQuery}
         setCurrentPostsQuery={setCurrentPostsQuery}
       />}
       <div className="flex flex-col w-1/5 border-r">
