@@ -27,8 +27,8 @@ export default function GetCommentsFeed({
   setPostsQueries,
   isDBLoaded,
   setIsDBLoaded,
-  initialPostsQuery,
-  setInitialPostsQuery,
+  pastPostsQuery,
+  setPastPostsQuery,
   setCurrentPostsQuery
 }: {
   commentTarget: any,
@@ -52,8 +52,8 @@ export default function GetCommentsFeed({
   setPostsQueries: Dispatch<SetStateAction<any[]>>,
   isDBLoaded: boolean,
   setIsDBLoaded: Dispatch<SetStateAction<boolean>>,
-  initialPostsQuery: any,
-  setInitialPostsQuery: Dispatch<SetStateAction<any>>,
+  pastPostsQuery: any,
+  setPastPostsQuery: Dispatch<SetStateAction<any>>,
   setCurrentPostsQuery: Dispatch<SetStateAction<any>>
 }) {
     const [comments, setComments] = useState([] as any[]);
@@ -86,8 +86,8 @@ export default function GetCommentsFeed({
           setPostsQueries,
           isDBLoaded,
           setIsDBLoaded,
-          initialPostsQuery,
-          setInitialPostsQuery,
+          pastPostsQuery,
+          setPastPostsQuery,
           setCurrentPostsQuery,
           commentTarget,
           howManyComments,
@@ -102,28 +102,14 @@ export default function GetCommentsFeed({
     }, [getCommentsFeed, commentTarget]);
 
     useEffect(() => {
-      if (!fetchCompleted) return;
       (async () => {
-
-        const auditGeneralParams = {
-          setLoading,
-          setErrorMessage,
-          postsContractAddress,
-          reactionsContractAddress,
-          commentsContractAddress,
-          repostsContractAddress,
-          items: comments,
-          fromBlock: fromBlockComments,
-          toBlock: toBlockComments
+        if (fetchCompleted) {
+          if (comments.length === 0) {
+            setWhenZeroContent(true);
+          }
+          setFetchCompleted(false);
+          setLoading(false);
         }
-
-        if (comments.length > 0) {
-          await auditItems('comments', 'Comments', auditGeneralParams, commentTarget)
-        } else {
-          setWhenZeroContent(true);
-        }
-        setFetchCompleted(false);
-        setLoading(false);
       })();
     }, [fetchCompleted]);
 

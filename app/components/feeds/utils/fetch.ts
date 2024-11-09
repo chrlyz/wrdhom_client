@@ -12,8 +12,8 @@ export const fetchItems = async (
       postsQueries,
       setPostsQueries,
       isDBLoaded,
-      initialPostsQuery,
-      setInitialPostsQuery,
+      pastPostsQuery,
+      setPastPostsQuery,
       setCurrentPostsQuery,
       profileAddress,
       howManyPosts,
@@ -38,8 +38,8 @@ export const fetchItems = async (
       setPostsQueries: Dispatch<SetStateAction<any[]>>,
       isDBLoaded: boolean,
       setIsDBLoaded: Dispatch<SetStateAction<boolean>>,
-      initialPostsQuery: any;
-      setInitialPostsQuery: Dispatch<SetStateAction<any>>,
+      pastPostsQuery: any;
+      setPastPostsQuery: Dispatch<SetStateAction<any>>,
       setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
       profileAddress?: string,
       howManyPosts?: number,
@@ -161,18 +161,21 @@ export const fetchItems = async (
             setPostsQueries(loadedPostsQueries);
           }
           
-          setInitialPostsQuery(currentProcessedQuery);
+          setPastPostsQuery(currentProcessedQuery);
           setIsDBLoaded(true);
 
         } else {
-
-          const postsAtStart = await getPostsQuery(
-            initialPostsQuery.postsAuditMetadata.hashedQuery,
-            initialPostsQuery.postsAuditMetadata.atBlockHeight
-          );
-          if (!postsAtStart) await addPostsQuery(initialPostsQuery);
-
           setPosts(processedItems);
+
+          const pastPostQueryDB = await getPostsQuery(
+            pastPostsQuery.postsAuditMetadata.hashedQuery,
+            pastPostsQuery.postsAuditMetadata.atBlockHeight
+          );
+          if (!pastPostQueryDB) {
+            await addPostsQuery(pastPostsQuery);
+          }
+
+          setPastPostsQuery(currentProcessedQuery);
 
           const postsQuery = await getPostsQuery(
             data.postsAuditMetadata.hashedQuery,
@@ -181,7 +184,6 @@ export const fetchItems = async (
           if (!postsQuery) {
             setCurrentPostsQuery({...currentProcessedQuery, ...{id: postsQueries.length+1}});
             setPostsQueries([...postsQueries, {...currentProcessedQuery, ...{id: postsQueries.length+1}}]);
-            await addPostsQuery(currentProcessedQuery);
           } else {
             setCurrentPostsQuery(postsQuery);
             if (!postsQueries[postsQuery.id-1])
