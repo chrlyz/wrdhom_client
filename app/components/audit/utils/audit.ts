@@ -7,6 +7,7 @@ export async function auditItems(
   contentType: ContentType,
   {
     items,
+    itemsMetadata,
     fromBlock,
     toBlock,
     setAuditing,
@@ -17,6 +18,7 @@ export async function auditItems(
     repostsContractAddress
   }: {
     items: any[],
+    itemsMetadata: any,
     fromBlock: number,
     toBlock: number,
     setAuditing: Dispatch<SetStateAction<boolean>>,
@@ -31,20 +33,77 @@ export async function auditItems(
   try {
     if (items.length === 0) return false;
 
-    const { MerkleMapWitness, Poseidon, CircuitString } = await import('o1js');
+    const { MerkleMapWitness, Poseidon, CircuitString, Field } = await import('o1js');
     const { PostState, RepostState, CommentState } = await import('wrdhom');
     const lowercaseCT = contentType.toLowerCase();
     const lowercaseSingularCT =  lowercaseCT.slice(0, -1);
     const singularCT = contentType.slice(0, -1);
   
-    const [postsAppState, reactionsAppState, commentsAppState, repostsAppState] = await Promise.all([
-      fetchContractData(postsContractAddress),
+    const [reactionsAppState, commentsAppState, repostsAppState] = await Promise.all([
       fetchContractData(reactionsContractAddress),
       fetchContractData(commentsContractAddress),
       fetchContractData(repostsContractAddress)
     ]);
+
+    const DELAY = 3000;
+    let historicPostsState;
+    let errorMessage;
+    let tries = 0;
+    let auditing = true;
+
+    while (auditing) {
+      if (tries === 10) {
+        setAuditing(false);
+        setErrorMessage(errorMessage);
+        return false;
+      }
+
+      const response = await fetch(`/posts/audit`
+        +`?atBlockHeight=${itemsMetadata.atBlockHeight}`,
+        {
+          headers: {'Cache-Control': 'no-cache'}
+        }
+      );
+      const data = await response.json();
+      historicPostsState = data.historicPostsState;
+      const historicPostsStateWitness = MerkleMapWitness.fromJSON(JSON.parse(data.historicPostsStateWitness));
+      const [calculatedPostsHistoryRoot, calculatedPostsHistoryKey] =
+        historicPostsStateWitness.computeRootAndKeyV2(Field(historicPostsState.hashedState));
   
-    const fetchedPostsRoot = postsAppState![2].toString();
+      if (calculatedPostsHistoryKey.toString() !== itemsMetadata.atBlockHeight) {
+        await delay(DELAY);
+        errorMessage = `Block height ${calculatedPostsHistoryKey.toString()} from server response doesn't`
+            + `match the requested posts state history block height ${itemsMetadata.atBlockHeight}`;
+        tries++;
+        continue;
+      }
+  
+      let postsAppState = await fetchContractData(postsContractAddress);
+      const onchainPostsHistoryRoot = postsAppState![4].toString();
+  
+      if (calculatedPostsHistoryRoot.toString() !== onchainPostsHistoryRoot) {
+        await delay(DELAY);
+        errorMessage = `Posts state history from server doesn't match onchain history`;
+        tries++;
+        continue;
+      }
+      
+      const calculatedPostsHistoryHashedState = Poseidon.hash([
+        Field(historicPostsState.allPostsCounter),
+        Field(BigInt(historicPostsState.userPostsCounter)),
+        Field(BigInt(historicPostsState.posts)),
+      ]);
+  
+      if (calculatedPostsHistoryHashedState.toString() !== historicPostsState.hashedState) {
+        await delay(DELAY);
+        errorMessage = `Invalid posts state history values from server`;
+        tries++;
+        continue;
+      }
+
+      auditing = false;
+    }
+
     const fetchedTargetsReactionsCountersRoot = reactionsAppState![2].toString();
     const fetchedReactionsRoot = reactionsAppState![3].toString();
     const fetchedTargetsCommentsCountersRoot = commentsAppState![2].toString();
@@ -121,7 +180,7 @@ export async function auditItems(
       if (
         (
           contentType === 'Posts'
-            ? fetchedPostsRoot
+            ? historicPostsState.posts
             : contentType === 'Reposts' ? fetchedRepostsRoot
             : fetchedCommentsRoot
         )
@@ -298,3 +357,7 @@ const checkGap = (
     return false;
   }
 };
+
+async function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
