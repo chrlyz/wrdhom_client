@@ -43,6 +43,7 @@ export default function AuditButton({
 
           const auditGeneralParams = {
           items: currentPostsQuery.processedPosts,
+          itemsMetadata: currentPostsQuery.postsAuditMetadata,
           fromBlock: currentPostsQuery.fromBlock,
           toBlock: currentPostsQuery.toBlock,
           setAuditing: setAuditing,
