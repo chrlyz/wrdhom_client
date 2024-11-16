@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useState, useEffect } from 'react';
 import { auditItems } from './utils/audit';
-import { updatePostsQuery } from '@/app/db/indexed-db';
+import { updatePostsQuery, getPostsQuery, addPostsQuery } from '@/app/db/indexed-db';
 
 export default function AuditButton({
   currentPostsQuery,
@@ -55,9 +55,21 @@ export default function AuditButton({
         }
 
         if (currentPostsQuery.feedType === 'profile') {
+          
           const isValid = await auditItems('profile', 'Posts', auditGeneralParams);
           updatePostsQueriesWithAudit(currentPostsQuery.id-1, isValid);
-          await updatePostsQuery(currentPostsQuery.id, {isValid: isValid});
+
+          const postsQuery = await getPostsQuery(
+            currentPostsQuery.postsAuditMetadata.hashedQuery,
+            currentPostsQuery.postsAuditMetadata.atBlockHeight
+          );
+
+          if (postsQuery) {
+            await updatePostsQuery(currentPostsQuery.id, {isValid: isValid});
+          } else {
+            await addPostsQuery({...currentPostsQuery, ...{isValid: isValid}});
+          }
+
         } else if (currentPostsQuery.feedType === 'global') {
             const isValid = await auditItems('global', 'Posts', auditGeneralParams);
             updatePostsQueriesWithAudit(currentPostsQuery.id-1, isValid);
