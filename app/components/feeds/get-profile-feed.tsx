@@ -67,7 +67,6 @@ export default function GetProfileFeed({
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [mergedContent, setMergedContent] = useState([] as any);
   const [fetchCompleted, setFetchCompleted] = useState(false);
-  const [whenZeroContent, setWhenZeroContent] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -76,7 +75,6 @@ export default function GetProfileFeed({
       setReposts([]);
       setLoading(true);
       setErrorMessage(null);
-      setWhenZeroContent(false);
       setFeedType('profile');
 
       const fetchItemsParams = {
@@ -109,12 +107,7 @@ export default function GetProfileFeed({
 
   useEffect(() => {
     (async () => {
-
       if (fetchCompleted) {
-        if (posts.length === 0 && reposts.length === 0) {
-          setWhenZeroContent(true);
-        }
-  
         mergeAndSortContent(posts, reposts, setMergedContent);
         setLoading(false);
       }
@@ -141,7 +134,7 @@ export default function GetProfileFeed({
         setProfileAddress={setProfileAddress}
         setCommentTarget={setCommentTarget}
       />
-      {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
+      {!loading && posts.length === 0 && reposts.length === 0 && <div className="p-2 border-b-2 shadow-lg">
         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
             <p >The query threw zero results (profile)</p>
         </div>
