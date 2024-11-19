@@ -61,7 +61,6 @@ export default function GetCommentsFeed({
     const [errorMessage, setErrorMessage] = useState(null);
     const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
     const [fetchCompleted, setFetchCompleted] = useState(false);
-    const [whenZeroContent, setWhenZeroContent] = useState(false);
   
     const goBack = () => {
         setShowComments(false);
@@ -76,7 +75,6 @@ export default function GetCommentsFeed({
         setComments([]);
         setLoading(true);
         setErrorMessage(null);
-        setWhenZeroContent(false);
 
         const fetchItemsParams = {
           account,
@@ -104,9 +102,6 @@ export default function GetCommentsFeed({
     useEffect(() => {
       (async () => {
         if (fetchCompleted) {
-          if (comments.length === 0) {
-            setWhenZeroContent(true);
-          }
           setFetchCompleted(false);
           setLoading(false);
         }
@@ -142,7 +137,7 @@ export default function GetCommentsFeed({
           setCommentTarget={setCommentTarget}
           commentTarget={commentTarget}
         />
-        {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
+        {!loading && comments.length === 0 && <div className="p-2 border-b-2 shadow-lg">
           <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
             <p >The query threw zero results</p>
           </div>

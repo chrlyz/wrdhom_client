@@ -67,7 +67,6 @@ export default function GetGlobalFeed({
   const [mergedContent, setMergedContent] = useState([] as any);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [fetchCompleted, setFetchCompleted] = useState(false);
-  const [whenZeroContent, setWhenZeroContent] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -76,7 +75,6 @@ export default function GetGlobalFeed({
       setReposts([]);
       setLoading(true);
       setErrorMessage(null);
-      setWhenZeroContent(false);
       setFeedType('global');
 
       const fetchItemsParams = {
@@ -109,10 +107,6 @@ export default function GetGlobalFeed({
   useEffect(() => {
     (async () => {
       if (fetchCompleted) {
-        if (posts.length === 0 && reposts.length === 0) {
-          setWhenZeroContent(true);
-        }
-  
         mergeAndSortContent(posts, reposts, setMergedContent);
         setLoading(false);
       }
@@ -135,7 +129,7 @@ export default function GetGlobalFeed({
         setProfileAddress={setProfileAddress}
         setCommentTarget={setCommentTarget}
       />
-      {!loading && whenZeroContent && <div className="p-2 border-b-2 shadow-lg">
+      {!loading && posts.length === 0 && reposts.length === 0 && <div className="p-2 border-b-2 shadow-lg">
         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
             <p >The query threw zero results (global)</p>
         </div>
