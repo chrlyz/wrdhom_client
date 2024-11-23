@@ -3,7 +3,6 @@ import { Dispatch, SetStateAction } from "react";
 import { ContentItem, ItemContentList } from './content-item';
 import { FeedType } from '../types';
 import { fetchItems } from './utils/fetch';
-import { auditItems } from './../audit/utils/audit';
 
 export default function GetCommentsFeed({
   commentTarget,
@@ -16,10 +15,6 @@ export default function GetCommentsFeed({
   setCommentTarget,
   setHideGetGlobalPosts,
   setShowComments,
-  postsContractAddress,
-  reactionsContractAddress,
-  commentsContractAddress,
-  repostsContractAddress,
   account,
   feedType,
   setFeedType,
@@ -41,10 +36,6 @@ export default function GetCommentsFeed({
   setCommentTarget: Dispatch<SetStateAction<any>>,
   setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
   setShowComments: Dispatch<SetStateAction<boolean>>,
-  postsContractAddress: string,
-  reactionsContractAddress: string,
-  commentsContractAddress: string,
-  repostsContractAddress: string,
   account: string[],
   feedType: FeedType,
   setFeedType: Dispatch<SetStateAction<FeedType>>,

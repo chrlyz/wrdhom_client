@@ -118,7 +118,9 @@ export const fetchItems = async (
         const isSigned = severSignature.verify(serverPublicAddress, [
           Field(data.postsAuditMetadata.hashedQuery),
           Field(data.postsAuditMetadata.hashedState),
-          Field(data.postsAuditMetadata.atBlockHeight)
+          Field(data.postsAuditMetadata.atBlockHeight),
+          Field(data.postsAuditMetadata.lastReactionsState.hashedState),
+          Field(data.postsAuditMetadata.lastReactionsState.atBlockHeight)
         ]).toBoolean();
         if(!isSigned) {
           throw new Error(`Invalid signature for server response`);

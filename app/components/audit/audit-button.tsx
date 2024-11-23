@@ -49,7 +49,6 @@ export default function AuditButton({
           setAuditing: setAuditing,
           setErrorMessage: setErrorMessage,
           postsContractAddress: postsContractAddress,
-          reactionsContractAddress: reactionsContractAddress,
           commentsContractAddress: commentsContractAddress,
           repostsContractAddress: repostsContractAddress,
         }
