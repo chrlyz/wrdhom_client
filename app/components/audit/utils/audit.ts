@@ -13,7 +13,6 @@ export async function auditItems(
     setAuditing,
     setErrorMessage,
     postsContractAddress,
-    reactionsContractAddress,
     commentsContractAddress,
     repostsContractAddress
   }: {
@@ -24,7 +23,6 @@ export async function auditItems(
     setAuditing: Dispatch<SetStateAction<boolean>>,
     setErrorMessage: Dispatch<SetStateAction<any>>,
     postsContractAddress: string,
-    reactionsContractAddress: string,
     commentsContractAddress: string,
     repostsContractAddress: string
   },
@@ -39,8 +37,7 @@ export async function auditItems(
     const lowercaseSingularCT =  lowercaseCT.slice(0, -1);
     const singularCT = contentType.slice(0, -1);
   
-    const [reactionsAppState, commentsAppState, repostsAppState] = await Promise.all([
-      fetchContractData(reactionsContractAddress),
+    const [commentsAppState, repostsAppState] = await Promise.all([
       fetchContractData(commentsContractAddress),
       fetchContractData(repostsContractAddress)
     ]);
@@ -49,9 +46,9 @@ export async function auditItems(
     let historicPostsState;
     let errorMessage;
     let tries = 0;
-    let auditing = true;
+    let auditing_historic_state = true;
 
-    while (auditing) {
+    while (auditing_historic_state) {
       if (tries === 10) {
         setAuditing(false);
         setErrorMessage(errorMessage);
@@ -71,10 +68,10 @@ export async function auditItems(
         historicPostsStateWitness.computeRootAndKeyV2(Field(historicPostsState.hashedState));
   
       if (calculatedPostsHistoryKey.toString() !== itemsMetadata.atBlockHeight) {
-        await delay(DELAY);
         errorMessage = `Block height ${calculatedPostsHistoryKey.toString()} from server response doesn't`
             + `match the requested posts state history block height ${itemsMetadata.atBlockHeight}`;
         tries++;
+        await delay(DELAY);
         continue;
       }
   
@@ -82,9 +79,9 @@ export async function auditItems(
       const onchainPostsHistoryRoot = postsAppState![4].toString();
   
       if (calculatedPostsHistoryRoot.toString() !== onchainPostsHistoryRoot) {
-        await delay(DELAY);
         errorMessage = `Posts state history from server doesn't match onchain history`;
         tries++;
+        await delay(DELAY);
         continue;
       }
       
@@ -95,17 +92,15 @@ export async function auditItems(
       ]);
   
       if (calculatedPostsHistoryHashedState.toString() !== historicPostsState.hashedState) {
-        await delay(DELAY);
         errorMessage = `Invalid posts state history values from server`;
         tries++;
+        await delay(DELAY);
         continue;
       }
 
-      auditing = false;
+      auditing_historic_state = false;
     }
 
-    const fetchedTargetsReactionsCountersRoot = reactionsAppState![2].toString();
-    const fetchedReactionsRoot = reactionsAppState![3].toString();
     const fetchedTargetsCommentsCountersRoot = commentsAppState![2].toString();
     const fetchedCommentsRoot = commentsAppState![3].toString();
     const fetchedTargetsRepostsCountersRoot = repostsAppState![2].toString();
@@ -210,7 +205,18 @@ export async function auditItems(
   
         if (contentType !== 'Comments') {
           // Audit embedded items
-          await auditEmbeddedItems(items[i], feedType, 'Reactions', fetchedReactionsRoot, fetchedTargetsReactionsCountersRoot, f);
+          let validAudit;
+          if (Number(itemsMetadata.lastReactionsState.allReactionsCounter) > 0) {
+            validAudit =  await auditEmbeddedItems(
+              items[i],
+              feedType,
+              'Reactions',
+              itemsMetadata.lastReactionsState.reactions,
+              itemsMetadata.lastReactionsState.targetsReactionsCounters,
+              f
+            );
+            if (!validAudit) return false;
+          }
           await auditEmbeddedItems(items[i], feedType, 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot, f);
           await auditEmbeddedItems(items[i], feedType, 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot, f);
         }
@@ -328,6 +334,7 @@ async function auditEmbeddedItems(
       );
     }
   };
+  return true;
 }
 
 const checkGap = (
