@@ -60,6 +60,10 @@ const nextConfig = {
           source: "/reactions/restore",
           destination: "http://localhost:3001/reactions/restore",
         },
+        {
+          source: "/reactions/audit",
+          destination: "http://localhost:3001/reactions/audit",
+        },
       ];
   },
   async headers() {

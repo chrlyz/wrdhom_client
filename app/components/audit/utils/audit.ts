@@ -13,6 +13,7 @@ export async function auditItems(
     setAuditing,
     setErrorMessage,
     postsContractAddress,
+    reactionsContractAddress,
     commentsContractAddress,
     repostsContractAddress
   }: {
@@ -23,6 +24,7 @@ export async function auditItems(
     setAuditing: Dispatch<SetStateAction<boolean>>,
     setErrorMessage: Dispatch<SetStateAction<any>>,
     postsContractAddress: string,
+    reactionsContractAddress: string,
     commentsContractAddress: string,
     repostsContractAddress: string
   },
@@ -44,6 +46,7 @@ export async function auditItems(
 
     const DELAY = 3000;
     let historicPostsState;
+    let historicReactionsState;
     let errorMessage;
     let tries = 0;
     let auditing_historic_state = true;
@@ -55,12 +58,14 @@ export async function auditItems(
         return false;
       }
 
+      // POSTS
       const response = await fetch(`/posts/audit`
         +`?atBlockHeight=${itemsMetadata.atBlockHeight}`,
         {
           headers: {'Cache-Control': 'no-cache'}
         }
       );
+      console.log(response)
       const data = await response.json();
       historicPostsState = data.historicPostsState;
       const historicPostsStateWitness = MerkleMapWitness.fromJSON(JSON.parse(data.historicPostsStateWitness));
@@ -97,6 +102,51 @@ export async function auditItems(
         await delay(DELAY);
         continue;
       }
+
+      // REACTIONS
+      const reactionsAudit = await fetch(`/reactions/audit`
+        +`?atBlockHeight=${itemsMetadata.lastReactionsState.atBlockHeight}`,
+        {
+          headers: {'Cache-Control': 'no-cache'}
+        }
+      );
+      const dataReactions = await reactionsAudit.json();
+      historicReactionsState = dataReactions.historicReactionsState;
+      const historicReactionsStateWitness = MerkleMapWitness.fromJSON(JSON.parse(dataReactions.historicReactionsStateWitness));
+      const [calculatedReactionsHistoryRoot, calculatedReactionsHistoryKey] =
+        historicReactionsStateWitness.computeRootAndKeyV2(Field(historicReactionsState.hashedState));
+
+        if (calculatedReactionsHistoryKey.toString() !== itemsMetadata.lastReactionsState.atBlockHeight) {
+          errorMessage = `Block height ${calculatedReactionsHistoryKey.toString()} from server response doesn't`
+              + ` match the requested reactions state history block height ${itemsMetadata.lastReactionsState.atBlockHeight}`;
+          tries++;
+          await delay(DELAY);
+          continue;
+        }
+        
+        let reactionsAppState = await fetchContractData(reactionsContractAddress);
+        const onchainReactionsHistoryRoot = reactionsAppState![5].toString();
+        
+        if (calculatedReactionsHistoryRoot.toString() !== onchainReactionsHistoryRoot) {
+          errorMessage = `Reactions state history from server doesn't match onchain history`;
+          tries++;
+          await delay(DELAY);
+          continue;
+        }
+        
+        const calculatedReactionsHistoryHashedState = Poseidon.hash([
+          Field(historicReactionsState.allReactionsCounter),
+          Field(BigInt(historicReactionsState.userReactionsCounter)),
+          Field(BigInt(historicReactionsState.targetsReactionsCounters)),
+          Field(BigInt(historicReactionsState.reactions)),
+        ]);
+        
+        if (calculatedReactionsHistoryHashedState.toString() !== historicReactionsState.hashedState) {
+          errorMessage = `Invalid reactions state history values from server`;
+          tries++;
+          await delay(DELAY);
+          continue;
+        }
 
       auditing_historic_state = false;
     }

@@ -207,10 +207,6 @@ export default function Home() {
         setCommentTarget={setCommentTarget}
         setHideGetGlobalPosts={setHideGetGlobalPosts}
         setShowComments={setShowComments}
-        postsContractAddress={postsContractAddress}
-        reactionsContractAddress={reactionsContractAddress}
-        commentsContractAddress={commentsContractAddress}
-        repostsContractAddress={repostsContractAddress}
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
