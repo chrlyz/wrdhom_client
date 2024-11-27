@@ -39,8 +39,7 @@ export async function auditItems(
     const lowercaseSingularCT =  lowercaseCT.slice(0, -1);
     const singularCT = contentType.slice(0, -1);
   
-    const [commentsAppState, repostsAppState] = await Promise.all([
-      fetchContractData(commentsContractAddress),
+    const [repostsAppState] = await Promise.all([
       fetchContractData(repostsContractAddress)
     ]);
 
@@ -65,7 +64,6 @@ export async function auditItems(
           headers: {'Cache-Control': 'no-cache'}
         }
       );
-      console.log(response)
       const data = await response.json();
       historicPostsState = data.historicPostsState;
       const historicPostsStateWitness = MerkleMapWitness.fromJSON(JSON.parse(data.historicPostsStateWitness));
@@ -151,8 +149,6 @@ export async function auditItems(
       auditing_historic_state = false;
     }
 
-    const fetchedTargetsCommentsCountersRoot = commentsAppState![2].toString();
-    const fetchedCommentsRoot = commentsAppState![3].toString();
     const fetchedTargetsRepostsCountersRoot = repostsAppState![2].toString();
     const fetchedRepostsRoot = repostsAppState![3].toString();
   
@@ -227,7 +223,7 @@ export async function auditItems(
           contentType === 'Posts'
             ? historicPostsState.posts
             : contentType === 'Reposts' ? fetchedRepostsRoot
-            : fetchedCommentsRoot
+            : itemsMetadata.lastCommentsState.comments
         )
         !== calculatedRoot
       ) {
@@ -267,7 +263,17 @@ export async function auditItems(
             );
             if (!validAudit) return false;
           }
-          await auditEmbeddedItems(items[i], feedType, 'Comments', fetchedCommentsRoot, fetchedTargetsCommentsCountersRoot, f);
+          if (Number(itemsMetadata.lastCommentsState.allCommentsCounter) > 0) {
+            validAudit =  await auditEmbeddedItems(
+              items[i],
+              feedType,
+              'Comments',
+              itemsMetadata.lastCommentsState.comments,
+              itemsMetadata.lastCommentsState.targetsCommentsCounters,
+              f
+            );
+            if (!validAudit) return false;
+          }
           await auditEmbeddedItems(items[i], feedType, 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot, f);
         }
       }
