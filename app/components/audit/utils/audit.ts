@@ -46,6 +46,7 @@ export async function auditItems(
     const DELAY = 3000;
     let historicPostsState;
     let historicReactionsState;
+    let historicCommentsState;
     let errorMessage;
     let tries = 0;
     let auditing_historic_state = true;
@@ -114,37 +115,82 @@ export async function auditItems(
       const [calculatedReactionsHistoryRoot, calculatedReactionsHistoryKey] =
         historicReactionsStateWitness.computeRootAndKeyV2(Field(historicReactionsState.hashedState));
 
-        if (calculatedReactionsHistoryKey.toString() !== itemsMetadata.lastReactionsState.atBlockHeight) {
-          errorMessage = `Block height ${calculatedReactionsHistoryKey.toString()} from server response doesn't`
-              + ` match the requested reactions state history block height ${itemsMetadata.lastReactionsState.atBlockHeight}`;
-          tries++;
-          await delay(DELAY);
-          continue;
+      if (calculatedReactionsHistoryKey.toString() !== itemsMetadata.lastReactionsState.atBlockHeight) {
+        errorMessage = `Block height ${calculatedReactionsHistoryKey.toString()} from server response doesn't`
+            + ` match the requested reactions state history block height ${itemsMetadata.lastReactionsState.atBlockHeight}`;
+        tries++;
+        await delay(DELAY);
+        continue;
+      }
+      
+      let reactionsAppState = await fetchContractData(reactionsContractAddress);
+      const onchainReactionsHistoryRoot = reactionsAppState![5].toString();
+      
+      if (calculatedReactionsHistoryRoot.toString() !== onchainReactionsHistoryRoot) {
+        errorMessage = `Reactions state history from server doesn't match onchain history`;
+        tries++;
+        await delay(DELAY);
+        continue;
+      }
+      
+      const calculatedReactionsHistoryHashedState = Poseidon.hash([
+        Field(historicReactionsState.allReactionsCounter),
+        Field(BigInt(historicReactionsState.userReactionsCounter)),
+        Field(BigInt(historicReactionsState.targetsReactionsCounters)),
+        Field(BigInt(historicReactionsState.reactions)),
+      ]);
+      
+      if (calculatedReactionsHistoryHashedState.toString() !== historicReactionsState.hashedState) {
+        errorMessage = `Invalid reactions state history values from server`;
+        tries++;
+        await delay(DELAY);
+        continue;
+      }
+
+      // COMMENTS
+      const commentsAudit = await fetch(`/comments/audit`
+        +`?atBlockHeight=${itemsMetadata.lastCommentsState.atBlockHeight}`,
+        {
+          headers: {'Cache-Control': 'no-cache'}
         }
-        
-        let reactionsAppState = await fetchContractData(reactionsContractAddress);
-        const onchainReactionsHistoryRoot = reactionsAppState![5].toString();
-        
-        if (calculatedReactionsHistoryRoot.toString() !== onchainReactionsHistoryRoot) {
-          errorMessage = `Reactions state history from server doesn't match onchain history`;
-          tries++;
-          await delay(DELAY);
-          continue;
-        }
-        
-        const calculatedReactionsHistoryHashedState = Poseidon.hash([
-          Field(historicReactionsState.allReactionsCounter),
-          Field(BigInt(historicReactionsState.userReactionsCounter)),
-          Field(BigInt(historicReactionsState.targetsReactionsCounters)),
-          Field(BigInt(historicReactionsState.reactions)),
-        ]);
-        
-        if (calculatedReactionsHistoryHashedState.toString() !== historicReactionsState.hashedState) {
-          errorMessage = `Invalid reactions state history values from server`;
-          tries++;
-          await delay(DELAY);
-          continue;
-        }
+      );
+      const dataComments = await commentsAudit.json();
+      historicCommentsState = dataComments.historicCommentsState;
+      const historicCommentsStateWitness = MerkleMapWitness.fromJSON(JSON.parse(dataComments.historicCommentsStateWitness));
+      const [calculatedCommentsHistoryRoot, calculatedCommentsHistoryKey] =
+        historicCommentsStateWitness.computeRootAndKeyV2(Field(historicCommentsState.hashedState));
+
+      if (calculatedCommentsHistoryKey.toString() !== itemsMetadata.lastCommentsState.atBlockHeight) {
+        errorMessage = `Block height ${calculatedCommentsHistoryKey.toString()} from server response doesn't`
+            + ` match the requested comments state history block height ${itemsMetadata.lastCommentsState.atBlockHeight}`;
+        tries++;
+        await delay(DELAY);
+        continue;
+      }
+
+      let commentsAppState = await fetchContractData(commentsContractAddress);
+      const onchainCommentsHistoryRoot = commentsAppState![5].toString();
+
+      if (calculatedCommentsHistoryRoot.toString() !== onchainCommentsHistoryRoot) {
+        errorMessage = `Comments state history from server doesn't match onchain history`;
+        tries++;
+        await delay(DELAY);
+        continue;
+      }
+
+      const calculatedCommentsHistoryHashedState = Poseidon.hash([
+        Field(historicCommentsState.allCommentsCounter),
+        Field(BigInt(historicCommentsState.userCommentsCounter)),
+        Field(BigInt(historicCommentsState.targetsCommentsCounters)),
+        Field(BigInt(historicCommentsState.comments)),
+      ]);
+
+      if (calculatedCommentsHistoryHashedState.toString() !== historicCommentsState.hashedState) {
+        errorMessage = `Invalid comments state history values from server`;
+        tries++;
+        await delay(DELAY);
+        continue;
+      }
 
       auditing_historic_state = false;
     }
@@ -223,7 +269,7 @@ export async function auditItems(
           contentType === 'Posts'
             ? historicPostsState.posts
             : contentType === 'Reposts' ? fetchedRepostsRoot
-            : itemsMetadata.lastCommentsState.comments
+            : historicCommentsState.comments
         )
         !== calculatedRoot
       ) {
