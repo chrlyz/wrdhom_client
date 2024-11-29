@@ -370,7 +370,7 @@ async function auditEmbeddedItems(
     setErrorMessage(
       `The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} `
       +`for ${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter},`
-      +` but it only provided ${embeddedItems.length} ${contentType}. `
+      +` but it provided ${embeddedItems.length} ${contentType}. `
       +`The server may be experiencing some issues or manipulating the content it shows.`
     );
     return false;

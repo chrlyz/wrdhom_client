@@ -1,26 +1,26 @@
 import { Dispatch, SetStateAction, useState, useEffect } from 'react';
 import { auditItems } from './utils/audit';
-import { updatePostsQuery, getPostsQuery, addPostsQuery } from '@/app/db/indexed-db';
+import { updateQuery, getQuery, addQuery } from '@/app/db/indexed-db';
 
 export default function AuditButton({
-  currentPostsQuery,
+  currentQuery,
   postsContractAddress,
   reactionsContractAddress,
   commentsContractAddress,
   repostsContractAddress,
   setAuditing,
   setErrorMessage,
-  setPostsQueries,
+  setQueries,
   auditing
 }: {
-  currentPostsQuery: any,
+  currentQuery: any,
   postsContractAddress: string,
   reactionsContractAddress: string,
   commentsContractAddress: string,
   repostsContractAddress: string,
   setAuditing: Dispatch<SetStateAction<boolean>>,
   setErrorMessage: Dispatch<SetStateAction<any>>,
-  setPostsQueries: Dispatch<SetStateAction<any[]>>,
+  setQueries: Dispatch<SetStateAction<any[]>>,
   auditing: boolean
 }) {
   const [clicked, setClicked] = useState(false);
@@ -29,23 +29,23 @@ export default function AuditButton({
     index: number,
     isValid: boolean
   ) => {
-      setPostsQueries(prevPostsQueries => {
+      setQueries(prevPostsQueries => {
         const newPostsQueries = [...prevPostsQueries];
-        newPostsQueries[index] = {...currentPostsQuery, ...{isValid: isValid}};
+        newPostsQueries[index] = {...currentQuery, ...{isValid: isValid}};
         return newPostsQueries;
       });
   }
 
   useEffect(() => {
   (async () => {
-      if (currentPostsQuery && clicked) {
+      if (currentQuery && clicked) {
           setClicked(false);
 
           const auditGeneralParams = {
-          items: currentPostsQuery.processedPosts,
-          itemsMetadata: currentPostsQuery.postsAuditMetadata,
-          fromBlock: currentPostsQuery.fromBlock,
-          toBlock: currentPostsQuery.toBlock,
+          items: currentQuery.processedItems,
+          itemsMetadata: currentQuery.auditMetadata,
+          fromBlock: currentQuery.fromBlock,
+          toBlock: currentQuery.toBlock,
           setAuditing: setAuditing,
           setErrorMessage: setErrorMessage,
           postsContractAddress: postsContractAddress,
@@ -54,36 +54,36 @@ export default function AuditButton({
           repostsContractAddress: repostsContractAddress,
         }
 
-        if (currentPostsQuery.feedType === 'profile') {
+        if (currentQuery.feedType === 'profile') {
           
           const isValid = await auditItems('profile', 'Posts', auditGeneralParams);
-          updatePostsQueriesWithAudit(currentPostsQuery.id-1, isValid);
+          updatePostsQueriesWithAudit(currentQuery.id-1, isValid);
 
-          const postsQuery = await getPostsQuery(
-            currentPostsQuery.postsAuditMetadata.hashedQuery,
-            currentPostsQuery.postsAuditMetadata.atBlockHeight
+          const query = await getQuery(
+            currentQuery.auditMetadata.hashedQuery,
+            currentQuery.auditMetadata.atBlockHeight
           );
 
-          if (postsQuery) {
-            await updatePostsQuery(currentPostsQuery.id, {isValid: isValid});
+          if (query) {
+            await updateQuery(currentQuery.id, {isValid: isValid});
           } else {
-            await addPostsQuery({...currentPostsQuery, ...{isValid: isValid}});
+            await addQuery({...currentQuery, ...{isValid: isValid}});
           }
 
-        } else if (currentPostsQuery.feedType === 'global') {
+        } else if (currentQuery.feedType === 'global') {
 
             const isValid = await auditItems('global', 'Posts', auditGeneralParams);
-            updatePostsQueriesWithAudit(currentPostsQuery.id-1, isValid);
+            updatePostsQueriesWithAudit(currentQuery.id-1, isValid);
 
-            const postsQuery = await getPostsQuery(
-              currentPostsQuery.postsAuditMetadata.hashedQuery,
-              currentPostsQuery.postsAuditMetadata.atBlockHeight
+            const query = await getQuery(
+              currentQuery.auditMetadata.hashedQuery,
+              currentQuery.auditMetadata.atBlockHeight
             );
 
-            if (postsQuery) {
-              await updatePostsQuery(currentPostsQuery.id, {isValid: isValid});
+            if (query) {
+              await updateQuery(currentQuery.id, {isValid: isValid});
             } else {
-              await addPostsQuery({...currentPostsQuery, ...{isValid: isValid}});
+              await addQuery({...currentQuery, ...{isValid: isValid}});
             }
         }
 
@@ -97,7 +97,7 @@ export default function AuditButton({
       <button
         className="w-full p-2 bg-black text-white"
         onClick={() => {
-          if (currentPostsQuery.isValid === undefined) {
+          if (currentQuery.isValid === undefined) {
             setClicked(true);
             setAuditing(true);
           }
