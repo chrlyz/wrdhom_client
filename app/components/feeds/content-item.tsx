@@ -31,9 +31,10 @@ export const ContentItem = ({
     setCommentTarget: Dispatch<SetStateAction<any>>,
     commentTarget?: any
 }) => {
+  if (item === null) return;
   const isRepost = item.repostState !== undefined;
-  const isComment = item.commentState !== undefined;
   const isCurrentUserRepost = item.currentUserRepostState !== undefined;
+  const isComment = item.commentState !== undefined;
 
   const renderRepostInfo = () => {
     if (!isRepost) return null;

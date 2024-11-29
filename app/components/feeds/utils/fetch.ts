@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { ContentType, EmbeddedReactions, FeedType } from '../../types';
-import { addPostsQuery, getPostsQuery, getAllPostsQueries } from "@/app/db/indexed-db";
+import { addQuery, getQuery, getAllQueries } from "@/app/db/indexed-db";
 
 export const fetchItems = async (
     feedType: FeedType,
@@ -9,12 +9,12 @@ export const fetchItems = async (
       account,
       setLoading,
       setErrorMessage,
-      postsQueries,
-      setPostsQueries,
+      queries,
+      setQueries,
       isDBLoaded,
-      pastPostsQuery,
-      setPastPostsQuery,
-      setCurrentPostsQuery,
+      pastQuery,
+      setPastQuery,
+      setCurrentQuery,
       profileAddress,
       howManyPosts,
       fromBlock,
@@ -34,13 +34,13 @@ export const fetchItems = async (
       account: string[],
       setLoading: Dispatch<SetStateAction<boolean>>,
       setErrorMessage: Dispatch<SetStateAction<any>>,
-      postsQueries: any[],
-      setPostsQueries: Dispatch<SetStateAction<any[]>>,
+      queries: any[],
+      setQueries: Dispatch<SetStateAction<any[]>>,
       isDBLoaded: boolean,
       setIsDBLoaded: Dispatch<SetStateAction<boolean>>,
-      pastPostsQuery: any;
-      setPastPostsQuery: Dispatch<SetStateAction<any>>,
-      setCurrentPostsQuery: Dispatch<SetStateAction<any>>,
+      pastQuery: any;
+      setPastQuery: Dispatch<SetStateAction<any>>,
+      setCurrentQuery: Dispatch<SetStateAction<any>>,
       profileAddress?: string,
       howManyPosts?: number,
       fromBlock?: number,
@@ -113,16 +113,16 @@ export const fetchItems = async (
 
         // Audit that the server response is signed by the server
         const severSignature = Signature.fromJSON(
-          JSON.parse(data.postsAuditMetadata.severSignature)
+          JSON.parse(data.auditMetadata.severSignature)
         );
         const isSigned = severSignature.verify(serverPublicAddress, [
-          Field(data.postsAuditMetadata.hashedQuery),
-          Field(data.postsAuditMetadata.hashedState),
-          Field(data.postsAuditMetadata.atBlockHeight),
-          Field(data.postsAuditMetadata.lastReactionsState.hashedState),
-          Field(data.postsAuditMetadata.lastReactionsState.atBlockHeight),
-          Field(data.postsAuditMetadata.lastCommentsState.hashedState),
-          Field(data.postsAuditMetadata.lastCommentsState.atBlockHeight)
+          Field(data.auditMetadata.hashedQuery),
+          Field(data.auditMetadata.hashedState),
+          Field(data.auditMetadata.atBlockHeight),
+          Field(data.auditMetadata.lastReactionsState.hashedState),
+          Field(data.auditMetadata.lastReactionsState.atBlockHeight),
+          Field(data.auditMetadata.lastCommentsState.hashedState),
+          Field(data.auditMetadata.lastCommentsState.atBlockHeight)
         ]).toBoolean();
         if(!isSigned) {
           throw new Error(`Invalid signature for server response`);
@@ -135,27 +135,27 @@ export const fetchItems = async (
           toBlockAsField,
           profileAddressAsField
         ]).toString();
-        if (data.postsAuditMetadata.hashedQuery !== hashedQuery) {
+        if (data.auditMetadata.hashedQuery !== hashedQuery) {
           throw new Error(`The server response doesn't match query for Posts`);
         }
 
         const currentProcessedQuery = {
           feedType: feedType,
           profileAddress: profileAddress,
-          postsAuditMetadata: data.postsAuditMetadata,
-          processedPosts: processedItems
+          auditMetadata: data.auditMetadata,
+          processedItems: processedItems
         }
         if (!isDBLoaded) {
 
-          const loadedPostsQueries = await getAllPostsQueries();
-          const postsQuery = await getPostsQuery(
-            data.postsAuditMetadata.hashedQuery,
-            data.postsAuditMetadata.atBlockHeight
+          const loadedPostsQueries = await getAllQueries();
+          const query = await getQuery(
+            data.auditMetadata.hashedQuery,
+            data.auditMetadata.atBlockHeight
           );
-          if (!postsQuery) {
+          if (!query) {
             setPosts(processedItems);
-            setCurrentPostsQuery({...currentProcessedQuery, ...{id: loadedPostsQueries.length+1}});
-            setPostsQueries([
+            setCurrentQuery({...currentProcessedQuery, ...{id: loadedPostsQueries.length+1}});
+            setQueries([
               ...loadedPostsQueries,
               {
                 ...currentProcessedQuery,
@@ -163,45 +163,176 @@ export const fetchItems = async (
               }
             ]);
           } else {
-            setPosts(postsQuery.processedPosts);
-            setCurrentPostsQuery(postsQuery);
-            setPostsQueries(loadedPostsQueries);
+            setPosts(query.processedItems);
+            setCurrentQuery(query);
+            setQueries(loadedPostsQueries);
           }
           
-          setPastPostsQuery(currentProcessedQuery);
+          setPastQuery(currentProcessedQuery);
           setIsDBLoaded(true);
 
         } else {
           setPosts(processedItems);
 
-          const pastPostQueryDB = await getPostsQuery(
-            pastPostsQuery.postsAuditMetadata.hashedQuery,
-            pastPostsQuery.postsAuditMetadata.atBlockHeight
-          );
-          if (!pastPostQueryDB) {
-            await addPostsQuery(pastPostsQuery);
+          let pastQueryDB;
+          if (pastQuery.auditMetadata.lastCommentsState === undefined) {
+            console.log(pastQuery.auditMetadata)
+            pastQueryDB = await getQuery(
+              pastQuery.auditMetadata.hashedQuery,
+              pastQuery.auditMetadata.atBlockHeight
+            );
+          } else {
+            pastQueryDB = await getQuery(
+              pastQuery.auditMetadata.hashedQuery,
+              pastQuery.auditMetadata.lastCommentsState.atBlockHeight
+            );
           }
 
-          setPastPostsQuery(currentProcessedQuery);
+          if (!pastQueryDB) {
+            await addQuery(pastQuery);
+          }
 
-          const postsQuery = await getPostsQuery(
-            data.postsAuditMetadata.hashedQuery,
-            data.postsAuditMetadata.atBlockHeight
+          setPastQuery(currentProcessedQuery);
+
+          const query = await getQuery(
+            data.auditMetadata.hashedQuery,
+            data.auditMetadata.atBlockHeight
           );
-          if (!postsQuery) {
-            setCurrentPostsQuery({...currentProcessedQuery, ...{id: postsQueries.length+1}});
-            setPostsQueries([...postsQueries, {...currentProcessedQuery, ...{id: postsQueries.length+1}}]);
+
+          if (!query) {
+            setCurrentQuery({...currentProcessedQuery, ...{id: queries.length+1}});
+            setQueries([...queries, {...currentProcessedQuery, ...{id: queries.length+1}}]);
           } else {
-            setCurrentPostsQuery(postsQuery);
-            if (!postsQueries[postsQuery.id-1])
-              setPostsQueries([...postsQueries, postsQuery]);
+            setCurrentQuery(query);
+            if (!queries[query.id-1])
+              setQueries([...queries, query]);
           }
         }
 
       } else if (contentType === 'Reposts' && setReposts) {
+
         setReposts(processedItems);
-      } else if (setComments) {
-        setComments(processedItems);
+
+      } else if (contentType === 'Comments' && setComments) {
+
+        // Start quick audit
+        const { Poseidon, Field, PublicKey, Signature } = await import('o1js');
+        const serverPublicAddress = PublicKey.fromBase58(process.env.NEXT_PUBLIC_SERVER_PUBLIC_ADDRESS!);
+        const howManyCommentsAsField = Field(howManyComments!);
+        const fromBlockAsField = Field(fromBlockComments!);
+        const toBlockAsField = Field(toBlockComments!);
+
+        // Audit that the server response is signed by the server
+        const severSignature = Signature.fromJSON(
+          JSON.parse(data.auditMetadata.severSignature)
+        );
+        const isSigned = severSignature.verify(serverPublicAddress, [
+          Field(data.auditMetadata.hashedQuery),
+          Field(data.auditMetadata.lastCommentsState.hashedState),
+          Field(data.auditMetadata.lastCommentsState.atBlockHeight)
+        ]).toBoolean();
+        if(!isSigned) {
+          throw new Error(`Invalid signature for server response`);
+        }
+
+        // Audit that server responds with proper Comments query params
+        const hashedQuery = Poseidon.hash([
+          howManyCommentsAsField,
+          fromBlockAsField,
+          toBlockAsField
+        ]).toString();
+        if (data.auditMetadata.hashedQuery !== hashedQuery) {
+          throw new Error(`The server response doesn't match query for Comments`);
+        }
+
+        const currentProcessedQuery = {
+          feedType: feedType,
+          auditMetadata: data.auditMetadata,
+          processedComments: processedItems
+        }
+        if (!isDBLoaded) {
+
+          const loadedCommentsQueries = await getAllQueries();
+          const query = await getQuery(
+            data.auditMetadata.hashedQuery,
+            data.auditMetadata.lastCommentsState.atBlockHeight
+          );
+          if (!query) {
+            setComments(processedItems);
+            setCurrentQuery({
+              ...currentProcessedQuery,
+              ...{
+                id: loadedCommentsQueries.length+1,
+                commentsTarget: commentTarget
+              }
+            });
+            setQueries([
+              ...loadedCommentsQueries,
+              {
+                ...currentProcessedQuery,
+                ...{
+                  id: loadedCommentsQueries.length+1,
+                  commentsTarget: commentTarget
+                }
+              }
+            ]);
+          } else {
+            setComments(query.processedComments);
+            setCurrentQuery(query);
+            setQueries(loadedCommentsQueries);
+          }
+          
+          setPastQuery(currentProcessedQuery);
+          setIsDBLoaded(true);
+
+        } else {
+          setComments(processedItems);
+
+          let pastQueryDB;
+          if (pastQuery.auditMetadata.lastCommentsState === undefined) {
+            pastQueryDB = await getQuery(
+              pastQuery.auditMetadata.hashedQuery,
+              pastQuery.auditMetadata.atBlockHeight
+            );
+          } else {
+            pastQueryDB = await getQuery(
+              pastQuery.auditMetadata.hashedQuery,
+              pastQuery.auditMetadata.lastCommentsState.atBlockHeight
+            );
+          }
+
+          if (!pastQueryDB) {
+            await addQuery(pastQuery);
+          }
+
+          setPastQuery(currentProcessedQuery);
+
+          const query = await getQuery(
+            data.auditMetadata.hashedQuery,
+            data.auditMetadata.lastCommentsState.atBlockHeight
+          );
+          if (!query) {
+            setCurrentQuery({
+              ...currentProcessedQuery,
+              ...{
+                id: queries.length+1,
+                commentsTarget: commentTarget
+              }
+            });
+            setQueries([...queries, {
+              ...currentProcessedQuery,
+              ...{
+                id: queries.length+1,
+                commentsTarget: commentTarget
+              }
+            }]);
+          } else {
+            setCurrentQuery(query);
+            if (!queries[query.id-1])
+              setQueries([...queries, query]);
+          }
+        }
+
       }
 
     } catch (e: any) {

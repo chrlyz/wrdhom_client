@@ -18,13 +18,15 @@ export default function GetCommentsFeed({
   account,
   feedType,
   setFeedType,
-  postsQueries,
-  setPostsQueries,
+  queries,
+  setQueries,
   isDBLoaded,
   setIsDBLoaded,
-  pastPostsQuery,
-  setPastPostsQuery,
-  setCurrentPostsQuery
+  pastQuery,
+  setPastQuery,
+  setCurrentQuery,
+  setComments,
+  comments
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -39,15 +41,16 @@ export default function GetCommentsFeed({
   account: string[],
   feedType: FeedType,
   setFeedType: Dispatch<SetStateAction<FeedType>>,
-  postsQueries: any[],
-  setPostsQueries: Dispatch<SetStateAction<any[]>>,
+  queries: any[],
+  setQueries: Dispatch<SetStateAction<any[]>>,
   isDBLoaded: boolean,
   setIsDBLoaded: Dispatch<SetStateAction<boolean>>,
-  pastPostsQuery: any,
-  setPastPostsQuery: Dispatch<SetStateAction<any>>,
-  setCurrentPostsQuery: Dispatch<SetStateAction<any>>
+  pastQuery: any,
+  setPastQuery: Dispatch<SetStateAction<any>>,
+  setCurrentQuery: Dispatch<SetStateAction<any>>,
+  setComments: Dispatch<SetStateAction<any[]>>,
+  comments: any[]
 }) {
-    const [comments, setComments] = useState([] as any[]);
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState(null);
     const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
@@ -63,21 +66,23 @@ export default function GetCommentsFeed({
   
     useEffect(() => {
       (async () => {
+        setFetchCompleted(false);
         setComments([]);
         setLoading(true);
         setErrorMessage(null);
+        setFeedType('comments');
 
         const fetchItemsParams = {
           account,
           setLoading,
           setErrorMessage,
-          postsQueries,
-          setPostsQueries,
+          queries,
+          setQueries,
           isDBLoaded,
           setIsDBLoaded,
-          pastPostsQuery,
-          setPastPostsQuery,
-          setCurrentPostsQuery,
+          pastQuery,
+          setPastQuery,
+          setCurrentQuery,
           commentTarget,
           howManyComments,
           fromBlockComments,
@@ -88,7 +93,7 @@ export default function GetCommentsFeed({
 
         setFetchCompleted(true);
       })();
-    }, [getCommentsFeed, commentTarget]);
+    }, [getCommentsFeed]);
 
     useEffect(() => {
       (async () => {

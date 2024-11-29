@@ -38,15 +38,16 @@ export default function Home() {
   const [commentsContractAddress] =  useState(process.env.NEXT_PUBLIC_COMMENTS_CONTRACT_ADDRESS as string);
   const [repostsContractAddress] = useState(process.env.NEXT_PUBLIC_REPOSTS_CONTRACT_ADDRESS as string);
   const [feedType, setFeedType] = useState(null as any);
-  const [postsQueries, setPostsQueries] = useState([] as any[]);
+  const [queries, setQueries] = useState([] as any[]);
   const [isDBLoaded, setIsDBLoaded] = useState(false);
-  const [pastPostsQuery, setPastPostsQuery] = useState(null as any);
-  const [currentPostsQuery, setCurrentPostsQuery] = useState(null as any);
+  const [pastQuery, setPastQuery] = useState(null as any);
+  const [currentQuery, setCurrentQuery] = useState(null as any);
   const [posts, setPosts] = useState([] as any[]);
   const [profilePosts, setProfilePosts] = useState([] as any[]);
   const [errorMessage, setErrorMessage] = useState(null as any);
   const [auditing, setAuditing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [comments, setComments] = useState([] as any[]);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
 
@@ -115,27 +116,29 @@ export default function Home() {
           {initialLoading ? null : <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>}
           {initialLoading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
           {<NavigationPanel
-            postsQueries={postsQueries}
-            currentPostsQuery={currentPostsQuery}
-            setCurrentPostsQuery={setCurrentPostsQuery}
+            queries={queries}
+            currentQuery={currentQuery}
+            setCurrentQuery={setCurrentQuery}
             setPosts={setPosts}
             setProfileAddress={setProfileAddress}
             setShowProfile={setShowProfile}
+            setShowComments={setShowComments}
             setCommentTarget={setCommentTarget}
             setHideGetGlobalPosts={setHideGetGlobalPosts}
             setFeedType={setFeedType}
             setProfilePosts={setProfilePosts}
+            setComments={setComments}
           />}
         </div>
         {initialLoading ? null : <AuditButton
-                currentPostsQuery={currentPostsQuery}
+                currentQuery={currentQuery}
                 postsContractAddress={postsContractAddress}
                 reactionsContractAddress={reactionsContractAddress}
                 commentsContractAddress={commentsContractAddress}
                 repostsContractAddress={repostsContractAddress}
                 setAuditing={setAuditing}
                 setErrorMessage={setErrorMessage}
-                setPostsQueries={setPostsQueries}
+                setQueries={setQueries}
                 auditing={auditing}
         />}
       </div>
@@ -153,13 +156,13 @@ export default function Home() {
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
-        postsQueries={postsQueries}
-        setPostsQueries={setPostsQueries}
+        queries={queries}
+        setQueries={setQueries}
         isDBLoaded={isDBLoaded}
         setIsDBLoaded={setIsDBLoaded}
-        pastPostsQuery={pastPostsQuery}
-        setPastPostsQuery={setPastPostsQuery}
-        setCurrentPostsQuery={setCurrentPostsQuery}
+        pastQuery={pastQuery}
+        setPastQuery={setPastQuery}
+        setCurrentQuery={setCurrentQuery}
         posts={posts}
         setPosts={setPosts}
         loading={loading}
@@ -182,13 +185,13 @@ export default function Home() {
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
-        postsQueries={postsQueries}
-        setPostsQueries={setPostsQueries}
+        queries={queries}
+        setQueries={setQueries}
         isDBLoaded={isDBLoaded}
         setIsDBLoaded={setIsDBLoaded}
-        pastPostsQuery={pastPostsQuery}
-        setPastPostsQuery={setPastPostsQuery}
-        setCurrentPostsQuery={setCurrentPostsQuery}
+        pastQuery={pastQuery}
+        setPastQuery={setPastQuery}
+        setCurrentQuery={setCurrentQuery}
         posts={profilePosts}
         setPosts={setProfilePosts}
         loading={loading}
@@ -210,13 +213,15 @@ export default function Home() {
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
-        postsQueries={postsQueries}
-        setPostsQueries={setPostsQueries}
+        queries={queries}
+        setQueries={setQueries}
         isDBLoaded={isDBLoaded}
         setIsDBLoaded={setIsDBLoaded}
-        pastPostsQuery={pastPostsQuery}
-        setPastPostsQuery={setPastPostsQuery}
-        setCurrentPostsQuery={setCurrentPostsQuery}
+        pastQuery={pastQuery}
+        setPastQuery={setPastQuery}
+        setCurrentQuery={setCurrentQuery}
+        setComments={setComments}
+        comments={comments}
       />}
       <div className="flex flex-col w-1/5 border-r">
         {initialLoading ? null : <div className="flex-grow">

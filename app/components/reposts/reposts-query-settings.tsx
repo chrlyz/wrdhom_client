@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { useState } from 'react';
 
-export default function RepostsQuerySettings({
+export default function RequerySettings({
     howManyReposts,
     setHowManyReposts,
     fromBlockReposts,
