@@ -7,7 +7,8 @@ export async function initDB() {
             upgrade(db) {
             if (!db.objectStoreNames.contains('queries')) {
                 const store = db.createObjectStore('queries', { keyPath: 'id', autoIncrement: true });
-                store.createIndex('hashedQuery_atBlockHeight', ['auditMetadata.hashedQuery', 'auditMetadata.atBlockHeight'], { unique: false });
+                store.createIndex(
+                    'hashedQuery_atBlockHeight',['auditMetadata.hashedQuery', 'auditMetadata.atBlockHeight'], { unique: false });
             }
             },
         });

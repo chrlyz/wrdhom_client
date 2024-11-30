@@ -147,25 +147,25 @@ export const fetchItems = async (
         }
         if (!isDBLoaded) {
 
-          const loadedPostsQueries = await getAllQueries();
+          const loadedQueries = await getAllQueries();
           const query = await getQuery(
-            data.auditMetadata.hashedQuery,
-            data.auditMetadata.atBlockHeight
+            currentProcessedQuery.auditMetadata.hashedQuery,
+            currentProcessedQuery.auditMetadata.atBlockHeight
           );
           if (!query) {
             setPosts(processedItems);
-            setCurrentQuery({...currentProcessedQuery, ...{id: loadedPostsQueries.length+1}});
+            setCurrentQuery({...currentProcessedQuery, ...{id: loadedQueries.length+1}});
             setQueries([
-              ...loadedPostsQueries,
+              ...loadedQueries,
               {
                 ...currentProcessedQuery,
-                ...{id: loadedPostsQueries.length+1}
+                ...{id: loadedQueries.length+1}
               }
             ]);
           } else {
             setPosts(query.processedItems);
             setCurrentQuery(query);
-            setQueries(loadedPostsQueries);
+            setQueries(loadedQueries);
           }
           
           setPastQuery(currentProcessedQuery);
@@ -175,8 +175,7 @@ export const fetchItems = async (
           setPosts(processedItems);
 
           let pastQueryDB;
-          if (pastQuery.auditMetadata.lastCommentsState === undefined) {
-            console.log(pastQuery.auditMetadata)
+          if (pastQuery.feedType !== 'comments') {
             pastQueryDB = await getQuery(
               pastQuery.auditMetadata.hashedQuery,
               pastQuery.auditMetadata.atBlockHeight
@@ -189,14 +188,18 @@ export const fetchItems = async (
           }
 
           if (!pastQueryDB) {
-            await addQuery(pastQuery);
+            if (pastQuery.feedType !== 'comments') {
+              await addQuery(pastQuery);
+            } else {
+              pastQuery.auditMetadata.atBlockHeight
+                = pastQuery.auditMetadata.lastCommentsState.atBlockHeight;
+              await addQuery(pastQuery);
+            }
           }
 
-          setPastQuery(currentProcessedQuery);
-
           const query = await getQuery(
-            data.auditMetadata.hashedQuery,
-            data.auditMetadata.atBlockHeight
+            currentProcessedQuery.auditMetadata.hashedQuery,
+            currentProcessedQuery.auditMetadata.atBlockHeight
           );
 
           if (!query) {
@@ -207,6 +210,8 @@ export const fetchItems = async (
             if (!queries[query.id-1])
               setQueries([...queries, query]);
           }
+
+          setPastQuery(currentProcessedQuery);
         }
 
       } else if (contentType === 'Reposts' && setReposts) {
@@ -248,38 +253,38 @@ export const fetchItems = async (
         const currentProcessedQuery = {
           feedType: feedType,
           auditMetadata: data.auditMetadata,
-          processedComments: processedItems
+          processedItems: processedItems
         }
         if (!isDBLoaded) {
 
-          const loadedCommentsQueries = await getAllQueries();
+          const loadedQueries = await getAllQueries();
           const query = await getQuery(
-            data.auditMetadata.hashedQuery,
-            data.auditMetadata.lastCommentsState.atBlockHeight
+            currentProcessedQuery.auditMetadata.hashedQuery,
+            currentProcessedQuery.auditMetadata.lastCommentsState.atBlockHeight
           );
           if (!query) {
             setComments(processedItems);
             setCurrentQuery({
               ...currentProcessedQuery,
               ...{
-                id: loadedCommentsQueries.length+1,
+                id: loadedQueries.length+1,
                 commentsTarget: commentTarget
               }
             });
             setQueries([
-              ...loadedCommentsQueries,
+              ...loadedQueries,
               {
                 ...currentProcessedQuery,
                 ...{
-                  id: loadedCommentsQueries.length+1,
+                  id: loadedQueries.length+1,
                   commentsTarget: commentTarget
                 }
               }
             ]);
           } else {
-            setComments(query.processedComments);
+            setComments(query.processedItems);
             setCurrentQuery(query);
-            setQueries(loadedCommentsQueries);
+            setQueries(loadedQueries);
           }
           
           setPastQuery(currentProcessedQuery);
@@ -288,8 +293,9 @@ export const fetchItems = async (
         } else {
           setComments(processedItems);
 
+          console.log(pastQuery)
           let pastQueryDB;
-          if (pastQuery.auditMetadata.lastCommentsState === undefined) {
+          if (pastQuery.feedType !== 'comments') {
             pastQueryDB = await getQuery(
               pastQuery.auditMetadata.hashedQuery,
               pastQuery.auditMetadata.atBlockHeight
@@ -301,15 +307,20 @@ export const fetchItems = async (
             );
           }
 
+          console.log(pastQueryDB)
           if (!pastQueryDB) {
-            await addQuery(pastQuery);
+            if (pastQuery.feedType !== 'comments') {
+              await addQuery(pastQuery);
+            } else {
+              pastQuery.auditMetadata.atBlockHeight
+                = pastQuery.auditMetadata.lastCommentsState.atBlockHeight;
+              await addQuery(pastQuery);
+            }
           }
 
-          setPastQuery(currentProcessedQuery);
-
           const query = await getQuery(
-            data.auditMetadata.hashedQuery,
-            data.auditMetadata.lastCommentsState.atBlockHeight
+            currentProcessedQuery.auditMetadata.hashedQuery,
+            currentProcessedQuery.auditMetadata.lastCommentsState.atBlockHeight
           );
           if (!query) {
             setCurrentQuery({
@@ -331,8 +342,9 @@ export const fetchItems = async (
             if (!queries[query.id-1])
               setQueries([...queries, query]);
           }
-        }
 
+          setPastQuery(currentProcessedQuery);
+        }
       }
 
     } catch (e: any) {
