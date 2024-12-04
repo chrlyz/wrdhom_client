@@ -255,6 +255,8 @@ export const fetchItems = async (
           auditMetadata: data.auditMetadata,
           processedItems: processedItems
         }
+        currentProcessedQuery.auditMetadata.atBlockHeight
+        = pastQuery.auditMetadata.lastCommentsState.atBlockHeight;
         if (!isDBLoaded) {
 
           const loadedQueries = await getAllQueries();
@@ -293,7 +295,6 @@ export const fetchItems = async (
         } else {
           setComments(processedItems);
 
-          console.log(pastQuery)
           let pastQueryDB;
           if (pastQuery.feedType !== 'comments') {
             pastQueryDB = await getQuery(
@@ -307,13 +308,10 @@ export const fetchItems = async (
             );
           }
 
-          console.log(pastQueryDB)
           if (!pastQueryDB) {
             if (pastQuery.feedType !== 'comments') {
               await addQuery(pastQuery);
             } else {
-              pastQuery.auditMetadata.atBlockHeight
-                = pastQuery.auditMetadata.lastCommentsState.atBlockHeight;
               await addQuery(pastQuery);
             }
           }

@@ -44,8 +44,8 @@ export default function AuditButton({
           const auditGeneralParams = {
           items: currentQuery.processedItems,
           itemsMetadata: currentQuery.auditMetadata,
-          fromBlock: currentQuery.fromBlock,
-          toBlock: currentQuery.toBlock,
+          fromBlock: currentQuery.auditMetadata.query.fromBlock,
+          toBlock: currentQuery.auditMetadata.query.toBlock,
           setAuditing: setAuditing,
           setErrorMessage: setErrorMessage,
           postsContractAddress: postsContractAddress,
@@ -85,6 +85,23 @@ export default function AuditButton({
             } else {
               await addQuery({...currentQuery, ...{isValid: isValid}});
             }
+
+        } else if (currentQuery.feedType === 'comments') {
+
+          const isValid = await auditItems('comments', 'Comments', auditGeneralParams, currentQuery.commentsTarget);
+          console.log(isValid)
+          updatePostsQueriesWithAudit(currentQuery.id-1, isValid);
+
+          const query = await getQuery(
+            currentQuery.auditMetadata.hashedQuery,
+            currentQuery.auditMetadata.atBlockHeight
+          );
+
+          if (query) {
+            await updateQuery(currentQuery.id, {isValid: isValid});
+          } else {
+            await addQuery({...currentQuery, ...{isValid: isValid}});
+          }
         }
 
         setAuditing(false);
