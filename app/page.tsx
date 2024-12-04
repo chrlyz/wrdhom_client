@@ -208,8 +208,6 @@ export default function Home() {
         getCommentsFeed={getCommentsFeed}
         walletConnected={walletConnected}
         setCommentTarget={setCommentTarget}
-        setHideGetGlobalPosts={setHideGetGlobalPosts}
-        setShowComments={setShowComments}
         account={account}
         feedType={feedType}
         setFeedType={setFeedType}
@@ -222,6 +220,8 @@ export default function Home() {
         setCurrentQuery={setCurrentQuery}
         setComments={setComments}
         comments={comments}
+        errorMessage={errorMessage}
+        setErrorMessage={setErrorMessage}
       />}
       <div className="flex flex-col w-1/5 border-r">
         {initialLoading ? null : <div className="flex-grow">

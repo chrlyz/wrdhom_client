@@ -13,8 +13,6 @@ export default function GetCommentsFeed({
   getCommentsFeed,
   walletConnected,
   setCommentTarget,
-  setHideGetGlobalPosts,
-  setShowComments,
   account,
   feedType,
   setFeedType,
@@ -26,7 +24,9 @@ export default function GetCommentsFeed({
   setPastQuery,
   setCurrentQuery,
   setComments,
-  comments
+  comments,
+  setErrorMessage,
+  errorMessage
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -36,8 +36,6 @@ export default function GetCommentsFeed({
   getCommentsFeed: boolean,
   walletConnected: boolean,
   setCommentTarget: Dispatch<SetStateAction<any>>,
-  setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
-  setShowComments: Dispatch<SetStateAction<boolean>>,
   account: string[],
   feedType: FeedType,
   setFeedType: Dispatch<SetStateAction<FeedType>>,
@@ -49,20 +47,13 @@ export default function GetCommentsFeed({
   setPastQuery: Dispatch<SetStateAction<any>>,
   setCurrentQuery: Dispatch<SetStateAction<any>>,
   setComments: Dispatch<SetStateAction<any[]>>,
-  comments: any[]
+  comments: any[],
+  setErrorMessage: Dispatch<SetStateAction<any>>,
+  errorMessage: any
 }) {
     const [loading, setLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState(null);
     const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
     const [fetchCompleted, setFetchCompleted] = useState(false);
-  
-    const goBack = () => {
-        setShowComments(false);
-        setCommentTarget(null);
-        setProfileAddress('');
-        setHideGetGlobalPosts('');
-        setFeedType('global');
-    }
   
     useEffect(() => {
       (async () => {
@@ -107,7 +98,6 @@ export default function GetCommentsFeed({
     return (
       <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh]`}>
         <div className="p-2 border-b-2 shadow-lg">
-          <button className="hover:underline m-2" onClick={goBack}>{'<- Go back to feed'}</button>
           <ContentItem
             feedType={feedType}
             item={commentTarget}
@@ -119,8 +109,8 @@ export default function GetCommentsFeed({
             setCommentTarget={setCommentTarget}
           />
         </div>
-        {loading && <p className="border-4 p-2 shadow-lg">Loading comments...</p>}
-        {errorMessage && <p className="border-4 p-2 shadow-lg">Error: {errorMessage}</p>}
+        {loading && <p className="border-4 p-2 shadow-lg">Loading...</p>}
+        {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
         <ItemContentList
           feedType={feedType}
           mergedContent={comments}
