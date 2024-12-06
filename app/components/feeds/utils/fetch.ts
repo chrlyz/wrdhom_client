@@ -122,7 +122,9 @@ export const fetchItems = async (
           Field(data.auditMetadata.lastReactionsState.hashedState),
           Field(data.auditMetadata.lastReactionsState.atBlockHeight),
           Field(data.auditMetadata.lastCommentsState.hashedState),
-          Field(data.auditMetadata.lastCommentsState.atBlockHeight)
+          Field(data.auditMetadata.lastCommentsState.atBlockHeight),
+          Field(data.auditMetadata.lastRepostsState.hashedState),
+          Field(data.auditMetadata.lastRepostsState.atBlockHeight)
         ]).toBoolean();
         if(!isSigned) {
           throw new Error(`Invalid signature for server response`);
