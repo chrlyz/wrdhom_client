@@ -38,10 +38,6 @@ export async function auditItems(
     const lowercaseCT = contentType.toLowerCase();
     const lowercaseSingularCT =  lowercaseCT.slice(0, -1);
     const singularCT = contentType.slice(0, -1);
-  
-    const [repostsAppState] = await Promise.all([
-      fetchContractData(repostsContractAddress)
-    ]);
 
     const DELAY = 3000;
     let historicPostsState;
@@ -251,9 +247,6 @@ export async function auditItems(
         auditing_historic_state = false;
       }
     }
-
-    const fetchedTargetsRepostsCountersRoot = repostsAppState![2].toString();
-    const fetchedRepostsRoot = repostsAppState![3].toString();
   
     for (let i = 0; i < items.length; i++) {
       const itemState: any = (contentType === 'Posts' ? PostState 
@@ -325,7 +318,7 @@ export async function auditItems(
         (
           contentType === 'Posts'
             ? historicPostsState.posts
-            : contentType === 'Reposts' ? fetchedRepostsRoot
+            : contentType === 'Reposts' ? itemsMetadata.lastRepostsState.reposts
             : historicCommentsState.comments
         )
         !== calculatedRoot
@@ -377,7 +370,17 @@ export async function auditItems(
             );
             if (!validAudit) return false;
           }
-          await auditEmbeddedItems(items[i], feedType, 'Reposts', fetchedRepostsRoot, fetchedTargetsRepostsCountersRoot, f);
+          if (Number(itemsMetadata.lastRepostsState.allRepostsCounter) > 0) {
+            validAudit =  await auditEmbeddedItems(
+              items[i],
+              feedType,
+              'Reposts',
+              itemsMetadata.lastRepostsState.reposts,
+              itemsMetadata.lastRepostsState.targetsRepostsCounters,
+              f
+            );
+            if (!validAudit) return false;
+          }
         }
       }
     };
