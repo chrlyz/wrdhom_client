@@ -140,6 +140,7 @@ export default function Home() {
                 setErrorMessage={setErrorMessage}
                 setQueries={setQueries}
                 auditing={auditing}
+                setCurrentQuery={setCurrentQuery}
         />}
       </div>
       <GetGlobalFeed getGlobalFeed={getGlobalFeed}
