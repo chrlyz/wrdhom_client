@@ -11,7 +11,8 @@ export default function AuditButton({
   setAuditing,
   setErrorMessage,
   setQueries,
-  auditing
+  auditing,
+  setCurrentQuery
 }: {
   currentQuery: any,
   postsContractAddress: string,
@@ -21,18 +22,21 @@ export default function AuditButton({
   setAuditing: Dispatch<SetStateAction<boolean>>,
   setErrorMessage: Dispatch<SetStateAction<any>>,
   setQueries: Dispatch<SetStateAction<any[]>>,
-  auditing: boolean
+  auditing: boolean,
+  setCurrentQuery: Dispatch<SetStateAction<any>>
 }) {
   const [clicked, setClicked] = useState(false);
 
-  const updatePostsQueriesWithAudit = (
+  const updateQueriesWithAudit = (
     index: number,
     isValid: boolean
   ) => {
-      setQueries(prevPostsQueries => {
-        const newPostsQueries = [...prevPostsQueries];
-        newPostsQueries[index] = {...currentQuery, ...{isValid: isValid}};
-        return newPostsQueries;
+      setQueries(prevQueries => {
+        const newQueries = [...prevQueries];
+        const newQuery = {...currentQuery, ...{isValid: isValid}};
+        setCurrentQuery(newQuery);
+        newQueries[index] = newQuery;
+        return newQueries;
       });
   }
 
@@ -57,7 +61,7 @@ export default function AuditButton({
         if (currentQuery.feedType === 'profile') {
           
           const isValid = await auditItems('profile', 'Posts', auditGeneralParams);
-          updatePostsQueriesWithAudit(currentQuery.id-1, isValid);
+          updateQueriesWithAudit(currentQuery.id-1, isValid);
 
           const query = await getQuery(
             currentQuery.auditMetadata.hashedQuery,
@@ -73,7 +77,7 @@ export default function AuditButton({
         } else if (currentQuery.feedType === 'global') {
 
             const isValid = await auditItems('global', 'Posts', auditGeneralParams);
-            updatePostsQueriesWithAudit(currentQuery.id-1, isValid);
+            updateQueriesWithAudit(currentQuery.id-1, isValid);
 
             const query = await getQuery(
               currentQuery.auditMetadata.hashedQuery,
@@ -89,8 +93,7 @@ export default function AuditButton({
         } else if (currentQuery.feedType === 'comments') {
 
           const isValid = await auditItems('comments', 'Comments', auditGeneralParams, currentQuery.commentsTarget);
-          console.log(isValid)
-          updatePostsQueriesWithAudit(currentQuery.id-1, isValid);
+          updateQueriesWithAudit(currentQuery.id-1, isValid);
 
           const query = await getQuery(
             currentQuery.auditMetadata.hashedQuery,

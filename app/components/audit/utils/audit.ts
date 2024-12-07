@@ -43,6 +43,7 @@ export async function auditItems(
     let historicPostsState;
     let historicReactionsState;
     let historicCommentsState;
+    let historicRepostsState;
     let errorMessage;
     let tries = 0;
     let auditing_historic_state = true;
@@ -78,7 +79,6 @@ export async function auditItems(
 
         let postsAppState = await fetchContractData(postsContractAddress);
         const onchainPostsHistoryRoot = postsAppState![4].toString();
-
         if (calculatedPostsHistoryRoot.toString() !== onchainPostsHistoryRoot) {
           errorMessage = `Posts state history from server doesn't match onchain history`;
           tries++;
@@ -122,7 +122,7 @@ export async function auditItems(
         
         let reactionsAppState = await fetchContractData(reactionsContractAddress);
         const onchainReactionsHistoryRoot = reactionsAppState![5].toString();
-        
+
         if (calculatedReactionsHistoryRoot.toString() !== onchainReactionsHistoryRoot) {
           errorMessage = `Reactions state history from server doesn't match onchain history`;
           tries++;
@@ -184,6 +184,51 @@ export async function auditItems(
 
         if (calculatedCommentsHistoryHashedState.toString() !== historicCommentsState.hashedState) {
           errorMessage = `Invalid comments state history values from server`;
+          tries++;
+          await delay(DELAY);
+          continue;
+        }
+
+        // REPOSTS
+        const repostsAudit = await fetch(`/reposts/audit`
+          +`?atBlockHeight=${itemsMetadata.lastRepostsState.atBlockHeight}`,
+          {
+            headers: {'Cache-Control': 'no-cache'}
+          }
+        );
+        const dataReposts = await repostsAudit.json();
+        historicRepostsState = dataReposts.historicRepostsState;
+        const historicRepostsStateWitness = MerkleMapWitness.fromJSON(JSON.parse(dataReposts.historicRepostsStateWitness));
+        const [calculatedRepostsHistoryRoot, calculatedRepostsHistoryKey] =
+          historicRepostsStateWitness.computeRootAndKeyV2(Field(historicRepostsState.hashedState));
+
+        if (calculatedRepostsHistoryKey.toString() !== itemsMetadata.lastRepostsState.atBlockHeight) {
+          errorMessage = `Block height ${calculatedRepostsHistoryKey.toString()} from server response doesn't`
+              + ` match the requested reposts state history block height ${itemsMetadata.lastRepostsState.atBlockHeight}`;
+          tries++;
+          await delay(DELAY);
+          continue;
+        }
+
+        let repostsAppState = await fetchContractData(repostsContractAddress);
+        const onchainRepostsHistoryRoot = repostsAppState![5].toString();
+
+        if (calculatedRepostsHistoryRoot.toString() !== onchainRepostsHistoryRoot) {
+          errorMessage = `Reposts state history from server doesn't match onchain history`;
+          tries++;
+          await delay(DELAY);
+          continue;
+        }
+
+        const calculatedRepostsHistoryHashedState = Poseidon.hash([
+          Field(historicRepostsState.allRepostsCounter),
+          Field(BigInt(historicRepostsState.userRepostsCounter)),
+          Field(BigInt(historicRepostsState.targetsRepostsCounters)),
+          Field(BigInt(historicRepostsState.reposts)),
+        ]);
+
+        if (calculatedRepostsHistoryHashedState.toString() !== historicRepostsState.hashedState) {
+          errorMessage = `Invalid reposts state history values from server`;
           tries++;
           await delay(DELAY);
           continue;

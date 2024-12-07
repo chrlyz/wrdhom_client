@@ -53,6 +53,10 @@ const nextConfig = {
           destination: "http://localhost:3001/reposts/restore",
         },
         {
+          source: "/reposts/audit",
+          destination: "http://localhost:3001/reposts/audit",
+        },
+        {
           source: '/graphql',
           destination: 'https://api.minascan.io/node/devnet/v1/graphql',
         },
