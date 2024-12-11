@@ -8,7 +8,7 @@ export async function initDB() {
             if (!db.objectStoreNames.contains('queries')) {
                 const store = db.createObjectStore('queries', { keyPath: 'id', autoIncrement: true });
                 store.createIndex(
-                    'hashedQuery_atBlockHeight',['auditMetadata.hashedQuery', 'auditMetadata.atBlockHeight'], { unique: false });
+                    'compositeHashedQuery',['compositeHashedQuery'], { unique: false });
             }
             },
         });
@@ -31,12 +31,12 @@ export async function getAllQueries() {
   return result;
 };
 
-export async function getQuery(hashedQuery: string, atBlockHeight: string) {
+export async function getQuery(compositeHashedQuery: string) {
     const db = await initDB();
     const tx = db.transaction('queries', 'readonly');
-    const index = tx.store.index('hashedQuery_atBlockHeight');
+    const index = tx.store.index('compositeHashedQuery');
 
-    const matchingEntry = await index.get([hashedQuery, atBlockHeight]);
+    const matchingEntry = await index.get([compositeHashedQuery]);
     await tx.done;
     return matchingEntry;
 }

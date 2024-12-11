@@ -15,6 +15,7 @@ export const fetchItems = async (
       pastQuery,
       setPastQuery,
       setCurrentQuery,
+      currentQuery,
       profileAddress,
       howManyPosts,
       fromBlock,
@@ -41,6 +42,7 @@ export const fetchItems = async (
       pastQuery: any;
       setPastQuery: Dispatch<SetStateAction<any>>,
       setCurrentQuery: Dispatch<SetStateAction<any>>,
+      currentQuery: any,
       profileAddress?: string,
       howManyPosts?: number,
       fromBlock?: number,
@@ -141,84 +143,74 @@ export const fetchItems = async (
           throw new Error(`The server response doesn't match query for Posts`);
         }
 
-        const currentProcessedQuery = {
-          feedType: feedType,
-          profileAddress: profileAddress,
-          auditMetadata: data.auditMetadata,
-          processedItems: processedItems
+        const currentProcessedQuery: any = {
+            posts: {
+              feedType: feedType,
+              profileAddress: profileAddress,
+              auditMetadata: data.auditMetadata,
+              processedItems: processedItems
+          }
         }
-        if (!isDBLoaded) {
-
-          const loadedQueries = await getAllQueries();
-          const query = await getQuery(
-            currentProcessedQuery.auditMetadata.hashedQuery,
-            currentProcessedQuery.auditMetadata.atBlockHeight
-          );
-          if (!query) {
-            setPosts(processedItems);
-            setCurrentQuery({...currentProcessedQuery, ...{id: loadedQueries.length+1}});
-            setQueries([
-              ...loadedQueries,
-              {
-                ...currentProcessedQuery,
-                ...{id: loadedQueries.length+1}
-              }
-            ]);
-          } else {
-            setPosts(query.processedItems);
-            setCurrentQuery(query);
-            setQueries(loadedQueries);
-          }
-          
-          setPastQuery(currentProcessedQuery);
-          setIsDBLoaded(true);
-
-        } else {
-          setPosts(processedItems);
-
-          let pastQueryDB;
-          if (pastQuery.feedType !== 'comments') {
-            pastQueryDB = await getQuery(
-              pastQuery.auditMetadata.hashedQuery,
-              pastQuery.auditMetadata.atBlockHeight
-            );
-          } else {
-            pastQueryDB = await getQuery(
-              pastQuery.auditMetadata.hashedQuery,
-              pastQuery.auditMetadata.lastCommentsState.atBlockHeight
-            );
-          }
-
-          if (!pastQueryDB) {
-            if (pastQuery.feedType !== 'comments') {
-              await addQuery(pastQuery);
-            } else {
-              pastQuery.auditMetadata.atBlockHeight
-                = pastQuery.auditMetadata.lastCommentsState.atBlockHeight;
-              await addQuery(pastQuery);
-            }
-          }
-
-          const query = await getQuery(
-            currentProcessedQuery.auditMetadata.hashedQuery,
-            currentProcessedQuery.auditMetadata.atBlockHeight
-          );
-
-          if (!query) {
-            setCurrentQuery({...currentProcessedQuery, ...{id: queries.length+1}});
-            setQueries([...queries, {...currentProcessedQuery, ...{id: queries.length+1}}]);
-          } else {
-            setCurrentQuery(query);
-            if (!queries[query.id-1])
-              setQueries([...queries, query]);
-          }
-
-          setPastQuery(currentProcessedQuery);
-        }
+        return currentProcessedQuery;
 
       } else if (contentType === 'Reposts' && setReposts) {
 
-        setReposts(processedItems);
+        // Start quick audit
+        const { Poseidon, Field, PublicKey, Signature } = await import('o1js');
+        const serverPublicAddress = PublicKey.fromBase58(process.env.NEXT_PUBLIC_SERVER_PUBLIC_ADDRESS!);
+        const howManyRepostsAsField = Field(howManyReposts!);
+        const fromBlockAsField = Field(fromBlockReposts!);
+        const toBlockAsField = Field(toBlockReposts!);
+
+        let profileAddressAsField;
+        if (feedType === 'profile') {
+          profileAddressAsField = Poseidon.hash(
+            PublicKey.fromBase58(profileAddress!).toFields()
+          );
+        } else {
+          profileAddressAsField = Field(0);
+        }
+
+        // Audit that the server response is signed by the server
+        const severSignature = Signature.fromJSON(
+          JSON.parse(data.auditMetadata.severSignature)
+        );
+        const isSigned = severSignature.verify(serverPublicAddress, [
+          Field(data.auditMetadata.hashedQuery),
+          Field(data.auditMetadata.hashedState),
+          Field(data.auditMetadata.atBlockHeight),
+          Field(data.auditMetadata.lastReactionsState.hashedState),
+          Field(data.auditMetadata.lastReactionsState.atBlockHeight),
+          Field(data.auditMetadata.lastCommentsState.hashedState),
+          Field(data.auditMetadata.lastCommentsState.atBlockHeight),
+          Field(data.auditMetadata.lastRepostsState.hashedState),
+          Field(data.auditMetadata.lastRepostsState.atBlockHeight)
+        ]).toBoolean();
+        if(!isSigned) {
+          throw new Error(`Invalid signature for server response`);
+        }
+
+        // Audit that server responds with proper Posts query params
+        const hashedQuery = Poseidon.hash([
+          howManyRepostsAsField,
+          fromBlockAsField,
+          toBlockAsField,
+          profileAddressAsField
+        ]).toString();
+        if (data.auditMetadata.hashedQuery !== hashedQuery) {
+          throw new Error(`The server response doesn't match query for Posts`);
+        }
+
+        const currentProcessedQuery: any = {
+          reposts: {
+            feedType: feedType,
+            profileAddress: profileAddress,
+            auditMetadata: data.auditMetadata,
+            processedItems: processedItems
+        }
+      }
+       
+      return currentProcessedQuery;
 
       } else if (contentType === 'Comments' && setComments) {
 
@@ -257,94 +249,7 @@ export const fetchItems = async (
           auditMetadata: data.auditMetadata,
           processedItems: processedItems
         }
-        currentProcessedQuery.auditMetadata.atBlockHeight
-        = pastQuery.auditMetadata.lastCommentsState.atBlockHeight;
-        if (!isDBLoaded) {
-
-          const loadedQueries = await getAllQueries();
-          const query = await getQuery(
-            currentProcessedQuery.auditMetadata.hashedQuery,
-            currentProcessedQuery.auditMetadata.lastCommentsState.atBlockHeight
-          );
-          if (!query) {
-            setComments(processedItems);
-            setCurrentQuery({
-              ...currentProcessedQuery,
-              ...{
-                id: loadedQueries.length+1,
-                commentsTarget: commentTarget
-              }
-            });
-            setQueries([
-              ...loadedQueries,
-              {
-                ...currentProcessedQuery,
-                ...{
-                  id: loadedQueries.length+1,
-                  commentsTarget: commentTarget
-                }
-              }
-            ]);
-          } else {
-            setComments(query.processedItems);
-            setCurrentQuery(query);
-            setQueries(loadedQueries);
-          }
-          
-          setPastQuery(currentProcessedQuery);
-          setIsDBLoaded(true);
-
-        } else {
-          setComments(processedItems);
-
-          let pastQueryDB;
-          if (pastQuery.feedType !== 'comments') {
-            pastQueryDB = await getQuery(
-              pastQuery.auditMetadata.hashedQuery,
-              pastQuery.auditMetadata.atBlockHeight
-            );
-          } else {
-            pastQueryDB = await getQuery(
-              pastQuery.auditMetadata.hashedQuery,
-              pastQuery.auditMetadata.lastCommentsState.atBlockHeight
-            );
-          }
-
-          if (!pastQueryDB) {
-            if (pastQuery.feedType !== 'comments') {
-              await addQuery(pastQuery);
-            } else {
-              await addQuery(pastQuery);
-            }
-          }
-
-          const query = await getQuery(
-            currentProcessedQuery.auditMetadata.hashedQuery,
-            currentProcessedQuery.auditMetadata.lastCommentsState.atBlockHeight
-          );
-          if (!query) {
-            setCurrentQuery({
-              ...currentProcessedQuery,
-              ...{
-                id: queries.length+1,
-                commentsTarget: commentTarget
-              }
-            });
-            setQueries([...queries, {
-              ...currentProcessedQuery,
-              ...{
-                id: queries.length+1,
-                commentsTarget: commentTarget
-              }
-            }]);
-          } else {
-            setCurrentQuery(query);
-            if (!queries[query.id-1])
-              setQueries([...queries, query]);
-          }
-
-          setPastQuery(currentProcessedQuery);
-        }
+        
       }
 
     } catch (e: any) {

@@ -48,6 +48,7 @@ export default function Home() {
   const [auditing, setAuditing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [comments, setComments] = useState([] as any[]);
+  const [mergedContent, setMergedContent] = useState([] as any);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
 
@@ -128,6 +129,7 @@ export default function Home() {
             setFeedType={setFeedType}
             setProfilePosts={setProfilePosts}
             setComments={setComments}
+            setMergedContent={setMergedContent}
           />}
         </div>
         {initialLoading ? null : <AuditButton
@@ -164,12 +166,15 @@ export default function Home() {
         pastQuery={pastQuery}
         setPastQuery={setPastQuery}
         setCurrentQuery={setCurrentQuery}
+        currentQuery={currentQuery}
         posts={posts}
         setPosts={setPosts}
         loading={loading}
         setLoading={setLoading}
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
+        setMergedContent={setMergedContent}
+        mergedContent={mergedContent}
       />
       {showProfile && <GetProfileFeed
         getProfileFeed={getProfileFeed}

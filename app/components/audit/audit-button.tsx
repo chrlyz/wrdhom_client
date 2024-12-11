@@ -64,8 +64,7 @@ export default function AuditButton({
           updateQueriesWithAudit(currentQuery.id-1, isValid);
 
           const query = await getQuery(
-            currentQuery.auditMetadata.hashedQuery,
-            currentQuery.auditMetadata.atBlockHeight
+            currentQuery.compositeHashedQuery
           );
 
           if (query) {
@@ -80,8 +79,7 @@ export default function AuditButton({
             updateQueriesWithAudit(currentQuery.id-1, isValid);
 
             const query = await getQuery(
-              currentQuery.auditMetadata.hashedQuery,
-              currentQuery.auditMetadata.atBlockHeight
+              currentQuery.compositeHashedQuery
             );
 
             if (query) {
@@ -96,8 +94,7 @@ export default function AuditButton({
           updateQueriesWithAudit(currentQuery.id-1, isValid);
 
           const query = await getQuery(
-            currentQuery.auditMetadata.hashedQuery,
-            currentQuery.auditMetadata.atBlockHeight
+            currentQuery.compositeHashedQuery
           );
 
           if (query) {

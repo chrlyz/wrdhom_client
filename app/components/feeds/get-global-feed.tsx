@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from "react";
 import { ItemContentList } from './content-item';
 import CreatePost from '../posts/create-post';
 import { fetchItems } from './utils/fetch';
-import { mergeAndSortContent } from './utils/structure';
+import { mergeAndSortContent } from './utils/mergeContent';
 import { FeedType } from '../types';
 
 export default function GetGlobalFeed({
@@ -28,12 +28,15 @@ export default function GetGlobalFeed({
   pastQuery,
   setPastQuery,
   setCurrentQuery,
+  currentQuery,
   posts,
   setPosts,
   loading,
   setLoading,
   errorMessage,
-  setErrorMessage
+  setErrorMessage,
+  setMergedContent,
+  mergedContent
 }: {
   getGlobalFeed: boolean,
   howManyPosts: number,
@@ -56,15 +59,17 @@ export default function GetGlobalFeed({
   pastQuery: any,
   setPastQuery: Dispatch<SetStateAction<any>>,
   setCurrentQuery: Dispatch<SetStateAction<any>>,
+  currentQuery: any,
   posts: any[],
   setPosts: Dispatch<SetStateAction<any[]>>,
   loading: boolean,
   setLoading: Dispatch<SetStateAction<boolean>>,
   errorMessage: any,
-  setErrorMessage: Dispatch<SetStateAction<any>>
+  setErrorMessage: Dispatch<SetStateAction<any>>,
+  setMergedContent: Dispatch<SetStateAction<any[]>>,
+  mergedContent: any[]
 }) {
   const [reposts, setReposts] = useState([] as any[]);
-  const [mergedContent, setMergedContent] = useState([] as any);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [fetchCompleted, setFetchCompleted] = useState(false);
 
@@ -88,6 +93,7 @@ export default function GetGlobalFeed({
         pastQuery,
         setPastQuery,
         setCurrentQuery,
+        currentQuery,
         howManyPosts,
         fromBlock,
         toBlock,
@@ -97,8 +103,17 @@ export default function GetGlobalFeed({
         toBlockReposts,
         setReposts: setReposts
       }
-      howManyPosts > 0 ? await fetchItems('global', 'Posts', fetchItemsParams) : null;
-      howManyReposts > 0 ? await fetchItems('global', 'Reposts', fetchItemsParams) : null;
+
+      let fetchedPosts = {posts: {processedItems: []}}
+      let fetchedReposts = {reposts: {processedItems: []}};
+      if (howManyPosts > 0) {
+        fetchedPosts = await fetchItems('global', 'Posts', fetchItemsParams);
+      }
+
+      if (howManyReposts > 0) {
+        fetchedReposts = await fetchItems('global', 'Reposts', fetchItemsParams);
+      }
+      setCurrentQuery({...fetchedPosts, ...fetchedReposts, feedType: 'global'});
 
       setFetchCompleted(true);
     })();
@@ -107,7 +122,17 @@ export default function GetGlobalFeed({
   useEffect(() => {
     (async () => {
       if (fetchCompleted) {
-        mergeAndSortContent(posts, reposts, setMergedContent);
+        mergeAndSortContent(
+          setCurrentQuery,
+          currentQuery,
+          setQueries,
+          queries,
+          setPastQuery,
+          pastQuery,
+          setIsDBLoaded,
+          isDBLoaded,
+          setMergedContent
+        );
         setLoading(false);
       }
     })();
@@ -129,7 +154,7 @@ export default function GetGlobalFeed({
         setProfileAddress={setProfileAddress}
         setCommentTarget={setCommentTarget}
       />
-      {!loading && posts.length === 0 && reposts.length === 0 && <div className="p-2 border-b-2 shadow-lg">
+      {!loading && currentQuery.posts.processedItems.length === 0 && currentQuery.reposts.processedItems.length === 0 && <div className="p-2 border-b-2 shadow-lg">
         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
             <p >The query threw zero results (global)</p>
         </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { ItemContentList } from './content-item';
 import { fetchItems } from './utils/fetch';
-import { mergeAndSortContent } from './utils/structure';
+import { mergeAndSortContent } from './utils/mergeContent';
 import { FeedType } from '../types';
 
 export default function GetProfileFeed({

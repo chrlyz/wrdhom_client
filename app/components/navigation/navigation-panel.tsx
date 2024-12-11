@@ -13,7 +13,8 @@ export default function NavigationPanel({
     setHideGetGlobalPosts,
     setFeedType,
     setComments,
-    setShowComments
+    setShowComments,
+    setMergedContent
 }: {
     queries: any[],
     currentQuery: any,
@@ -26,16 +27,15 @@ export default function NavigationPanel({
     setHideGetGlobalPosts: Dispatch<SetStateAction<string>>,
     setFeedType: Dispatch<SetStateAction<FeedType>>,
     setComments: Dispatch<SetStateAction<any[]>>,
-    setShowComments: Dispatch<SetStateAction<boolean>>
+    setShowComments: Dispatch<SetStateAction<boolean>>,
+    setMergedContent: Dispatch<SetStateAction<any[]>>
 }) {
   const [clicked, setClicked] = useState(false);
   
-  const isAuditMetadataEqual = (query1: any, query2: any) => {
+  const areQueriesEqual = (query1: any, query2: any) => {
     if (!query1 || !query2) return false;
     
-    return query1.auditMetadata.hashedQuery === query2.auditMetadata.hashedQuery
-      && query1.auditMetadata.hashedState === query2.auditMetadata.hashedState
-      && query1.auditMetadata.atBlockHeight === query2.auditMetadata.atBlockHeight;
+    return query1.compositeHashedQuery === query2.compositeHashedQuery
   };
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function NavigationPanel({
           setProfileAddress(currentQuery.profileAddress);
           setFeedType('profile');
         } else if (currentQuery.feedType === 'global') {
-          setPosts(currentQuery.processedItems);
+          setMergedContent(currentQuery.mergedAndSorted);
           setProfileAddress('');
           setShowProfile(false);
           setShowComments(false);
@@ -82,8 +82,8 @@ export default function NavigationPanel({
             transition-all duration-200 ease-in-out
             hover:opacity-80
             ${
-              query.isValid && isAuditMetadataEqual(currentQuery, query) ? 'bg-green-700'
-              : isAuditMetadataEqual(currentQuery, query) ? 'bg-black'
+              query.isValid && areQueriesEqual(currentQuery, query) ? 'bg-green-700'
+              : areQueriesEqual(currentQuery, query) ? 'bg-black'
               : query.isValid ? 'bg-green-500' : 'bg-gray-300'
             }
           `}
