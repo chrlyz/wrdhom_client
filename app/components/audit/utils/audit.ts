@@ -58,7 +58,7 @@ export async function auditItems(
 
         // POSTS
         const response = await fetch(`/posts/audit`
-          +`?atBlockHeight=${itemsMetadata.atBlockHeight}`,
+          +`?atBlockHeight=${itemsMetadata.lastPostsState.atBlockHeight}`,
           {
             headers: {'Cache-Control': 'no-cache'}
           }
@@ -69,9 +69,9 @@ export async function auditItems(
         const [calculatedPostsHistoryRoot, calculatedPostsHistoryKey] =
           historicPostsStateWitness.computeRootAndKeyV2(Field(historicPostsState.hashedState));
 
-        if (calculatedPostsHistoryKey.toString() !== itemsMetadata.atBlockHeight) {
+        if (calculatedPostsHistoryKey.toString() !== itemsMetadata.lastPostsState.atBlockHeight) {
           errorMessage = `Block height ${calculatedPostsHistoryKey.toString()} from server response doesn't`
-              + `match the requested posts state history block height ${itemsMetadata.atBlockHeight}`;
+              + `match the requested posts state history block height ${itemsMetadata.lastPostsState.atBlockHeight}`;
           tries++;
           await delay(DELAY);
           continue;
