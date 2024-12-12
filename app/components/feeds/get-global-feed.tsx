@@ -29,8 +29,6 @@ export default function GetGlobalFeed({
   setPastQuery,
   setCurrentQuery,
   currentQuery,
-  posts,
-  setPosts,
   loading,
   setLoading,
   errorMessage,
@@ -60,8 +58,6 @@ export default function GetGlobalFeed({
   setPastQuery: Dispatch<SetStateAction<any>>,
   setCurrentQuery: Dispatch<SetStateAction<any>>,
   currentQuery: any,
-  posts: any[],
-  setPosts: Dispatch<SetStateAction<any[]>>,
   loading: boolean,
   setLoading: Dispatch<SetStateAction<boolean>>,
   errorMessage: any,
@@ -69,15 +65,12 @@ export default function GetGlobalFeed({
   setMergedContent: Dispatch<SetStateAction<any[]>>,
   mergedContent: any[]
 }) {
-  const [reposts, setReposts] = useState([] as any[]);
   const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
   const [fetchCompleted, setFetchCompleted] = useState(false);
 
   useEffect(() => {
     (async () => {
       setFetchCompleted(false);
-      setPosts([]);
-      setReposts([]);
       setLoading(true);
       setErrorMessage(null);
       setFeedType('global');
@@ -86,38 +79,31 @@ export default function GetGlobalFeed({
         account,
         setLoading,
         setErrorMessage,
-        queries,
-        setQueries,
-        isDBLoaded,
-        setIsDBLoaded,
-        pastQuery,
-        setPastQuery,
-        setCurrentQuery,
-        currentQuery,
         howManyPosts,
         fromBlock,
         toBlock,
-        setPosts,
         howManyReposts,
         fromBlockReposts,
-        toBlockReposts,
-        setReposts: setReposts
+        toBlockReposts
       }
 
       let fetchedPosts = {posts: {processedItems: []}}
-      let fetchedReposts = {reposts: {processedItems: []}};
+      let fetchedReposts = {reposts: {processedItems: []}}
       if (howManyPosts > 0) {
         fetchedPosts = await fetchItems('global', 'Posts', fetchItemsParams);
+        fetchedPosts = fetchedPosts ?? {posts: {processedItems: []}}
       }
 
       if (howManyReposts > 0) {
         fetchedReposts = await fetchItems('global', 'Reposts', fetchItemsParams);
+        fetchedReposts = fetchedReposts ?? {reposts: {processedItems: []}}
       }
+      
       setCurrentQuery({...fetchedPosts, ...fetchedReposts, feedType: 'global'});
 
       setFetchCompleted(true);
     })();
-  }, [getGlobalFeed, account, isDBLoaded]);
+  }, [getGlobalFeed, isDBLoaded]);
 
   useEffect(() => {
     (async () => {
@@ -136,7 +122,7 @@ export default function GetGlobalFeed({
         setLoading(false);
       }
     })();
-  }, [fetchCompleted, posts]);
+  }, [fetchCompleted]);
 
   return (
     <div className={`w-3/5 p-4 overflow-y-auto max-h-[100vh] ${hideGetGlobalPosts}`}>

@@ -120,14 +120,12 @@ export default function Home() {
             queries={queries}
             currentQuery={currentQuery}
             setCurrentQuery={setCurrentQuery}
-            setPosts={setPosts}
             setProfileAddress={setProfileAddress}
             setShowProfile={setShowProfile}
             setShowComments={setShowComments}
             setCommentTarget={setCommentTarget}
             setHideGetGlobalPosts={setHideGetGlobalPosts}
             setFeedType={setFeedType}
-            setProfilePosts={setProfilePosts}
             setComments={setComments}
             setMergedContent={setMergedContent}
           />}
@@ -167,8 +165,6 @@ export default function Home() {
         setPastQuery={setPastQuery}
         setCurrentQuery={setCurrentQuery}
         currentQuery={currentQuery}
-        posts={posts}
-        setPosts={setPosts}
         loading={loading}
         setLoading={setLoading}
         errorMessage={errorMessage}
@@ -198,12 +194,13 @@ export default function Home() {
         pastQuery={pastQuery}
         setPastQuery={setPastQuery}
         setCurrentQuery={setCurrentQuery}
-        posts={profilePosts}
-        setPosts={setProfilePosts}
+        currentQuery={currentQuery}
         loading={loading}
         setLoading={setLoading}
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
+        setMergedContent={setMergedContent}
+        mergedContent={mergedContent}
       />}
       {showComments && <GetCommentsFeed
         commentTarget={commentTarget}

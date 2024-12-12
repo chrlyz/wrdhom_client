@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction, useState, useEffect } from 'react';
 import { auditItems } from './utils/audit';
 import { updateQuery, getQuery, addQuery } from '@/app/db/indexed-db';
+import { ContentType } from '../types';
 
 export default function AuditButton({
   currentQuery,
@@ -29,78 +30,133 @@ export default function AuditButton({
 
   const updateQueriesWithAudit = (
     index: number,
-    isValid: boolean
+    isValid: boolean,
+    contentType: ContentType
   ) => {
-      setQueries(prevQueries => {
-        const newQueries = [...prevQueries];
-        const newQuery = {...currentQuery, ...{isValid: isValid}};
-        setCurrentQuery(newQuery);
-        newQueries[index] = newQuery;
-        return newQueries;
-      });
+      if (contentType === 'Posts') {
+        setCurrentQuery((prevQuery: any) => {
+          const newQuery = {...prevQuery, ...{posts: {...prevQuery.posts, isValid: isValid}}};
+          setQueries(prevQueries => {
+            const newQueries = [...prevQueries];
+            setCurrentQuery(newQuery);
+            newQueries[index] = newQuery;
+            return newQueries;
+          });
+          return newQuery
+        });
+      } else if (contentType === 'Reposts') {
+        setCurrentQuery((prevQuery: any) => {
+          const newQuery = {...prevQuery, ...{reposts: {...prevQuery.reposts, isValid: isValid}}};
+          setQueries(prevQueries => {
+            const newQueries = [...prevQueries];
+            newQueries[index] = newQuery;
+            return newQueries;
+          });
+          return newQuery;
+        });
+      }
   }
 
   useEffect(() => {
   (async () => {
       if (currentQuery && clicked) {
-          setClicked(false);
+        setClicked(false);
 
-          const auditGeneralParams = {
-          items: currentQuery.processedItems,
-          itemsMetadata: currentQuery.auditMetadata,
-          fromBlock: currentQuery.auditMetadata.query.fromBlock,
-          toBlock: currentQuery.auditMetadata.query.toBlock,
-          setAuditing: setAuditing,
-          setErrorMessage: setErrorMessage,
-          postsContractAddress: postsContractAddress,
-          reactionsContractAddress: reactionsContractAddress,
-          commentsContractAddress: commentsContractAddress,
-          repostsContractAddress: repostsContractAddress,
-        }
-
-        if (currentQuery.feedType === 'profile') {
-          
-          const isValid = await auditItems('profile', 'Posts', auditGeneralParams);
-          updateQueriesWithAudit(currentQuery.id-1, isValid);
-
-          const query = await getQuery(
-            currentQuery.compositeHashedQuery
-          );
-
-          if (query) {
-            await updateQuery(currentQuery.id, {isValid: isValid});
-          } else {
-            await addQuery({...currentQuery, ...{isValid: isValid}});
+        let postsAuditGeneralParams;
+        if (currentQuery.posts.processedItems.length > 0) {
+          postsAuditGeneralParams = {
+            items: currentQuery.posts.processedItems,
+            itemsMetadata: currentQuery.posts.auditMetadata,
+            fromBlock: currentQuery.posts.auditMetadata.query.fromBlock,
+            toBlock: currentQuery.posts.auditMetadata.query.toBlock,
+            setAuditing: setAuditing,
+            setErrorMessage: setErrorMessage,
+            postsContractAddress: postsContractAddress,
+            reactionsContractAddress: reactionsContractAddress,
+            commentsContractAddress: commentsContractAddress,
+            repostsContractAddress: repostsContractAddress
           }
 
-        } else if (currentQuery.feedType === 'global') {
-
-            const isValid = await auditItems('global', 'Posts', auditGeneralParams);
-            updateQueriesWithAudit(currentQuery.id-1, isValid);
-
+          if (currentQuery.feedType === 'profile') {
+            console.log('profile')
+            const isValid = await auditItems('profile', 'Posts', postsAuditGeneralParams);
+            updateQueriesWithAudit(currentQuery.id-1, isValid, 'Posts');
+  
             const query = await getQuery(
               currentQuery.compositeHashedQuery
             );
-
+  
             if (query) {
-              await updateQuery(currentQuery.id, {isValid: isValid});
+              await updateQuery(currentQuery.id, {posts: {...currentQuery.posts, isValid: isValid}});
             } else {
-              await addQuery({...currentQuery, ...{isValid: isValid}});
+              await addQuery({...currentQuery, ...{posts: {...currentQuery.posts, isValid: isValid}}});
             }
+  
+          } else if (currentQuery.feedType === 'global') {
+              console.log('global')
+              const isValid = await auditItems('global', 'Posts', postsAuditGeneralParams);
+              updateQueriesWithAudit(currentQuery.id-1, isValid, 'Posts');
+  
+              const query = await getQuery(
+                currentQuery.compositeHashedQuery
+              );
+  
+              if (query) {
+                console.log('update')
+                await updateQuery(currentQuery.id, {posts: {...currentQuery.posts, isValid: isValid, update: 'update'}});
+              } else {
+                console.log('add')
+                await addQuery({...currentQuery, ...{posts: {...currentQuery.posts, isValid: isValid, add: 'add'}}});
+              }
+  
+          }
+        }
 
-        } else if (currentQuery.feedType === 'comments') {
+        let repostsAuditGeneralParams;
+        if (currentQuery.reposts.processedItems.length > 0) {
+          repostsAuditGeneralParams = {
+            items: currentQuery.reposts.processedItems,
+            itemsMetadata: currentQuery.reposts.auditMetadata,
+            fromBlock: currentQuery.reposts.auditMetadata.query.fromBlock,
+            toBlock: currentQuery.reposts.auditMetadata.query.toBlock,
+            setAuditing: setAuditing,
+            setErrorMessage: setErrorMessage,
+            postsContractAddress: postsContractAddress,
+            reactionsContractAddress: reactionsContractAddress,
+            commentsContractAddress: commentsContractAddress,
+            repostsContractAddress: repostsContractAddress
+          }
 
-          const isValid = await auditItems('comments', 'Comments', auditGeneralParams, currentQuery.commentsTarget);
-          updateQueriesWithAudit(currentQuery.id-1, isValid);
-
-          const query = await getQuery(
-            currentQuery.compositeHashedQuery
-          );
-
-          if (query) {
-            await updateQuery(currentQuery.id, {isValid: isValid});
-          } else {
-            await addQuery({...currentQuery, ...{isValid: isValid}});
+          if (currentQuery.feedType === 'profile') {
+          
+            const isValid = await auditItems('profile', 'Reposts', repostsAuditGeneralParams);
+            updateQueriesWithAudit(currentQuery.id-1, isValid, 'Reposts');
+  
+            const query = await getQuery(
+              currentQuery.compositeHashedQuery
+            );
+  
+            if (query) {
+              await updateQuery(currentQuery.id, {reposts: {...currentQuery.reposts, isValid: isValid}});
+            } else {
+              await addQuery({...currentQuery, ...{reposts: {...currentQuery.reposts, isValid: isValid}}});
+            }
+  
+          } else if (currentQuery.feedType === 'global') {
+  
+              const isValid = await auditItems('global', 'Reposts', repostsAuditGeneralParams);
+              updateQueriesWithAudit(currentQuery.id-1, isValid, 'Reposts');
+  
+              const query = await getQuery(
+                currentQuery.compositeHashedQuery
+              );
+  
+              if (query) {
+                await updateQuery(currentQuery.id, {reposts: {...currentQuery.reposts, isValid: isValid}});
+              } else {
+                await addQuery({...currentQuery, ...{reposts: {...currentQuery.reposts, isValid: isValid}}});
+              }
+  
           }
         }
 
@@ -114,7 +170,10 @@ export default function AuditButton({
       <button
         className="w-full p-2 bg-black text-white"
         onClick={() => {
-          if (currentQuery.isValid === undefined) {
+          if (
+            currentQuery.posts.isValid === undefined
+            && currentQuery.reposts.isValid === undefined
+          ) {
             setClicked(true);
             setAuditing(true);
           }

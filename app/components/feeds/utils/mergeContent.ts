@@ -23,21 +23,21 @@ export const mergeAndSortContent = async (
           compositeHashedQuery = Poseidon.hash([
             CircuitString.fromString('composite').hash(),
             Field(currentQuery.posts.auditMetadata.hashedQuery),
-            Field(currentQuery.posts.auditMetadata.atBlockHeight),
+            Field(currentQuery.posts.auditMetadata.lastPostsState.atBlockHeight),
             Field(currentQuery.reposts.auditMetadata.hashedQuery),
-            Field(currentQuery.reposts.auditMetadata.atBlockHeight)
+            Field(currentQuery.reposts.auditMetadata.lastRepostsState.atBlockHeight)
           ]).toString();
         } else if (currentQuery.posts.processedItems.length > 0) {
           compositeHashedQuery = Poseidon.hash([
             CircuitString.fromString('posts').hash(),
             Field(currentQuery.posts.auditMetadata.hashedQuery),
-            Field(currentQuery.posts.auditMetadata.atBlockHeight)
+            Field(currentQuery.posts.auditMetadata.lastPostsState.atBlockHeight)
           ]).toString();
         } else if (currentQuery.reposts.processedItems.length > 0) {
           compositeHashedQuery = Poseidon.hash([
             CircuitString.fromString('reposts').hash(),
             Field(currentQuery.reposts.auditMetadata.hashedQuery),
-            Field(currentQuery.reposts.auditMetadata.atBlockHeight)
+            Field(currentQuery.reposts.auditMetadata.lastRepostsState.atBlockHeight)
           ]).toString();
         }
         return compositeHashedQuery;

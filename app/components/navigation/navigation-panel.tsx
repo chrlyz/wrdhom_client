@@ -5,8 +5,6 @@ export default function NavigationPanel({
     queries,
     currentQuery,
     setCurrentQuery,
-    setPosts,
-    setProfilePosts,
     setProfileAddress,
     setShowProfile,
     setCommentTarget,
@@ -19,8 +17,6 @@ export default function NavigationPanel({
     queries: any[],
     currentQuery: any,
     setCurrentQuery: Dispatch<SetStateAction<any>>,
-    setPosts: Dispatch<SetStateAction<any[]>>,
-    setProfilePosts: Dispatch<SetStateAction<any[]>>,
     setProfileAddress: Dispatch<SetStateAction<string>>,
     setShowProfile: Dispatch<SetStateAction<boolean>>,
     setCommentTarget: Dispatch<SetStateAction<any>>,
@@ -46,7 +42,7 @@ export default function NavigationPanel({
         
 
         if (currentQuery.feedType === 'profile') {
-          setProfilePosts(currentQuery.processedItems);
+          setMergedContent(currentQuery.mergedAndSorted);
           setProfileAddress(currentQuery.profileAddress);
           setFeedType('profile');
         } else if (currentQuery.feedType === 'global') {
@@ -71,23 +67,64 @@ export default function NavigationPanel({
   return (
     <div className="flex flex-wrap gap-2 p-4 border-t mt-10">
       {queries.map((query, index) => {
-        return (<button
-          key={index}
-          onClick={() => {
-            setCurrentQuery(query);
-            setClicked(true);
-          }}
-          className={`
-            w-8 h-8 
-            transition-all duration-200 ease-in-out
-            hover:opacity-80
-            ${
-              query.isValid && areQueriesEqual(currentQuery, query) ? 'bg-green-700'
-              : areQueriesEqual(currentQuery, query) ? 'bg-black'
-              : query.isValid ? 'bg-green-500' : 'bg-gray-300'
-            }
-          `}
-        />)
+        let backGroundColor = '';
+        
+        if (
+          query.posts.isValid
+          && query.reposts.isValid
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-green-700';
+        } else if (
+          query.posts.isValid
+          && query.reposts.processedItems.length === 0
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-green-700';
+        } else if (
+          query.posts.processedItems.length === 0
+          && query.reposts.isValid
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-green-700';
+        } else if (
+          query.posts.isValid
+          && query.reposts.isValid
+        ) {
+          backGroundColor = 'bg-green-500';
+        } else if (
+          query.posts.isValid
+          && query.reposts.processedItems.length === 0
+        ) {
+          backGroundColor = 'bg-green-500';
+        } else if (
+          query.posts.processedItems.length === 0
+          && query.reposts.isValid
+        ) {
+          backGroundColor = 'bg-green-500';
+        } else if (
+          areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-black';
+        } else {
+          backGroundColor = 'bg-gray-300';
+        }
+  
+        return (
+          <button
+            key={index}
+            onClick={() => {
+              setCurrentQuery(query);
+              setClicked(true);
+            }}
+            className={`
+              w-8 h-8 
+              transition-all duration-200 ease-in-out
+              hover:opacity-80
+              ${backGroundColor}
+            `}
+          />
+        );
       })}
     </div>
   );

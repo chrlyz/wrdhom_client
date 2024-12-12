@@ -9,49 +9,29 @@ export const fetchItems = async (
       account,
       setLoading,
       setErrorMessage,
-      queries,
-      setQueries,
-      isDBLoaded,
-      pastQuery,
-      setPastQuery,
-      setCurrentQuery,
-      currentQuery,
       profileAddress,
       howManyPosts,
       fromBlock,
       toBlock,
-      setPosts,
       howManyReposts,
       fromBlockReposts,
       toBlockReposts,
-      setReposts,
       howManyComments,
       fromBlockComments,
       toBlockComments,
       commentTarget,
-      setComments,
-      setIsDBLoaded
+      setComments
     }: {
       account: string[],
       setLoading: Dispatch<SetStateAction<boolean>>,
       setErrorMessage: Dispatch<SetStateAction<any>>,
-      queries: any[],
-      setQueries: Dispatch<SetStateAction<any[]>>,
-      isDBLoaded: boolean,
-      setIsDBLoaded: Dispatch<SetStateAction<boolean>>,
-      pastQuery: any;
-      setPastQuery: Dispatch<SetStateAction<any>>,
-      setCurrentQuery: Dispatch<SetStateAction<any>>,
-      currentQuery: any,
       profileAddress?: string,
       howManyPosts?: number,
       fromBlock?: number,
       toBlock?: number,
-      setPosts?: Dispatch<SetStateAction<any[]>>,
       howManyReposts?: number,
       fromBlockReposts?: number,
       toBlockReposts?: number,
-      setReposts?: Dispatch<SetStateAction<any[]>>,
       howManyComments?: number,
       fromBlockComments?: number,
       toBlockComments?: number,
@@ -95,7 +75,7 @@ export const fetchItems = async (
 
       const processedItems = itemsResponse.map((item: any) => processItem(item, contentType));
 
-      if (contentType === 'Posts' && setPosts) {
+      if (contentType === 'Posts') {
 
         // Start quick audit
         const { Poseidon, Field, PublicKey, Signature } = await import('o1js');
@@ -119,8 +99,8 @@ export const fetchItems = async (
         );
         const isSigned = severSignature.verify(serverPublicAddress, [
           Field(data.auditMetadata.hashedQuery),
-          Field(data.auditMetadata.hashedState),
-          Field(data.auditMetadata.atBlockHeight),
+          Field(data.auditMetadata.lastPostsState.hashedState),
+          Field(data.auditMetadata.lastPostsState.atBlockHeight),
           Field(data.auditMetadata.lastReactionsState.hashedState),
           Field(data.auditMetadata.lastReactionsState.atBlockHeight),
           Field(data.auditMetadata.lastCommentsState.hashedState),
@@ -153,7 +133,7 @@ export const fetchItems = async (
         }
         return currentProcessedQuery;
 
-      } else if (contentType === 'Reposts' && setReposts) {
+      } else if (contentType === 'Reposts') {
 
         // Start quick audit
         const { Poseidon, Field, PublicKey, Signature } = await import('o1js');
@@ -177,20 +157,20 @@ export const fetchItems = async (
         );
         const isSigned = severSignature.verify(serverPublicAddress, [
           Field(data.auditMetadata.hashedQuery),
-          Field(data.auditMetadata.hashedState),
-          Field(data.auditMetadata.atBlockHeight),
+          Field(data.auditMetadata.lastRepostsState.hashedState),
+          Field(data.auditMetadata.lastRepostsState.atBlockHeight),
+          Field(data.auditMetadata.lastPostsState.hashedState),
+          Field(data.auditMetadata.lastPostsState.atBlockHeight),
           Field(data.auditMetadata.lastReactionsState.hashedState),
           Field(data.auditMetadata.lastReactionsState.atBlockHeight),
           Field(data.auditMetadata.lastCommentsState.hashedState),
-          Field(data.auditMetadata.lastCommentsState.atBlockHeight),
-          Field(data.auditMetadata.lastRepostsState.hashedState),
-          Field(data.auditMetadata.lastRepostsState.atBlockHeight)
+          Field(data.auditMetadata.lastCommentsState.atBlockHeight)
         ]).toBoolean();
         if(!isSigned) {
           throw new Error(`Invalid signature for server response`);
         }
 
-        // Audit that server responds with proper Posts query params
+        // Audit that server responds with proper Reposts query params
         const hashedQuery = Poseidon.hash([
           howManyRepostsAsField,
           fromBlockAsField,
@@ -198,7 +178,7 @@ export const fetchItems = async (
           profileAddressAsField
         ]).toString();
         if (data.auditMetadata.hashedQuery !== hashedQuery) {
-          throw new Error(`The server response doesn't match query for Posts`);
+          throw new Error(`The server response doesn't match query for Reposts`);
         }
 
         const currentProcessedQuery: any = {
