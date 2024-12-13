@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from "react";
 import { ItemContentList } from './content-item';
 import CreatePost from '../posts/create-post';
 import { fetchItems } from './utils/fetch';
-import { mergeAndSortContent } from './utils/mergeContent';
+import { indexPostsAndReposts } from './utils/indexPostsAndReposts';
 import { FeedType } from '../types';
 
 export default function GetGlobalFeed({
@@ -89,6 +89,7 @@ export default function GetGlobalFeed({
 
       let fetchedPosts = {posts: {processedItems: []}}
       let fetchedReposts = {reposts: {processedItems: []}}
+      let fetchedComments = {comments: {processedItems: []}}
       if (howManyPosts > 0) {
         fetchedPosts = await fetchItems('global', 'Posts', fetchItemsParams);
         fetchedPosts = fetchedPosts ?? {posts: {processedItems: []}}
@@ -99,7 +100,7 @@ export default function GetGlobalFeed({
         fetchedReposts = fetchedReposts ?? {reposts: {processedItems: []}}
       }
       
-      setCurrentQuery({...fetchedPosts, ...fetchedReposts, feedType: 'global'});
+      setCurrentQuery({...fetchedPosts, ...fetchedReposts, ...fetchedComments, feedType: 'global'});
 
       setFetchCompleted(true);
     })();
@@ -108,7 +109,7 @@ export default function GetGlobalFeed({
   useEffect(() => {
     (async () => {
       if (fetchCompleted) {
-        mergeAndSortContent(
+        indexPostsAndReposts(
           setCurrentQuery,
           currentQuery,
           setQueries,

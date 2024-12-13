@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from "react";
 import { getAllQueries, getQuery, addQuery } from "@/app/db/indexed-db";
 import { Field, Poseidon, CircuitString } from "o1js";
 
-export const mergeAndSortContent = async (
+export const indexPostsAndReposts = async (
   setCurrentQuery: Dispatch<SetStateAction<any>>,
   currentQuery: any,
   setQueries: Dispatch<SetStateAction<any[]>>,

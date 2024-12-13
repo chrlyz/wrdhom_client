@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dispatch, SetStateAction } from "react";
 import { ItemContentList } from './content-item';
 import { fetchItems } from './utils/fetch';
-import { mergeAndSortContent } from './utils/mergeContent';
+import { indexPostsAndReposts } from './utils/indexPostsAndReposts';
 import { FeedType } from '../types';
 
 export default function GetProfileFeed({
@@ -90,6 +90,7 @@ export default function GetProfileFeed({
 
       let fetchedPosts = {posts: {processedItems: []}}
       let fetchedReposts = {reposts: {processedItems: []}}
+      let fetchedComments = {comments: {processedItems: []}}
       if (howManyPosts > 0) {
         fetchedPosts = await fetchItems('profile', 'Posts', fetchItemsParams);
         fetchedPosts = fetchedPosts ?? {posts: {processedItems: []}}
@@ -100,7 +101,7 @@ export default function GetProfileFeed({
         fetchedReposts = fetchedReposts ?? {reposts: {processedItems: []}}
       }
 
-      setCurrentQuery({...fetchedPosts, ...fetchedReposts, feedType: 'profile', profileAddress: profileAddress});
+      setCurrentQuery({...fetchedPosts, ...fetchedReposts, ...fetchedComments, feedType: 'profile', profileAddress: profileAddress});
 
       setFetchCompleted(true);
     })();
@@ -109,7 +110,7 @@ export default function GetProfileFeed({
   useEffect(() => {
     (async () => {
       if (fetchCompleted) {
-        mergeAndSortContent(
+        indexPostsAndReposts(
           setCurrentQuery,
           currentQuery,
           setQueries,

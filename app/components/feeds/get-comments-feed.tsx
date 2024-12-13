@@ -3,6 +3,7 @@ import { Dispatch, SetStateAction } from "react";
 import { ContentItem, ItemContentList } from './content-item';
 import { FeedType } from '../types';
 import { fetchItems } from './utils/fetch';
+import { indexComments } from './utils/indexComments';
 
 export default function GetCommentsFeed({
   commentTarget,
@@ -23,8 +24,8 @@ export default function GetCommentsFeed({
   pastQuery,
   setPastQuery,
   setCurrentQuery,
+  currentQuery,
   setComments,
-  comments,
   setErrorMessage,
   errorMessage
 }: {
@@ -46,8 +47,8 @@ export default function GetCommentsFeed({
   pastQuery: any,
   setPastQuery: Dispatch<SetStateAction<any>>,
   setCurrentQuery: Dispatch<SetStateAction<any>>,
+  currentQuery: any,
   setComments: Dispatch<SetStateAction<any[]>>,
-  comments: any[],
   setErrorMessage: Dispatch<SetStateAction<any>>,
   errorMessage: any
 }) {
@@ -58,7 +59,6 @@ export default function GetCommentsFeed({
     useEffect(() => {
       (async () => {
         setFetchCompleted(false);
-        setComments([]);
         setLoading(true);
         setErrorMessage(null);
         setFeedType('comments');
@@ -77,19 +77,37 @@ export default function GetCommentsFeed({
           commentTarget,
           howManyComments,
           fromBlockComments,
-          toBlockComments,
-          setComments
+          toBlockComments
         }
-        howManyComments > 0 ? await fetchItems('comments', 'Comments', fetchItemsParams) : null;
+
+        let fetchedPosts = {posts: {processedItems: []}}
+        let fetchedReposts = {reposts: {processedItems: []}}
+        let fetchedComments = {comments: {processedItems: []}}
+        if (howManyComments > 0) {
+          fetchedComments = await fetchItems('comments', 'Comments', fetchItemsParams);
+          fetchedComments = fetchedComments ?? {comments: {processedItems: []}}
+        }
+
+        setCurrentQuery({...fetchedPosts, ...fetchedReposts, ...fetchedComments, feedType: 'comments', commentTarget: commentTarget});
 
         setFetchCompleted(true);
       })();
-    }, [getCommentsFeed]);
+    }, [getCommentsFeed, isDBLoaded, commentTarget]);
 
     useEffect(() => {
       (async () => {
         if (fetchCompleted) {
-          setFetchCompleted(false);
+          indexComments(
+            setCurrentQuery,
+            currentQuery,
+            setQueries,
+            queries,
+            setPastQuery,
+            pastQuery,
+            setIsDBLoaded,
+            isDBLoaded,
+            setComments
+          );
           setLoading(false);
         }
       })();
@@ -113,7 +131,7 @@ export default function GetCommentsFeed({
         {errorMessage && <p className="border-4 p-2 shadow-lg break-normal overflow-wrap">Error: {errorMessage}</p>}
         <ItemContentList
           feedType={feedType}
-          mergedContent={comments}
+          mergedContent={currentQuery.comments.processedItems}
           loading={loading}
           walletConnected={walletConnected}
           account={account}
@@ -123,7 +141,7 @@ export default function GetCommentsFeed({
           setCommentTarget={setCommentTarget}
           commentTarget={commentTarget}
         />
-        {!loading && comments.length === 0 && <div className="p-2 border-b-2 shadow-lg">
+        {!loading && currentQuery.comments.processedItems.length === 0 && <div className="p-2 border-b-2 shadow-lg">
           <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
             <p >The query threw zero results</p>
           </div>
