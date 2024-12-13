@@ -54,6 +54,16 @@ export default function AuditButton({
           });
           return newQuery;
         });
+      } else if (contentType === 'Comments') {
+        setCurrentQuery((prevQuery: any) => {
+          const newQuery = {...prevQuery, ...{comments: {...prevQuery.comments, isValid: isValid}}};
+          setQueries(prevQueries => {
+            const newQueries = [...prevQueries];
+            newQueries[index] = newQuery;
+            return newQueries;
+          });
+          return newQuery;
+        });
       }
   }
 
@@ -78,7 +88,6 @@ export default function AuditButton({
           }
 
           if (currentQuery.feedType === 'profile') {
-            console.log('profile')
             const isValid = await auditItems('profile', 'Posts', postsAuditGeneralParams);
             updateQueriesWithAudit(currentQuery.id-1, isValid, 'Posts');
   
@@ -93,7 +102,6 @@ export default function AuditButton({
             }
   
           } else if (currentQuery.feedType === 'global') {
-              console.log('global')
               const isValid = await auditItems('global', 'Posts', postsAuditGeneralParams);
               updateQueriesWithAudit(currentQuery.id-1, isValid, 'Posts');
   
@@ -102,10 +110,8 @@ export default function AuditButton({
               );
   
               if (query) {
-                console.log('update')
                 await updateQuery(currentQuery.id, {posts: {...currentQuery.posts, isValid: isValid, update: 'update'}});
               } else {
-                console.log('add')
                 await addQuery({...currentQuery, ...{posts: {...currentQuery.posts, isValid: isValid, add: 'add'}}});
               }
   
@@ -160,6 +166,36 @@ export default function AuditButton({
           }
         }
 
+        let commentsAuditGeneralParams;
+        if (currentQuery.comments.processedItems.length > 0) {
+          commentsAuditGeneralParams = {
+            items: currentQuery.comments.processedItems,
+            itemsMetadata: currentQuery.comments.auditMetadata,
+            fromBlock: currentQuery.comments.auditMetadata.query.fromBlock,
+            toBlock: currentQuery.comments.auditMetadata.query.toBlock,
+            setAuditing: setAuditing,
+            setErrorMessage: setErrorMessage,
+            postsContractAddress: postsContractAddress,
+            reactionsContractAddress: reactionsContractAddress,
+            commentsContractAddress: commentsContractAddress,
+            repostsContractAddress: repostsContractAddress
+          }
+          
+          const isValid = await auditItems('comments', 'Comments', commentsAuditGeneralParams, currentQuery.commentTarget);
+          updateQueriesWithAudit(currentQuery.id-1, isValid, 'Comments');
+
+          const query = await getQuery(
+            currentQuery.compositeHashedQuery
+          );
+
+          if (query) {
+            await updateQuery(currentQuery.id, {comments: {...currentQuery.comments, isValid: isValid}});
+          } else {
+            await addQuery({...currentQuery, ...{comments: {...currentQuery.comments, isValid: isValid}}});
+  
+          }
+        }
+
         setAuditing(false);
       }
     })();
@@ -173,6 +209,7 @@ export default function AuditButton({
           if (
             currentQuery.posts.isValid === undefined
             && currentQuery.reposts.isValid === undefined
+            && currentQuery.comments.isValid === undefined
           ) {
             setClicked(true);
             setAuditing(true);

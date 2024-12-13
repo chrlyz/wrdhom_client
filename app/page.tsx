@@ -221,8 +221,8 @@ export default function Home() {
         pastQuery={pastQuery}
         setPastQuery={setPastQuery}
         setCurrentQuery={setCurrentQuery}
+        currentQuery={currentQuery}
         setComments={setComments}
-        comments={comments}
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
       />}

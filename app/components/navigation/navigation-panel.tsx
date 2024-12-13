@@ -54,10 +54,9 @@ export default function NavigationPanel({
           setHideGetGlobalPosts('');
           setFeedType('global');
         } else if (currentQuery.feedType === 'comments') {
-          setComments(currentQuery.processedItems);
-          setCommentTarget(currentQuery.commentsTarget);
+          setComments(currentQuery.comments.processedItems);
+          setCommentTarget(currentQuery.commentTarget);
           setShowProfile(false);
-          setShowComments(true);
           setFeedType('comments');
         }
       }
@@ -100,6 +99,15 @@ export default function NavigationPanel({
         } else if (
           query.posts.processedItems.length === 0
           && query.reposts.isValid
+        ) {
+          backGroundColor = 'bg-green-500';
+        } else if (
+          query.comments.isValid
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-green-700';
+        } else if (
+          query.comments.isValid
         ) {
           backGroundColor = 'bg-green-500';
         } else if (

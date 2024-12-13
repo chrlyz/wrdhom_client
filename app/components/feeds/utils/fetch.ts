@@ -19,8 +19,7 @@ export const fetchItems = async (
       howManyComments,
       fromBlockComments,
       toBlockComments,
-      commentTarget,
-      setComments
+      commentTarget
     }: {
       account: string[],
       setLoading: Dispatch<SetStateAction<boolean>>,
@@ -35,8 +34,7 @@ export const fetchItems = async (
       howManyComments?: number,
       fromBlockComments?: number,
       toBlockComments?: number,
-      commentTarget?: any,
-      setComments?: Dispatch<SetStateAction<any[]>>
+      commentTarget?: any
     }
 ) => {
     try {
@@ -192,7 +190,7 @@ export const fetchItems = async (
        
       return currentProcessedQuery;
 
-      } else if (contentType === 'Comments' && setComments) {
+      } else if (contentType === 'Comments') {
 
         // Start quick audit
         const { Poseidon, Field, PublicKey, Signature } = await import('o1js');
@@ -225,11 +223,14 @@ export const fetchItems = async (
         }
 
         const currentProcessedQuery = {
-          feedType: feedType,
-          auditMetadata: data.auditMetadata,
-          processedItems: processedItems
+          comments: {
+            feedType: feedType,
+            auditMetadata: data.auditMetadata,
+            processedItems: processedItems
+          }
         }
         
+        return currentProcessedQuery;
       }
 
     } catch (e: any) {
