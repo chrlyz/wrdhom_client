@@ -202,7 +202,7 @@ export default function AuditButton({
   });
   
   return (
-    <div className="p-4 w-full mb-32">
+    <div className="p-4 w-full">
       <button
         className="w-full p-2 bg-black text-white"
         onClick={() => {
@@ -215,7 +215,9 @@ export default function AuditButton({
             setAuditing(true);
           }
         }}
-      >Audit</button>
+      >
+        Audit Query
+      </button>
       {auditing && <p className="border-4 p-2 shadow-lg">Auditing...</p>}
     </div>
   );

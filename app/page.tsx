@@ -9,6 +9,7 @@ import GetProfileFeed from './components/feeds/get-profile-feed';
 import GetCommentsFeed from './components/feeds/get-comments-feed';
 import NavigationPanel from './components/navigation/navigation-panel';
 import AuditButton from './components/audit/audit-button';
+import DataTransferButtons from './components/portable_queries/data_transfer_buttons'
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -42,8 +43,6 @@ export default function Home() {
   const [isDBLoaded, setIsDBLoaded] = useState(false);
   const [pastQuery, setPastQuery] = useState(null as any);
   const [currentQuery, setCurrentQuery] = useState(null as any);
-  const [posts, setPosts] = useState([] as any[]);
-  const [profilePosts, setProfilePosts] = useState([] as any[]);
   const [errorMessage, setErrorMessage] = useState(null as any);
   const [auditing, setAuditing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -131,16 +130,20 @@ export default function Home() {
           />}
         </div>
         {initialLoading ? null : <AuditButton
-                currentQuery={currentQuery}
-                postsContractAddress={postsContractAddress}
-                reactionsContractAddress={reactionsContractAddress}
-                commentsContractAddress={commentsContractAddress}
-                repostsContractAddress={repostsContractAddress}
-                setAuditing={setAuditing}
-                setErrorMessage={setErrorMessage}
-                setQueries={setQueries}
-                auditing={auditing}
-                setCurrentQuery={setCurrentQuery}
+          currentQuery={currentQuery}
+          postsContractAddress={postsContractAddress}
+          reactionsContractAddress={reactionsContractAddress}
+          commentsContractAddress={commentsContractAddress}
+          repostsContractAddress={repostsContractAddress}
+          setAuditing={setAuditing}
+          setErrorMessage={setErrorMessage}
+          setQueries={setQueries}
+          auditing={auditing}
+          setCurrentQuery={setCurrentQuery}
+        />}
+        {initialLoading ? null : <DataTransferButtons
+          queries={queries}
+          setQueries={setQueries}
         />}
       </div>
       <GetGlobalFeed getGlobalFeed={getGlobalFeed}
