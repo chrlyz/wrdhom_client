@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useState, useEffect } from 'react';
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import { FeedType } from '../types';
 
 export default function NavigationPanel({
@@ -12,7 +12,9 @@ export default function NavigationPanel({
     setFeedType,
     setComments,
     setShowComments,
-    setMergedContent
+    setMergedContent,
+    setSelectedNavigation,
+    selectedNavigation
 }: {
     queries: any[],
     currentQuery: any,
@@ -24,9 +26,10 @@ export default function NavigationPanel({
     setFeedType: Dispatch<SetStateAction<FeedType>>,
     setComments: Dispatch<SetStateAction<any[]>>,
     setShowComments: Dispatch<SetStateAction<boolean>>,
-    setMergedContent: Dispatch<SetStateAction<any[]>>
+    setMergedContent: Dispatch<SetStateAction<any[]>>,
+    setSelectedNavigation: Dispatch<SetStateAction<boolean>>,
+    selectedNavigation: boolean
 }) {
-  const [clicked, setClicked] = useState(false);
   
   const areQueriesEqual = (query1: any, query2: any) => {
     if (!query1 || !query2) return false;
@@ -36,9 +39,9 @@ export default function NavigationPanel({
 
   useEffect(() => {
     (async () => {
-      if (currentQuery && clicked) {
+      if (currentQuery && selectedNavigation) {
 
-        setClicked(false);
+        setSelectedNavigation(false);
         
 
         if (currentQuery.feedType === 'profile') {
@@ -123,7 +126,7 @@ export default function NavigationPanel({
             key={index}
             onClick={() => {
               setCurrentQuery(query);
-              setClicked(true);
+              setSelectedNavigation(true);
             }}
             className={`
               w-8 h-8 

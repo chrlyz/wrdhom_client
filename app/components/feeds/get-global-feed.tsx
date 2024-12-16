@@ -143,7 +143,7 @@ export default function GetGlobalFeed({
       />
       {!loading && currentQuery.posts.processedItems.length === 0 && currentQuery.reposts.processedItems.length === 0 && <div className="p-2 border-b-2 shadow-lg">
         <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
-            <p >The query threw zero results (global)</p>
+            <p >Empty Feed</p>
         </div>
       </div>}
     </div>

@@ -18,14 +18,14 @@ export default function Home() {
   const [account, setAccount] = useState(['Not connected']);
   const [accountChanged, setAccountChanged] = useState(false);
   const [getGlobalFeed, setGetGlobalFeed] = useState(false);
-  const [howManyPosts, setHowManyPosts] = useState(3);
+  const [howManyPosts, setHowManyPosts] = useState(6);
   const [fromBlock, setFromBlock] = useState(0);
   const [toBlock, setToBlock] = useState(10_000_000);
   const [getProfileFeed, setGetProfileFeed] = useState(false);
   const [profileAddress, setProfileAddress] = useState('');
   const [hideGetGlobalPosts, setHideGetGlobalPosts] = useState('');
   const [showProfile, setShowProfile] = useState(false);
-  const [howManyComments, setHowManyComments] = useState(1);
+  const [howManyComments, setHowManyComments] = useState(3);
   const [fromBlockComments, setFromBlockComments] = useState(0);
   const [toBlockComments, setToBlockComments] = useState(10_000_000);
   const [getCommentsFeed, setGetCommentsFeed] = useState(false);
@@ -48,6 +48,7 @@ export default function Home() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [comments, setComments] = useState([] as any[]);
   const [mergedContent, setMergedContent] = useState([] as any);
+  const [selectedNavigation, setSelectedNavigation] = useState(false);
 
   const walletConnection = () => setWalletConnected(!walletConnected);
 
@@ -115,7 +116,7 @@ export default function Home() {
           {initialLoading ? null : !hasWallet && <InstallWallet />}
           {initialLoading ? null : <p className="text-s mb-2 break-words">{hasWallet ? 'Your account is: ' + account[0] : ''}</p>}
           {initialLoading ? null : hasWallet && !walletConnected && <ConnectWallet walletConnection={walletConnection}/>}
-          {<NavigationPanel
+          {!loading && <NavigationPanel
             queries={queries}
             currentQuery={currentQuery}
             setCurrentQuery={setCurrentQuery}
@@ -127,6 +128,8 @@ export default function Home() {
             setFeedType={setFeedType}
             setComments={setComments}
             setMergedContent={setMergedContent}
+            setSelectedNavigation={setSelectedNavigation}
+            selectedNavigation={selectedNavigation}
           />}
         </div>
         {initialLoading ? null : <AuditButton
@@ -144,6 +147,9 @@ export default function Home() {
         {initialLoading ? null : <DataTransferButtons
           queries={queries}
           setQueries={setQueries}
+          setLoading={setLoading}
+          setCurrentQuery={setCurrentQuery}
+          setSelectedNavigation={setSelectedNavigation}
         />}
       </div>
       <GetGlobalFeed getGlobalFeed={getGlobalFeed}
@@ -228,6 +234,8 @@ export default function Home() {
         setComments={setComments}
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
+        setLoading={setLoading}
+        loading={loading}
       />}
       <div className="flex flex-col w-1/5 border-r">
         {initialLoading ? null : <div className="flex-grow">
