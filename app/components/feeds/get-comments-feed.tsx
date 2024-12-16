@@ -27,7 +27,9 @@ export default function GetCommentsFeed({
   currentQuery,
   setComments,
   setErrorMessage,
-  errorMessage
+  errorMessage,
+  setLoading,
+  loading
 }: {
   commentTarget: any,
   setProfileAddress: Dispatch<SetStateAction<string>>,
@@ -50,9 +52,10 @@ export default function GetCommentsFeed({
   currentQuery: any,
   setComments: Dispatch<SetStateAction<any[]>>,
   setErrorMessage: Dispatch<SetStateAction<any>>,
-  errorMessage: any
+  errorMessage: any,
+  setLoading: Dispatch<SetStateAction<boolean>>,
+  loading: boolean
 }) {
-    const [loading, setLoading] = useState(true);
     const [selectedProfileAddress, setSelectedProfileAddress] = useState('');
     const [fetchCompleted, setFetchCompleted] = useState(false);
   
@@ -143,7 +146,7 @@ export default function GetCommentsFeed({
         />
         {!loading && currentQuery.comments.processedItems.length === 0 && <div className="p-2 border-b-2 shadow-lg">
           <div className="flex items-center border-4 p-2 shadow-lg whitespace-pre-wrap break-normal overflow-wrap">
-            <p >The query threw zero results</p>
+            <p >Empty Feed</p>
           </div>
         </div>}
       </div>
