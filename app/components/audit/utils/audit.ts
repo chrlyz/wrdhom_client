@@ -10,7 +10,6 @@ export async function auditItems(
     itemsMetadata,
     fromBlock,
     toBlock,
-    setAuditing,
     setErrorMessage,
     postsContractAddress,
     reactionsContractAddress,
@@ -21,7 +20,6 @@ export async function auditItems(
     itemsMetadata: any,
     fromBlock: number,
     toBlock: number,
-    setAuditing: Dispatch<SetStateAction<boolean>>,
     setErrorMessage: Dispatch<SetStateAction<any>>,
     postsContractAddress: string,
     reactionsContractAddress: string,
@@ -51,7 +49,6 @@ export async function auditItems(
     if (feedType !== 'comments') {
       while (auditing_historic_state) {
         if (tries === 10) {
-          setAuditing(false);
           setErrorMessage(errorMessage);
           return false;
         }
@@ -239,7 +236,6 @@ export async function auditItems(
     } else {
       while (auditing_historic_state) {
         if (tries === 10) {
-          setAuditing(false);
           setErrorMessage(errorMessage);
           return false;
         }
@@ -293,6 +289,7 @@ export async function auditItems(
       }
     }
   
+    let isValidAudit;
     for (let i = 0; i < items.length; i++) {
       const itemState: any = (contentType === 'Posts' ? PostState 
                                                       : contentType === 'Reposts' ? RepostState
@@ -302,7 +299,6 @@ export async function auditItems(
       const allItemsCounter = itemState[`all${contentType}Counter`];
       const usersItemsCounter = itemState[`user${contentType}Counter`];
       const targetItemsCounter = itemState[`target${contentType}Counter`];
-      const f = {setAuditing: setAuditing, setErrorMessage: setErrorMessage}
 
       if (i+1 < items.length) {
           const nextItemState: any = (contentType === 'Posts' ? PostState
@@ -322,7 +318,9 @@ export async function auditItems(
                                   ? `target${contentType}Counter`
                                   : `user${contentType}Counter`
                               }`;
-          checkGap(currentIndex, nextItemState[nextIndex], contentType, f);
+
+          isValidAudit = checkGap(currentIndex, nextItemState[nextIndex], contentType, setErrorMessage);
+          if (!isValidAudit) return false;
       }
 
       const blockHeight = Number(itemState[`${lowercaseSingularCT}BlockHeight`]);
@@ -335,7 +333,6 @@ export async function auditItems(
 
       // Audit block range
       if (blockHeight < fromBlock || blockHeight > toBlock) {
-        setAuditing(false);
         setErrorMessage(
           `Block-length ${blockHeight} for ${middleMessage}`
             +` isn't between the block range ${fromBlock} to ${toBlock}`
@@ -348,7 +345,6 @@ export async function auditItems(
       const calculatedPostKey = Poseidon.hash([posterAddressAsField, postState.postContentID.hash()]);
       const statedPostKey = contentType !== 'Comments' ? items[i].postKey : itemState.targetKey;
       if (calculatedPostKey.toString() !== statedPostKey.toString()) {
-        setAuditing(false);
         setErrorMessage(
           `Post Key for ${middleMessage}`
             +` doesn't belong to Post`
@@ -363,12 +359,11 @@ export async function auditItems(
         (
           contentType === 'Posts'
             ? historicPostsState.posts
-            : contentType === 'Reposts' ? itemsMetadata.lastRepostsState.reposts
+            : contentType === 'Reposts' ? historicRepostsState.reposts
             : historicCommentsState.comments
         )
         !== calculatedRoot
       ) {
-        setAuditing(false);
         setErrorMessage(
           `${middleMessage}`
             +` has different root than zkApp state. The server may be experiencing some issues or manipulating results for your query.`
@@ -382,7 +377,6 @@ export async function auditItems(
         const calculatedCID = await getCID(items[i].content);
         const statedCID = contentType !== 'Comments' ? items[i].postState.postContentID : itemState.commentContentID
         if (calculatedCID !== CircuitString.fromJSON(statedCID).toString()) {
-          setAuditing(false);
           setErrorMessage(
             `The content for ${middleMessage}`
               +` doesn't match the expected contentID. The server may be experiencing some issues or manipulating the content it shows.`
@@ -392,39 +386,38 @@ export async function auditItems(
   
         if (contentType !== 'Comments') {
           // Audit embedded items
-          let validAudit;
           if (Number(itemsMetadata.lastReactionsState.allReactionsCounter) > 0) {
-            validAudit =  await auditEmbeddedItems(
+            isValidAudit =  await auditEmbeddedItems(
               items[i],
               feedType,
               'Reactions',
               itemsMetadata.lastReactionsState.reactions,
               itemsMetadata.lastReactionsState.targetsReactionsCounters,
-              f
+              setErrorMessage
             );
-            if (!validAudit) return false;
+            if (!isValidAudit) return false;
           }
           if (Number(itemsMetadata.lastCommentsState.allCommentsCounter) > 0) {
-            validAudit =  await auditEmbeddedItems(
+            isValidAudit =  await auditEmbeddedItems(
               items[i],
               feedType,
               'Comments',
               itemsMetadata.lastCommentsState.comments,
               itemsMetadata.lastCommentsState.targetsCommentsCounters,
-              f
+              setErrorMessage
             );
-            if (!validAudit) return false;
+            if (!isValidAudit) return false;
           }
           if (Number(itemsMetadata.lastRepostsState.allRepostsCounter) > 0) {
-            validAudit =  await auditEmbeddedItems(
+            isValidAudit =  await auditEmbeddedItems(
               items[i],
               feedType,
               'Reposts',
               itemsMetadata.lastRepostsState.reposts,
               itemsMetadata.lastRepostsState.targetsRepostsCounters,
-              f
+              setErrorMessage
             );
-            if (!validAudit) return false;
+            if (!isValidAudit) return false;
           }
         }
       }
@@ -449,13 +442,7 @@ async function auditEmbeddedItems(
   contentType: ContentType,
   fetchedItemsRoot: string,
   fetchedTargetItemsRoot: string,
-  {
-    setAuditing,
-    setErrorMessage
-  }: {
-    setAuditing: Dispatch<SetStateAction<boolean>>,
-    setErrorMessage: Dispatch<SetStateAction<any>>
-  }
+  setErrorMessage: Dispatch<SetStateAction<any>>
 ) {
   const { MerkleMapWitness, Field } = await import('o1js');
   const { ReactionState, CommentState, RepostState } = await import('wrdhom');
@@ -471,7 +458,6 @@ async function auditEmbeddedItems(
 
   // Audit that the server retrieves the same amount of embedded items it reports
   if (embeddedItems.length !== statedNumberOfEmbeddedItems) {
-    setAuditing(false);
     setErrorMessage(
       `The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} `
       +`for ${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter},`
@@ -488,7 +474,6 @@ async function auditEmbeddedItems(
   )[0].toString();
 
   if (fetchedTargetItemsRoot !== calculatedTargetsItemsCountersRoot ) {
-    setAuditing(false);
     setErrorMessage(
       `The server stated that there are ${statedNumberOfEmbeddedItems} ${contentType} for `
       +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter},`
@@ -505,7 +490,6 @@ async function auditEmbeddedItems(
 
     // Audit that embedded items belong to the parent item
     if (stateJSON.targetKey !== parentItem.postKey) {
-      setAuditing(false);
       setErrorMessage(
         `${singularCT} ${stateJSON[`target${contentType}Counter`]} from `
         +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter} `
@@ -516,7 +500,6 @@ async function auditEmbeddedItems(
 
     // Audit that the embedded items match the onchain state
     if (fetchedItemsRoot !== calculatedRoot) {
-      setAuditing(false);
       setErrorMessage(
         `${singularCT} ${stateJSON[`target${contentType}Counter`]} from `
         +`${feedType === 'global' ? singularParentCT + ' ' + allItemsCounter : 'User ' + singularParentCT + ' ' + usersItemsCounter} `
@@ -533,7 +516,7 @@ async function auditEmbeddedItems(
         state[`target${contentType}Counter`],
         nextState[`target${contentType}Counter`],
         contentType,
-        {setAuditing, setErrorMessage},
+        setErrorMessage,
         {
           parentCounter: parentContentType === 'Reposts' ? parentItem.repostState[`allRepostsCounter`] : parentItem.postState[`allPostsCounter`],
           parentContentType: parentContentType
@@ -548,13 +531,7 @@ const checkGap = (
   current: string,
   next: string,
   contentType: ContentType,
-  {
-    setAuditing,
-    setErrorMessage
-  }: {
-    setAuditing: Dispatch<SetStateAction<boolean>>,
-    setErrorMessage: Dispatch<SetStateAction<any>>
-  },
+  setErrorMessage: Dispatch<SetStateAction<any>>,
   parentInfo?: {
     parentCounter: number,
     parentContentType: ContentType
@@ -562,13 +539,14 @@ const checkGap = (
 ) => {
   // Audit that no items are being omitted
   if (Number(current) !== Number(next) + 1) {
-    setAuditing(false);
     setErrorMessage(
       `Gap between ${contentType} ${current} and ${next}${parentInfo?.parentCounter ? `, `
         +`from ${parentInfo?.parentContentType.slice(0, -1)} ${parentInfo?.parentCounter}` : ''}. `
         +`The server may be experiencing some issues or censoring ${contentType}.`
     );
     return false;
+  } else {
+    return true;
   }
 };
 
