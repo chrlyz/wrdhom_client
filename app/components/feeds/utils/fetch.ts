@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
 import { ContentType, EmbeddedReactions, FeedType } from '../../types';
-import { addQuery, getQuery, getAllQueries } from "@/app/db/indexed-db";
 
 export const fetchItems = async (
     feedType: FeedType,

@@ -73,13 +73,13 @@ export default function AuditButton({
         setClicked(false);
 
         let postsAuditGeneralParams;
+        let isValid;
         if (currentQuery.posts.processedItems.length > 0) {
           postsAuditGeneralParams = {
             items: currentQuery.posts.processedItems,
             itemsMetadata: currentQuery.posts.auditMetadata,
             fromBlock: currentQuery.posts.auditMetadata.query.fromBlock,
             toBlock: currentQuery.posts.auditMetadata.query.toBlock,
-            setAuditing: setAuditing,
             setErrorMessage: setErrorMessage,
             postsContractAddress: postsContractAddress,
             reactionsContractAddress: reactionsContractAddress,
@@ -88,7 +88,7 @@ export default function AuditButton({
           }
 
           if (currentQuery.feedType === 'profile') {
-            const isValid = await auditItems('profile', 'Posts', postsAuditGeneralParams);
+            isValid = await auditItems('profile', 'Posts', postsAuditGeneralParams);
             updateQueriesWithAudit(currentQuery.id-1, isValid, 'Posts');
   
             const query = await getQuery(
@@ -102,7 +102,7 @@ export default function AuditButton({
             }
   
           } else if (currentQuery.feedType === 'global') {
-              const isValid = await auditItems('global', 'Posts', postsAuditGeneralParams);
+              isValid = await auditItems('global', 'Posts', postsAuditGeneralParams);
               updateQueriesWithAudit(currentQuery.id-1, isValid, 'Posts');
   
               const query = await getQuery(
@@ -116,6 +116,10 @@ export default function AuditButton({
               }
   
           }
+          if (!isValid) {
+            setAuditing(false);
+            return;
+          }
         }
 
         let repostsAuditGeneralParams;
@@ -125,7 +129,6 @@ export default function AuditButton({
             itemsMetadata: currentQuery.reposts.auditMetadata,
             fromBlock: currentQuery.reposts.auditMetadata.query.fromBlock,
             toBlock: currentQuery.reposts.auditMetadata.query.toBlock,
-            setAuditing: setAuditing,
             setErrorMessage: setErrorMessage,
             postsContractAddress: postsContractAddress,
             reactionsContractAddress: reactionsContractAddress,
@@ -135,7 +138,7 @@ export default function AuditButton({
 
           if (currentQuery.feedType === 'profile') {
           
-            const isValid = await auditItems('profile', 'Reposts', repostsAuditGeneralParams);
+            isValid = await auditItems('profile', 'Reposts', repostsAuditGeneralParams);
             updateQueriesWithAudit(currentQuery.id-1, isValid, 'Reposts');
   
             const query = await getQuery(
@@ -150,7 +153,7 @@ export default function AuditButton({
   
           } else if (currentQuery.feedType === 'global') {
   
-              const isValid = await auditItems('global', 'Reposts', repostsAuditGeneralParams);
+              isValid = await auditItems('global', 'Reposts', repostsAuditGeneralParams);
               updateQueriesWithAudit(currentQuery.id-1, isValid, 'Reposts');
   
               const query = await getQuery(
@@ -164,6 +167,10 @@ export default function AuditButton({
               }
   
           }
+          if (!isValid) {
+            setAuditing(false);
+            return;
+          }
         }
 
         let commentsAuditGeneralParams;
@@ -173,7 +180,6 @@ export default function AuditButton({
             itemsMetadata: currentQuery.comments.auditMetadata,
             fromBlock: currentQuery.comments.auditMetadata.query.fromBlock,
             toBlock: currentQuery.comments.auditMetadata.query.toBlock,
-            setAuditing: setAuditing,
             setErrorMessage: setErrorMessage,
             postsContractAddress: postsContractAddress,
             reactionsContractAddress: reactionsContractAddress,
@@ -181,7 +187,7 @@ export default function AuditButton({
             repostsContractAddress: repostsContractAddress
           }
           
-          const isValid = await auditItems('comments', 'Comments', commentsAuditGeneralParams, currentQuery.commentTarget);
+          isValid = await auditItems('comments', 'Comments', commentsAuditGeneralParams, currentQuery.commentTarget);
           updateQueriesWithAudit(currentQuery.id-1, isValid, 'Comments');
 
           const query = await getQuery(
@@ -193,6 +199,10 @@ export default function AuditButton({
           } else {
             await addQuery({...currentQuery, ...{comments: {...currentQuery.comments, isValid: isValid}}});
   
+          }
+          if (!isValid) {
+            setAuditing(false);
+            return;
           }
         }
 

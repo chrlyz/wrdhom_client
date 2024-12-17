@@ -113,7 +113,91 @@ export default function NavigationPanel({
           query.comments.isValid
         ) {
           backGroundColor = 'bg-green-500';
+        }
+
+        else if (
+          query.posts.isValid !== undefined
+          && !query.posts.isValid
+          && query.reposts.isValid !== undefined
+          && !query.reposts.isValid
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-red-700';
         } else if (
+          query.posts.isValid !== undefined
+          && !query.posts.isValid
+          && query.reposts.isValid === undefined
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-red-700';
+        } else if (
+          query.posts.isValid === undefined
+          && query.reposts.isValid !== undefined
+          && !query.reposts.isValid
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-red-700';
+        } else if (
+          query.comments.isValid !== undefined
+          && !query.comments.isValid
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-red-700';
+        } else if (
+          query.posts.isValid !== undefined
+          && !query.posts.isValid
+          && query.reposts.isValid
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-red-700';
+        } else if (
+          query.posts.isValid
+          && query.reposts.isValid !== undefined
+          && !query.reposts.isValid
+          && areQueriesEqual(currentQuery, query)
+        ) {
+          backGroundColor = 'bg-red-700';
+        }
+        
+        else if (
+          query.posts.isValid !== undefined
+          && !query.posts.isValid
+          && query.reposts.isValid !== undefined
+          && !query.reposts.isValid
+        ) {
+          backGroundColor = 'bg-red-500';
+        } else if (
+          query.posts.isValid !== undefined
+          && !query.posts.isValid
+          && query.reposts.isValid === undefined
+        ) {
+          backGroundColor = 'bg-red-500';
+        } else if (
+          query.posts.isValid === undefined
+          && query.reposts.isValid !== undefined
+          && !query.reposts.isValid
+        ) {
+          backGroundColor = 'bg-red-500';
+        } else if (
+          query.comments.isValid !== undefined
+          && !query.comments.isValid
+        ) {
+          backGroundColor = 'bg-red-500';
+        } else if (
+          query.posts.isValid !== undefined
+          && !query.posts.isValid
+          && query.reposts.isValid
+        ) {
+          backGroundColor = 'bg-red-500';
+        } else if (
+          query.posts.isValid
+          && query.reposts.isValid !== undefined
+          && !query.reposts.isValid
+        ) {
+          backGroundColor = 'bg-red-500';
+        }
+        
+        else if (
           areQueriesEqual(currentQuery, query)
         ) {
           backGroundColor = 'bg-black';
